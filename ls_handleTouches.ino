@@ -1926,6 +1926,7 @@ byte getNoteNumber(byte split, byte col, byte row) {
   if (isLeftHandedSplit(split)) {
     noteCol = (NUMCOLS - col);
   }
+  noteCol = noteCol*2;
 
   notenum = determineRowOffsetNote(split, row) + noteCol - 1;
 
