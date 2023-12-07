@@ -610,6 +610,7 @@ void initializePresetSettings() {
         p.split[s].pitchCorrectQuantize = true;
         p.split[s].pitchCorrectHold = true;
         p.split[s].pitchResetOnRelease = false;
+        p.split[s].skipFretting = false;
         p.split[s].minForY = 0;
         p.split[s].maxForY = 127;
         p.split[s].relativeY = false;
@@ -1311,6 +1312,10 @@ void handlePerSplitSettingNewTouch() {
           break;
         case 3:
           Split[Global.currentPerSplit].pitchResetOnRelease = !Split[Global.currentPerSplit].pitchResetOnRelease;
+          break;
+
+        case 0:
+          Split[Global.currentPerSplit].skipFretting = !Split[Global.currentPerSplit].skipFretting;
           break;
       }
       break;

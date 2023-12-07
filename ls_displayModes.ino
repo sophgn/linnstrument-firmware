@@ -633,6 +633,10 @@ void paintPerSplitDisplay(byte side) {
     setLed(8, 3, Split[side].colorMain, cellOn);
   }
 
+  if (Split[side].skipFretting == true) {
+    setLed(8, 0, Split[side].colorMain, cellOn);
+  }
+
   // set Timbre/Y settings
   if (Split[side].sendY == true)  {
     setLed(9, 7, getLimitsForYColor(side), cellOn);

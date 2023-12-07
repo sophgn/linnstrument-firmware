@@ -630,6 +630,7 @@ struct SplitSettings {
   boolean pitchCorrectQuantize;           // true to quantize pitch of initial touch, false if not
   byte pitchCorrectHold;                  // See PitchCorrectHoldSpeed values
   boolean pitchResetOnRelease;            // true to enable pitch bend being set back to 0 when releasing a touch
+  boolean skipFretting;                   // true to skip every other midi value in a row (e.g. kite guitar layout)
   TimbreExpression expressionForY;        // the expression that should be used for timbre
   unsigned short customCCForY;            // 0-129 (with 128 and 129 being placeholders for PolyPressure and ChannelPressure)
   unsigned short minForY;                 // 0-127

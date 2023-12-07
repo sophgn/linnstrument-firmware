@@ -1926,7 +1926,10 @@ byte getNoteNumber(byte split, byte col, byte row) {
   if (isLeftHandedSplit(split)) {
     noteCol = (NUMCOLS - col);
   }
-  noteCol = noteCol*2;
+
+  if (Split[split].skipFretting) {
+    noteCol = noteCol*2;
+  }
 
   notenum = determineRowOffsetNote(split, row) + noteCol - 1;
 
@@ -1936,7 +1939,7 @@ byte getNoteNumber(byte split, byte col, byte row) {
 short determineRowOffsetNote(byte split, byte row) {
   short lowest = 30;                                  // 30 = F#2, which is 10 semitones below guitar low E (E3/52). High E = E5/76
 
-  if (Global.rowOffset <= 12) {                       // if rowOffset is set to between 0 and 12..
+  if (Global.rowOffset <= 12) {                       // if rowOffset is 12 or lower
     short offset = Global.rowOffset;
 
     if (Global.rowOffset == ROWOFFSET_OCTAVECUSTOM) {
@@ -1952,7 +1955,7 @@ short determineRowOffsetNote(byte split, byte row) {
       getSplitBoundaries(split, lowCol, highCol);
 
       offset = highCol - lowCol;                      // calculate the row offset based on the width of the split the column belongs to
-      if (Global.splitActive && split == RIGHT) {     // if the right split is displayed, change the column so that it the lower left starting
+      if (Global.splitActive && split == RIGHT) {     // if the right split is displayed, change the column so that the lower left starting
         getSplitBoundaries(LEFT, lowCol, highCol);    // point starts at the same point as the left split, behaving as if there were two independent
         lowest = lowest - (highCol - lowCol);         // LinnStruments next to each-other
       }
@@ -1964,8 +1967,12 @@ short determineRowOffsetNote(byte split, byte row) {
         lowest -= 1;
       }
     }
-    else if (offset >= 12) {                          // start the octave offset one octave lower to prevent having disabled notes at the top in the default configuration
-      lowest = 18;
+    else if (offset >= 12) {
+      if (Split[split].skipFretting) {                // handle skipFretting with high row offset (kite guitar is 13, only fills 194 pads)
+        lowest = -1;                                   // start at note 0 (why -1 gets us 0?) so that we show as many as possible and all disabled notes are in one place
+      } else {
+        lowest = 18;                                  // start the octave offset one octave lower to prevent having disabled notes at the top in the default configuration
+      }
     }
     else if (offset <= -12) {
       lowest = 18 - 7 * offset;
