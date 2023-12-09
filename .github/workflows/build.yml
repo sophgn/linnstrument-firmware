@@ -34,7 +34,7 @@ jobs:
           prerelease: true
           title: "Development Build"
           files: |
-            ${{ github.workspace }}/*.bin
+            *.bin
     
     - name: Diagnose
       run:  |
@@ -43,4 +43,6 @@ jobs:
         ls build/
         echo '. contents:'
         ls
+        echo '${{ github.workspace }} contents:'
+        ls ${{ github.workspace }}
           
