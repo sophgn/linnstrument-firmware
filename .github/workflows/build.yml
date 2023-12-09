@@ -21,7 +21,9 @@ jobs:
       run: arduino-cli lib install "DueFlashStorage@1.0.0"
 
     - name: Compile
-      run:  arduino-cli compile --fqbn arduino:sam:arduino_due_x ./linnstrument-firmware.ino --warnings more
+      run:  |
+        arduino-cli compile --fqbn arduino:sam:arduino_due_x ./linnstrument-firmware.ino
+        ls
 
     - name: Publish Release
       uses: "marvinpinto/action-automatic-releases@latest"
@@ -31,6 +33,6 @@ jobs:
           prerelease: true
           title: "Development Build"
           files: |
-            *.bin
+            *.*
 
           
