@@ -17,14 +17,14 @@ jobs:
         arduino-cli core update-index
         arduino-cli core install arduino:sam@1.6.11
 
-    - name: Install 
+    - name: Install Required DueFlashStorage library
       run: arduino-cli lib install "DueFlashStorage@1.0.0"
 
-    - name: Compile
+    - name: Compile linnstrument-firmware.ino and export binary
       run:  |
         echo 'Run number ${{ github.run_number }}'
         arduino-cli compile --export-binaries --fqbn arduino:sam:arduino_due_x ./linnstrument-firmware.ino
-        mv build/arduino.sam.arduino_due_x linnstrument-fork-build${{ github.run_number }}.bin
+        mv build/arduino.sam.arduino_due_x/linnstrument-firmware.ino.bin linnstrument-fork-build${{ github.run_number }}.bin
 
     - name: Publish Release
       uses: "marvinpinto/action-automatic-releases@latest"
@@ -34,15 +34,4 @@ jobs:
           prerelease: true
           title: "Development Build"
           files: |
-            linnstrument-fork-build17.bin
-    
-    - name: Diagnose
-      run:  |
-        echo 'Run number ${{ github.run_number }}'
-        echo 'build/ contents:'
-        ls build/
-        echo '. contents:'
-        ls
-        echo '${{ github.workspace }} contents:'
-        ls ${{ github.workspace }}
-          
+            *.bin
