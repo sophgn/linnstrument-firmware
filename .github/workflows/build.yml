@@ -34,7 +34,7 @@ jobs:
           prerelease: true
           title: "Development Build"
           files: |
-            *.bin
+            linnstrument-fork-build17.bin
     
     - name: Diagnose
       run:  |
