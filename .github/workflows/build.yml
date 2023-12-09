@@ -28,9 +28,11 @@ jobs:
         ls
         echo 'build/ contents:'
         ls build/
-        mv build/arduino.sam.arduino_due_x linnstrument-firmware-fork-build-${{ github.run_number }}.bin
+        mv build/arduino.sam.arduino_due_x linnstrument-fork-build${{ github.run_number }}.bin
         echo 'build/ contents:'
         ls build/
+        echo '. contents:'
+        ls
 
     - name: Publish Release
       uses: "marvinpinto/action-automatic-releases@latest"
