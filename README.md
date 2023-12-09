@@ -4,21 +4,29 @@ I added an experimental feature to the Linnstrument firmware to support "skip-fr
 
 The name is in reference to the microtonal [kite guitar](https://kiteguitar.com/), which obviously uses frets and not keys, but the Linnstrument's rows and columns work just like strings and frets, so you can acheive Kite fretting on the Linnstrument easily with this mod by setting your synth software to use 41 equal divisions of the octave instead of 12. This is easy to do in e.g. Surge XT with it's Tuning Editor.
 
-Why would you want to skip half the notes? On the kite guitar, strings are 13 steps apart, which you can achieve on the Linnstrument by setting the Row Offset to a custom value of 13 (Global Settings -> Row Offset -> hold down "Octave" to get the secret menu -> swipe right). Thirteen is an odd number, so that means that if the first row represented the Even scale degrees (0 2 4 6 8...), the next row will represent the odd scale degrees (..13 15 17 19 21..)! Thus you actually have access to all the midi notes after all, with two neighboring strings filling each other's gaps. 
+Why would you want to skip half the notes? On the kite guitar, strings are 13 steps apart, which you can achieve on the Linnstrument by setting the Row Offset to a custom value of 13 (Global Settings -> Row Offset -> hold down "Octave" to get the secret menu -> swipe right). Thirteen is an odd number, so that means that if the first row represented the _even_ scale degrees (0 2 4 6 8...), the next row will represent the _odd_ scale degrees (..13 15 17 19 21..)! Thus you actually have access to **all** the midi notes after all, with two neighboring strings filling each other's gaps. 
 
 This is handy, as 41 notes per octave would not otherwise fit on a single row. But with half that, you get at least an octave per row on a 200-pad instrument. Luckily, you typically only want the odds or evens at the same time on the same string/row anyway, as explained on the kite guitar website.
 
 Note that while you may be used to your Linnstrument lighting up multiple pads when you press a single one (the other pads are repeats of the same note), with the kite layout all the notes are actually slightly different, so pressing a pad will only light up that pad.
 
-# Usage
+# Caveats
+- Because MIDI only supports 128 notes, the Linnstrument pads that go beyond that range are disabled. This won't be noticable on the smaller Linnstrument, but on the full-size device, 128 notes plus a 13 note row offset means 194 pads lit, falling just 6 pads shy of the full 200 pads. By default they'll all be in the top corner; as usual you can shift everything around with transpose settings (or just use split mode!)
+- Linnstrument pad color lighting settings will still be based on 12-degree scales, so no lighting pattern you try will be very useful for 41edo. Kite-specific lighting is an area for future exploration, but it doesn't need to be at the firmware level - simply send MIDI to your instrument and it will light the pads accordingly. Pure Data might be a good software choice for this.
+- The arpeggiator is currently unaware of the skipfretting patch and will exhibit undefined behavior for now.
+- The skip-fretting feature always starts disabled and is not yet stored across device restarts.
+
+# Install
 Follow the [standard directions](https://www.rogerlinndesign.com/support/support-linnstrument-update-software), but replace the `.bin` file in the updater bundle with the one found in the Releases section of this project.
 
-If you're not on Mac or Windows, you can still do it using `arduino-cli`, or by cloning this project, opening it in Arduino IDE (according to the Dev section below), and hitting "Upload" - no coding or command line required. Note that these methods do not let you preserve your Linnstruments' settings and calibration, for now.
+If you're not on mac or windows but gnu/linux, you can still do it using `arduino-cli`, or by cloning this project, opening it in Arduino IDE (following the Dev section below), and hitting "Upload" - no coding or command line required. Note that unlike the official updater, this method does not let you preserve your Linnstruments' settings and calibration (for now).
 
-# Caveats
-- Because MIDI only supports 128 notes, the Linnstrument pads that go beyond that range are disabled. This won't be noticable on the smaller Linnstrument, but on the full-size device, 128 notes plus a 13 note row offset means 194 pads lit, falling just 6 pads shy of the full 200 pads. By default they'll all be in the top corner; you can shift everyhting around with transpose settings (or just use split mode!)
-- Linnstrument pad color lighting is still based on the 12EDO assumption, so the lighting pattern is not very useful for 41edo. Kite-specific lighting is an area for future exploration, but it doesn't need to be at the firmware level - simply send MIDI to your instrument and it will light the pads accordingly. Pure Data might be a good software choice for this.
-- The arpeggiator is currently unaware of the skipfretting patch and will exhibit undefined behavior for now.
+
+# Usage
+- Go to your per-split settings. (Yes, this means you can have one skip-fretted split and one not!)
+- See the X/Pitch column? Tap the pad at the very _bottom_.
+
+That's it!
 
 # Development
 
@@ -26,7 +34,7 @@ These sources assume that you're using Arduino IDE v1.8.1 with SAM boards v1.6.1
 Different versions of this package might create unknown build and execution problems.
 I use the flatpak version of Arduino IDE, which means the build environment is nicely sandboxed. This means you can just pick the versions as per the instructions and all other software will work the same.
 
-Instructions from [https://www.rogerlinndesign.com/support/support-linnstrument-source-code](Linnstrument support page):
+Instructions from [Linnstrument support page](https://www.rogerlinndesign.com/support/support-linnstrument-source-code):
 -    Visit the Ardunino downloads page and follow the instructions for downloading the latest Arduino IDE.
 -    Launch the "Arduino IDE" app.
 -    Connect your LinnStrument via USB, then turn on UPDATE OS mode (Global Settings > Actions column).
