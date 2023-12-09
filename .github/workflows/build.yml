@@ -22,8 +22,15 @@ jobs:
 
     - name: Compile
       run:  |
+        echo 'Run number ${{ github.run_number }}'
         arduino-cli compile --export-binaries --fqbn arduino:sam:arduino_due_x ./linnstrument-firmware.ino
+        echo '. contents:'
+        ls
+        echo 'build/ contents:'
+        ls build/
         mv build/arduino.sam.arduino_due_x build/linnstrument-firmware-fork-build-${{ github.run_number }}.bin
+        echo 'build/ contents:'
+        ls build/
 
     - name: Publish Release
       uses: "marvinpinto/action-automatic-releases@latest"
