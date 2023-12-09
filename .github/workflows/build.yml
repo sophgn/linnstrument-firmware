@@ -1,0 +1,27 @@
+name: build
+
+on: [pull_request, push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest  
+    steps:
+    - name: Checkout
+      uses: actions/checkout@master
+
+    - name: Setup Arduino CLI
+      uses: arduino/setup-arduino-cli@v1
+
+    - name: Setup Arduino Core for Arduino Due board
+      run: |
+        arduino-cli core update-index
+        arduino-cli core install arduino:sam@1.6.11
+
+    - name: Install 
+      run: arduino-cli lib install "DueFlashStorage@1.0.0"
+
+    - name: Compile
+      run:  arduino-cli compile --fqbn arduino:sam:arduino_due_x ./linnstrument-firmware.ino --warnings more
+
+
+          
