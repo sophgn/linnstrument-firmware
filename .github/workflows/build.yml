@@ -24,6 +24,7 @@ jobs:
       run:  |
         arduino-cli compile --export-binaries --fqbn arduino:sam:arduino_due_x ./linnstrument-firmware.ino
         ls
+        ls ./bin
 
     - name: Publish Release
       uses: "marvinpinto/action-automatic-releases@latest"
@@ -33,6 +34,6 @@ jobs:
           prerelease: true
           title: "Development Build"
           files: |
-            *.bin
+            build/*.bin
 
           
