@@ -8,8 +8,6 @@ Why would you want to skip half the notes? On the kite guitar, strings are 13 st
 
 This is handy, as 41 notes per octave would not otherwise fit on a single row. But with half that, you get at least an octave per row on a 200-pad instrument. Luckily, you typically only want the odds or evens at the same time on the same string/row anyway, as explained on the kite guitar website.
 
-Note that while you may be used to your Linnstrument lighting up multiple pads when you press a single one (the other pads are repeats of the same note), with the kite layout all the notes are actually slightly different, so pressing a pad will only light up that pad.
-
 # Caveats
 - Because MIDI only supports 128 notes, the Linnstrument pads that go beyond that range are disabled. This won't be noticable on the smaller Linnstrument, but on the full-size device, 128 notes plus a 13 note row offset means 194 pads lit, falling just 6 pads shy of the full 200 pads. By default the disabled pads will all be in the top corner; as usual you can shift them around with the "transpose lights" settings.
 - Linnstrument pad color lighting default settings are all based on 12-degree scales, not very useful for 41edo. Kite-specific lighting can be added with the `SCALE SELECT` custom light pattern mode, or you can send MIDI to your device and it will light the pads accordingly. Pure Data might be a good software choice for this.
