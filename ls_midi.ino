@@ -1673,9 +1673,9 @@ void highlightPossibleNoteCells(byte split, byte notenum) {
   if (Split[split].lowRowMode != lowRowNormal) {
     row = 1;
   }
-  for (; row < NUMROWS; ++row) {
-    short col = getNoteNumColumn(split, notenum, row);
-    if (col > 0) {
+  for (; row < NUMROWS; ++row) {    // for all rows, starting from the bottom
+    short col = getNoteNumColumn(split, notenum, row); // see what column the note would be in
+    if (col > 0) { // for most rows it'd be negative (not in this row), if not, light up the note
       setLed(col, row, Split[split].colorPlayed, cellOn, LED_LAYER_PLAYED);
     }
   }
@@ -1719,8 +1719,25 @@ void resetPossibleNoteCells(byte split, byte notenum) {
 
 short getNoteNumColumn(byte split, byte notenum, byte row) {
   short row_offset_note = determineRowOffsetNote(split, row);
-  short col = notenum - (row_offset_note + Split[split].transposeOctave) + 1           // calculate the column that this MIDI note can be played on
+
+  short col;
+
+  if (Split[split].skipFretting) {
+    // we add 2 instead of 1 for skip fretting, since we add 1 everywhere for some reason
+    // pitch transposition is only reflected on this side, not in getNoteNumber
+    col = notenum - (row_offset_note + Split[split].transposeOctave) + 2         
+            + Split[split].transposeLights*2 - Split[split].transposePitch;;             
+    if (col % 2 == 0) { // even notenum in even row, or odd notenum in odd row
+      col = col / 2;
+    } else {
+      return -1; /// this note is skipped in this row
+    }
+    
+  } else {
+    col = notenum - (row_offset_note + Split[split].transposeOctave) + 1           // calculate the column that this MIDI note can be played on
             + Split[split].transposeLights - Split[split].transposePitch;;             // adapt for transposition settings
+  }
+
   if (isLeftHandedSplit(split)) {
     col = NUMCOLS - col;
   }

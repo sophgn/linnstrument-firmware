@@ -1940,7 +1940,8 @@ byte getNoteNumber(byte split, byte col, byte row) {
   signed char transposeLights = Split[split].transposeLights;
 
   if (Split[split].skipFretting) {
-    noteCol = noteCol*2;
+    // subtract 1 needed everywhere, so do it again when doubling - this lets us start at note 0 instead of 1
+    noteCol = noteCol*2 - 1;
     transposeLights = transposeLights*2;
   }
 
@@ -1949,6 +1950,7 @@ byte getNoteNumber(byte split, byte col, byte row) {
   return notenum - transposeLights;
 }
 
+// determine the start note of a given row.
 short determineRowOffsetNote(byte split, byte row) {
   short lowest = 30;                                  // 30 = F#2, which is 10 semitones below guitar low E (E3/52). High E = E5/76
 
@@ -1982,7 +1984,7 @@ short determineRowOffsetNote(byte split, byte row) {
     }
     else if (offset >= 12) {
       if (Split[split].skipFretting) {                // handle skipFretting with high row offset (kite guitar is 13, only fills 194 pads)
-        lowest = -1;                                   // start at note 0 (why -1 gets us 0?) so that we show as many as possible and all disabled notes are in one place
+        lowest = 0;                                   // start at note 0 (why -1 gets us 0?) so that we show as many as possible and all disabled notes are in one place
       } else {
         lowest = 18;                                  // start the octave offset one octave lower to prevent having disabled notes at the top in the default configuration
       }
