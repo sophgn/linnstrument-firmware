@@ -1325,7 +1325,7 @@ void handlePerSplitSettingNewTouch() {
           break;
 
         case 0:
-          Split[Global.currentPerSplit].skipFretting = !Split[Global.currentPerSplit].skipFretting;
+          // handled on release
           break;
       }
       break;
@@ -1483,6 +1483,15 @@ void handlePerSplitSettingNewTouch() {
       }
       break;
 
+    case 8:
+      // custom skip-key setting button, long press for kite settings
+      switch (sensorRow) {
+        case 0:
+          setLed(sensorCol, sensorRow, Split[sensorSplit].colorAccent, cellSlowPulse);
+          break;
+      }
+      break;
+
     case 9:
       switch (sensorRow) {
         case 7:
@@ -1567,6 +1576,21 @@ void handlePerSplitSettingHold() {
           case 4:
             resetNumericDataChange();
             setDisplayMode(displayBendRange);
+            updateDisplay();
+            break;
+        }
+        break;
+
+      case 8: 
+        switch (sensorRow) {
+          case 0: // hidden kite setting button held
+            Global.rowOffset = ROWOFFSET_OCTAVECUSTOM;        // use custom row offset to get 13
+            Global.customRowOffset = 13;                      // kite guitar uses +13 row offset
+            Split[LEFT].playedTouchMode = playedSame;         // turn on same-note lighting for familiarity
+            Split[RIGHT].playedTouchMode = playedSame;        // turn on same-note lighting for familiarity
+            Split[LEFT].skipFretting = true;
+            Split[RIGHT].skipFretting = true;
+            setDisplayMode(displayNormal);
             updateDisplay();
             break;
         }
@@ -1667,6 +1691,17 @@ void handlePerSplitSettingRelease() {
                                        Split[Global.currentPerSplit].bendRangeOption == bendRange24 ? cellOn : cellOff)) {
             Split[Global.currentPerSplit].bendRangeOption = bendRange24;
             midiSendMpePitchBendRange(Global.currentPerSplit);
+          }
+          break;
+      }
+      break;
+
+    case 8:
+      switch (sensorRow) {
+        case 0: //hidden kite setting, not held
+          if (ensureCellBeforeHoldWait(Split[Global.currentPerSplit].colorAccent,
+                                       Split[Global.currentPerSplit].skipFretting ? cellOn : cellOff)) {
+            Split[Global.currentPerSplit].skipFretting = !Split[Global.currentPerSplit].skipFretting;
           }
           break;
       }

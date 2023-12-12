@@ -1957,7 +1957,7 @@ short determineRowOffsetNote(byte split, byte row) {
   if (Global.rowOffset <= 12) {                       // if rowOffset is 12 or lower
     short offset = Global.rowOffset;
 
-    if (Global.rowOffset == ROWOFFSET_OCTAVECUSTOM) {
+    if (Global.rowOffset == ROWOFFSET_OCTAVECUSTOM) { // Global.rowOffset is not the offset if a custom one is set
       offset = Global.customRowOffset;
     }
 
@@ -1982,6 +1982,7 @@ short determineRowOffsetNote(byte split, byte row) {
         lowest -= 1;
       }
     }
+
     else if (offset >= 12) {
       if (Split[split].skipFretting) {                // handle skipFretting with high row offset (kite guitar is 13, only fills 194 pads)
         lowest = 0;                                   // start at note 0 (why -1 gets us 0?) so that we show as many as possible and all disabled notes are in one place

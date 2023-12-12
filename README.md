@@ -11,10 +11,8 @@ This is handy, as 41 notes per octave would not otherwise fit on a single row. B
 Note that while you may be used to your Linnstrument lighting up multiple pads when you press a single one (the other pads are repeats of the same note), with the kite layout all the notes are actually slightly different, so pressing a pad will only light up that pad.
 
 # Caveats
-- Because MIDI only supports 128 notes, the Linnstrument pads that go beyond that range are disabled. This won't be noticable on the smaller Linnstrument, but on the full-size device, 128 notes plus a 13 note row offset means 194 pads lit, falling just 6 pads shy of the full 200 pads. By default they'll all be in the top corner; as usual you can shift everything around with transpose settings (or just use split mode!)
-- Linnstrument pad color lighting settings will still be based on 12-degree scales, so no lighting pattern you try will be very useful for 41edo. Kite-specific lighting is an area for future exploration, but it doesn't need to be at the firmware level - simply send MIDI to your instrument and it will light the pads accordingly. Pure Data might be a good software choice for this.
-- The arpeggiator is currently unaware of the skipfretting patch and will exhibit undefined behavior for now.
-- The skip-fretting feature always starts disabled and is not yet stored across device restarts.
+- Because MIDI only supports 128 notes, the Linnstrument pads that go beyond that range are disabled. This won't be noticable on the smaller Linnstrument, but on the full-size device, 128 notes plus a 13 note row offset means 194 pads lit, falling just 6 pads shy of the full 200 pads. By default the disabled pads will all be in the top corner; as usual you can shift them around with the "transpose lights" settings.
+- Linnstrument pad color lighting default settings are all based on 12-degree scales, not very useful for 41edo. Kite-specific lighting can be added with the `SCALE SELECT` custom light pattern mode, or you can send MIDI to your device and it will light the pads accordingly. Pure Data might be a good software choice for this.
 
 # Install
 Follow the [standard directions](https://www.rogerlinndesign.com/support/support-linnstrument-update-software), but replace the `.bin` file in the updater bundle with the one found in the Releases section of this project.
@@ -22,11 +20,19 @@ Follow the [standard directions](https://www.rogerlinndesign.com/support/support
 If you're not on mac or windows but gnu/linux, you can still do it using `arduino-cli`, or by cloning this project, opening it in Arduino IDE (following the Dev section below), and hitting "Upload" - no coding or command line required. Note that unlike the official updater, this method does not let you preserve your Linnstruments' settings and calibration (for now).
 
 
-# Usage
+# Using skip-fretting
 - Go to your per-split settings. (Yes, this means you can have one skip-fretted split and one not!)
 - See the X/Pitch column? Tap the pad at the very _bottom_.
 
 That's it!
+
+# Kite Mode
+If you long-press the skip-fretting button, you can instantly configure your Linnstrument and both splits for kite tuning. It will appear in a different (accent) color when correctly applied.
+
+- Enables skip fretting
+- Sets `PLAYED` note lighting to `SAME` mode, so you can see which other pads represent the same note as you learn the kite layout (optional)
+- Enables Custom Row Offset
+- Sets the Custom Row Offset to 13 steps (kite tuning)
 
 # Development
 

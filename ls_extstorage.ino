@@ -17,7 +17,7 @@ Functions to exchange settings with an external device over a serial handshake p
 This is essentially used by the upgrade tool to temporarily store the previous settings while doing
 an upgrade and sending them back after the upgrade is finished.
 The new firmware is then responsible of applying the received settings and possibly performing
-some transformation logic is the settings structure changed for the new firmware.
+some transformation logic if the settings structure changed for the new firmware.
 **************************************************************************************************/
 
 /**************************************** Configuration V1 ****************************************
