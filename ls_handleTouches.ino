@@ -1937,13 +1937,16 @@ byte getNoteNumber(byte split, byte col, byte row) {
     noteCol = (NUMCOLS - col);
   }
 
+  signed char transposeLights = Split[split].transposeLights;
+
   if (Split[split].skipFretting) {
     noteCol = noteCol*2;
+    transposeLights = transposeLights*2;
   }
 
   notenum = determineRowOffsetNote(split, row) + noteCol - 1;
 
-  return notenum - Split[split].transposeLights;
+  return notenum - transposeLights;
 }
 
 short determineRowOffsetNote(byte split, byte row) {
