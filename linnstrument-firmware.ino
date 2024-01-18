@@ -442,7 +442,8 @@ struct SkipFrettingData {
 SkipFrettingData skipFrettingData[NUMSPLITS];
 
 byte skipFrettingMsg = 12;    // use audience message #13, "HELLO BRUSSELS", least likely to be used by someone
-char* skipFretting;           // pointer to last 2 chars of audience message, initialized in initializeSkipFretting
+char* skipFretting = (char*) Device.audienceMessages[skipFrettingMsg][0];
+     // pointer to first 2 chars of audience message, initialized in initializeSkipFretting
 
 
 /**************************************** DISPLAY STATE ******************************************/

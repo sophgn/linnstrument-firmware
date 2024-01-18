@@ -382,7 +382,8 @@ void initializeSkipFretting() {
   byte m = skipFrettingMsg;
   byte length = strlen (Device.audienceMessages[m]);         
   length = min (length, 28);                                 // if user entered in 30 chars, overwrite the last 2 chars
-  skipFretting = (char*)Device.audienceMessages[m][length];  // skipFretting points to 1st char after audience message
+  length = 0; //FOR DEBUGGING/TESTING
+  //skipFretting = (char*)Device.audienceMessages[m][length];  // skipFretting points to 1st char after audience message
   Device.audienceMessages[m][length] = ASCII_FALSE;          // extend last message by 2 chars, store our 2 booleans there
   Device.audienceMessages[m][length+1] = ASCII_FALSE;        // this line is same as saying "skipFretting[RIGHT] = ASCII_FALSE;"
   Device.audienceMessages[m][length+2] = '\0';               // this line shouldn't be needed, but do it anyway just in case 
@@ -2415,41 +2416,32 @@ void handleOctaveTransposeNewTouchSplit(byte side) {
   // use the same two CCs that the foot switches are assigned to via long-pressing the CC65 option
   // right footswitch is up, left is down. For octave transposing only, short-press latches, long-press doesn't
   // repurpose semitones to be whole tones and lights to be arrows/edosteps, so that ±7 of each covers 41edo
-  // midi for octave transposing mimics footswitch midi: it reports each increment/decrement, plus a 0 CC for pedal release
-  // but midi for tone/arrow transposing directly reports the current amount of transpose, no zero CCs
+  // midi for octave transposing via footswitch reports each increment/decrement, plus a 0 CC for pedal release
+  // but midi from here directly reports the current amount of transpose, no zero CCs
   // see also paintOctaveTransposeDisplay function in ls_displayModes.ino
   // a 12edo Wicki-Hayden user wants to transpose normally, hence the rowOffset > 7 test
   if (skipFretting[side] == ASCII_TRUE && Global.rowOffset > 7) {
     byte ch = (side == LEFT ? 1 : 16);                                       // midi channel
     
-    byte i = (Split[side].transposeOctave - oldTransposeOctave) / 12;        // octave up/down, mimic footswitch midi
-    if (i != 0) {
-      skipFrettingData[side].transposeOctave += Split[side].transposeOctave;
-    }
-    while (i > 0) {                                                
-      midiSendControlChange (Global.ccForSwitchCC65[SWITCH_FOOT_R], 127, ch, true);
-      midiSendControlChange (Global.ccForSwitchCC65[SWITCH_FOOT_R],   0, ch, true);
-      i--;
-    }
-    while (i < 0) {
-      midiSendControlChange (Global.ccForSwitchCC65[SWITCH_FOOT_L], 127, ch, true);
-      midiSendControlChange (Global.ccForSwitchCC65[SWITCH_FOOT_L],   0, ch, true);
-      i++;
+    if (Split[side].transposeOctave != oldTransposeOctave) {                           // octave up/down
+      skipFrettingData[side].transposeOctave += Split[side].transposeOctave;                           
+      midiSendControlChange (Global.ccForSwitchCC65[SWITCH_FOOT_R], 
+                             96 + Split[side].transposeOctave / 12, ch, true);         // range is 91-101                   
     }
 
     if (Split[side].transposePitch != oldTransposePitch) {                             // tone up/down
       skipFrettingData[side].transposeTone += Split[side].transposePitch;                           
       midiSendControlChange (Global.ccForSwitchCC65[SWITCH_FOOT_R], 
-                             96 + Split[side].transposePitch, ch, true);               // range is 89-103                   
+                             64 + Split[side].transposePitch, ch, true);               // range is 57-71                   
     }
 
     if (Split[side].transposeLights != oldTransposeLights) {                           // arrow up/down
       skipFrettingData[side].transposeArrow += Split[side].transposeLights;                           
       midiSendControlChange (Global.ccForSwitchCC65[SWITCH_FOOT_R], 
-                             64 + Split[side].transposePitch, ch, true);               // range is 57-71             
+                             32 + Split[side].transposeLights, ch, true);              // range is 25-39             
     }
 
-    Split[side].transposeOctave = oldTransposeOctave;
+    Split[side].transposeOctave = oldTransposeOctave;                   // prevent internal transposing
     Split[side].transposePitch  = oldTransposePitch;
     Split[side].transposeLights = oldTransposeLights;
   }
