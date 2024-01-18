@@ -383,24 +383,9 @@ void initializeSkipFretting() {
   byte length = strlen (Device.audienceMessages[m]);    
   length = min (length, 28);                             // if user entered in 30 chars, overwrite the last 2 chars
   skipFretting += length;                                // skipFretting now points to 1st char after audience message
-  Device.audienceMessages[m][length] = ASCII_FALSE;      // extend last message by 2 chars, store our 2 booleans there
-  Device.audienceMessages[m][length+1] = ASCII_FALSE;    // this line is same as saying "skipFretting[RIGHT] = ASCII_FALSE;"
+  Device.audienceMessages[m][length] = ASCII_FALSE;      // extend the message by 2 chars, store our 2 booleans there
+  Device.audienceMessages[m][length+1] = ASCII_FALSE;    // this line is same as saying "skipFretting[1] = ASCII_FALSE;"
   Device.audienceMessages[m][length+2] = '\0';           // this line shouldn't be needed, but do it anyway just in case 
-
-  //EXPERIMENT --- paint a rainbow
-  for (byte i = 0; i < 25; i++) {
-    skipFrettingExperiment[i+53] = 9;
-    skipFrettingExperiment[i+79] = 17;
-    skipFrettingExperiment[i+105] = 25;
-    skipFrettingExperiment[i+131] = 41;
-  }
-  if (skipFrettingExperiment[60] == 9) {
-    Device.audienceMessages[m][0] = 'X';
-    skipFrettingExperiment[10] = 9;
-    skipFrettingExperiment[12] = 17;
-    skipFrettingExperiment[14] = 25;
-    skipFrettingExperiment[16] = 41;
-  }
 }
 
 void initializeNoteLights(GlobalSettings& g) {

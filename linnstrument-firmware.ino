@@ -878,10 +878,6 @@ byte skipFrettingMsg = 12;    // use audience message #13, "HELLO BRUSSELS", lea
 // pointer to first 2 chars of audience message #13, adjusted in initializeSkipFretting to last 2 chars
 char * skipFretting = (char *)Device.audienceMessages + 31 * skipFrettingMsg;
 
-//EXPERIMENT
-byte * skipFrettingExperiment = (byte*)Device.customLeds + 2 * LED_LAYER_SIZE;  
-
-
 /**************************************** SECRET SWITCHES ****************************************/
 
 #define SECRET_SWITCHES 6
