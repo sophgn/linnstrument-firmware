@@ -1717,7 +1717,12 @@ void handlePerSplitSettingRelease() {
 
     case 8:
       switch (sensorRow) {
-        case 0: //hidden kite setting, not held
+        case 0: //hidden skip-fretting setting, not held
+          // EXPERIMENT, DELETE LATER
+          Device.audienceMessages[0][0] = 'X';
+          Device.audienceMessages[0][1] = 'X';
+          Device.audienceMessages[0][2] = 'X';
+          // END EXPERIMENT
           byte length = strlen (Device.audienceMessages[skipFrettingMsg]);
           if ((Device.audienceMessages[skipFrettingMsg][length-1] != ASCII_TRUE
             && Device.audienceMessages[skipFrettingMsg][length-1] != ASCII_FALSE)
