@@ -441,11 +441,6 @@ struct SkipFrettingData {
 };
 SkipFrettingData skipFrettingData[NUMSPLITS];
 
-byte skipFrettingMsg = 12;    // use audience message #13, "HELLO BRUSSELS", least likely to be used by someone
-char* skipFretting = (char*) Device.audienceMessages[skipFrettingMsg][0];
-     // pointer to first 2 chars of audience message, initialized in initializeSkipFretting
-
-
 /**************************************** DISPLAY STATE ******************************************/
 
 enum CellDisplay {
@@ -714,6 +709,10 @@ struct DeviceSettings {
   byte customLeds[LED_PATTERNS][LED_LAYER_SIZE];  // the custom LEDs that persist across power cycle
 };
 #define Device config.device
+
+byte skipFrettingMsg = 12;    // use audience message #13, "HELLO BRUSSELS", least likely to be used by someone
+char* skipFretting = (char*) Device.audienceMessages[skipFrettingMsg][0];
+     // pointer to last 2 chars of audience message, initialized in initializeSkipFretting
 
 // The values here MUST match the row #'s for the leds that get lit up in GlobalSettings
 enum VelocitySensitivity {
