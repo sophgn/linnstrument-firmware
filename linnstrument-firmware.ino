@@ -230,6 +230,10 @@ const int LED_PATTERNS = 3;
 const unsigned long LED_LAYER_SIZE = MAXCOLS * MAXROWS;
 const unsigned long LED_ARRAY_SIZE = (MAX_LED_LAYERS+1) * LED_LAYER_SIZE;
 
+// these two constants are for storing skipFretting booleans in audienceMessages
+const char ASCII_FALSE = ' ';     // ascii 32, the lowest ascii char allowed in audienceMessages
+const char ASCII_TRUE  = '!';     // ascii 33
+
 /******************************************** VELOCITY *******************************************/
 
 #define VELOCITY_SAMPLES       4
@@ -430,6 +434,16 @@ struct NoteTouchMapping {
 };
 NoteTouchMapping noteTouchMapping[NUMSPLITS];
 
+struct SkipFrettingData {
+  signed char transposeOctave;
+  signed char transposeTone;
+  signed char transposeArrow;
+};
+SkipFrettingData skipFrettingData[NUMSPLITS];
+
+byte skipFrettingMsg = 12;    // use audience message #13, "HELLO BRUSSELS", least likely to be used by someone
+char* skipFretting;           // pointer to last 2 chars of audience message, initialized in initializeSkipFretting
+
 
 /**************************************** DISPLAY STATE ******************************************/
 
@@ -619,7 +633,6 @@ struct SplitSettings {
   boolean pitchCorrectQuantize;           // true to quantize pitch of initial touch, false if not
   byte pitchCorrectHold;                  // See PitchCorrectHoldSpeed values
   boolean pitchResetOnRelease;            // true to enable pitch bend being set back to 0 when releasing a touch
-  boolean skipFretting;                   // true to skip every other midi value in a row (e.g. kite guitar layout)
   TimbreExpression expressionForY;        // the expression that should be used for timbre
   unsigned short customCCForY;            // 0-129 (with 128 and 129 being placeholders for PolyPressure and ChannelPressure)
   unsigned short minForY;                 // 0-127

@@ -643,10 +643,10 @@ void paintPerSplitDisplay(byte side) {
     setLed(8, 3, Split[side].colorMain, cellOn);
   }
 
-  if (Global.rowOffset == ROWOFFSET_OCTAVECUSTOM && Global.customRowOffset == 13 && Split[side].skipFretting == true) {
+  if (Global.rowOffset == ROWOFFSET_OCTAVECUSTOM && Global.customRowOffset == 13 && skipFretting[side] == ASCII_TRUE) {
     // kite settings are enabled, show in accent color
     setLed(8, 0, Split[side].colorAccent, cellOn);
-  } else if (Split[side].skipFretting == true) {
+  } else if (skipFretting[side] == ASCII_TRUE) {
     // skip fretting is on, show main color
     setLed(8, 0, Split[side].colorMain, cellOn);
   }
@@ -1383,7 +1383,67 @@ void paintVolumeDisplayRow(byte side) {
   paintCCFaderDisplayRow(side, 5, Split[side].colorMain, 7, 1, NUMCOLS-2);
 }
 
+void paintOctaveTransposeDisplaySkipFretting(byte side) {     // alternate version of paintOctaveTransposeDisplay
+  clearDisplay();                                             // see handleOctaveTransposeNewTouchSplit in ls_settings.ino
+  blinkMiddleRootNote = true;
+
+  // Paint the octave shift value
+  if (!doublePerSplit || SkipFrettingData[LEFT].transposeOctave == SkipFrettingData[RIGHT].transposeOctave) {
+    paintOctave(Split[Global.currentPerSplit].colorMain, 8, OCTAVE_ROW, SkipFrettingData[side].transposeOctave);
+  }
+  else if (doublePerSplit) {
+    if (abs(SkipFrettingData[LEFT].transposeOctave) > abs(SkipFrettingData[RIGHT].transposeOctave)) {
+      paintOctave(Split[LEFT].colorMain,  8, OCTAVE_ROW, SkipFrettingData[LEFT].transposeOctave);
+      paintOctave(Split[RIGHT].colorMain, 8, OCTAVE_ROW, SkipFrettingData[RIGHT].transposeOctave);
+    }
+    else {
+      paintOctave(Split[RIGHT].colorMain, 8, OCTAVE_ROW, SkipFrettingData[RIGHT].transposeOctave);
+      paintOctave(Split[LEFT].colorMain,  8, OCTAVE_ROW, SkipFrettingData[LEFT].transposeOctave);
+    }
+  }
+
+  // Paint the whole tone transpose values
+  if (!doublePerSplit || SkipFrettingData[LEFT].transposeTone == SkipFrettingData[RIGHT].transposeTone) {
+    paintTranspose(Split[Global.currentPerSplit].colorMain, SWITCH_1_ROW, SkipFrettingData[side].transposeTone);
+  }
+  else if (doublePerSplit) {
+    if (abs(SkipFrettingData[LEFT].transposeTone) > abs(SkipFrettingData[RIGHT].transposeTone)) {
+      paintTranspose(Split[LEFT].colorMain,  SWITCH_1_ROW, SkipFrettingData[LEFT].transposeTone);
+      paintTranspose(Split[RIGHT].colorMain, SWITCH_1_ROW, SkipFrettingData[RIGHT].transposeTone);
+    }
+    else {
+      paintTranspose(Split[RIGHT].colorMain, SWITCH_1_ROW, SkipFrettingData[RIGHT].transposeTone);
+      paintTranspose(Split[LEFT].colorMain,  SWITCH_1_ROW, SkipFrettingData[LEFT].transposeTone);
+    }
+  }
+
+  // Paint the arrow transpose values
+  if (!doublePerSplit || SkipFrettingData[LEFT].transposeArrow == SkipFrettingData[RIGHT].transposeArrow) {
+    paintTranspose(Split[Global.currentPerSplit].colorMain, SWITCH_2_ROW, SkipFrettingData[side].transposeArrow);
+  }
+  else if (doublePerSplit) {
+    if (abs(SkipFrettingData[LEFT].transposeArrow) > abs(SkipFrettingData[RIGHT].transposeArrow)) {
+      paintTranspose(Split[LEFT].colorMain,  SWITCH_2_ROW, SkipFrettingData[LEFT].transposeArrow);
+      paintTranspose(Split[RIGHT].colorMain, SWITCH_2_ROW, SkipFrettingData[RIGHT].transposeArrow);
+    }
+    else {
+      paintTranspose(Split[RIGHT].colorMain, SWITCH_2_ROW, SkipFrettingData[RIGHT].transposeArrow);
+      paintTranspose(Split[LEFT].colorMain,  SWITCH_2_ROW, SkipFrettingData[LEFT].transposeArrow);
+    }
+  }
+
+  paintShowSplitSelection(side);
+}
+
+
 void paintOctaveTransposeDisplay(byte side) {
+  /********************** disable this code until LinnstrumentMicrotonal is ready ********************    
+  if (skipFretting[side] == ASCII_TRUE && Global.rowOffset > 7) {         // > 7 to exclude 12edo Wicki-Hayden users
+    paintOctaveTransposeDisplaySkipFretting (side);
+    return;
+  }
+  **************************************************************************************************/
+    
   clearDisplay();
   blinkMiddleRootNote = true;
 

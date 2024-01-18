@@ -376,6 +376,18 @@ void initializeAudienceMessages() {
   }
 }
 
+void initializeSkipFretting() {
+  // this function runs only once, when user enables skip fretting for the very first time after updating to this fork
+  // ideally it'd run immediately after user settings are restored after an update, but that involves forking the updater
+  byte m = skipFrettingMsg;
+  byte length = strlen (Device.audienceMessages[m]);         
+  length = min (length, 28);                                 // if user entered in 30 chars, overwrite the last 2 chars
+  skipFretting = (char*)Device.audienceMessages[m][length];  // skipFretting points to 1st char after audience message
+  Device.audienceMessages[m][length] = ASCII_FALSE;          // extend last message by 2 chars, store our 2 booleans there
+  Device.audienceMessages[m][length+1] = ASCII_FALSE;        // this line is same as saying "skipFretting[RIGHT] = ASCII_FALSE;"
+  Device.audienceMessages[m][length+2] = '\0';               // this line shouldn't be needed, but do it anyway just in case 
+}
+
 void initializeNoteLights(GlobalSettings& g) {
     g.activeNotes = 0;
 
@@ -620,7 +632,6 @@ void initializePresetSettings() {
         p.split[s].pitchCorrectQuantize = true;
         p.split[s].pitchCorrectHold = true;
         p.split[s].pitchResetOnRelease = false;
-        p.split[s].skipFretting = false;
         p.split[s].minForY = 0;
         p.split[s].maxForY = 127;
         p.split[s].relativeY = false;
@@ -1588,8 +1599,15 @@ void handlePerSplitSettingHold() {
             Global.customRowOffset = 13;                      // kite guitar uses +13 row offset
             Split[LEFT].playedTouchMode = playedSame;         // turn on same-note lighting for familiarity
             Split[RIGHT].playedTouchMode = playedSame;        // turn on same-note lighting for familiarity
-            Split[LEFT].skipFretting = true;
-            Split[RIGHT].skipFretting = true;
+            byte length = strlen (Device.audienceMessages[skipFrettingMsg]);
+            if ((Device.audienceMessages[skipFrettingMsg][length-1] != ASCII_TRUE
+              && Device.audienceMessages[skipFrettingMsg][length-1] != ASCII_FALSE)
+             || (Device.audienceMessages[skipFrettingMsg][length-2] != ASCII_TRUE
+              && Device.audienceMessages[skipFrettingMsg][length-2] != ASCII_FALSE)) {
+              initializeSkipFretting ();
+            }
+            skipFretting[LEFT]  = ASCII_TRUE;
+            skipFretting[RIGHT] = ASCII_TRUE;
             setDisplayMode(displayNormal);
             updateDisplay();
             break;
@@ -1699,9 +1717,20 @@ void handlePerSplitSettingRelease() {
     case 8:
       switch (sensorRow) {
         case 0: //hidden kite setting, not held
+          byte length = strlen (Device.audienceMessages[skipFrettingMsg]);
+          if ((Device.audienceMessages[skipFrettingMsg][length-1] != ASCII_TRUE
+            && Device.audienceMessages[skipFrettingMsg][length-1] != ASCII_FALSE)
+           || (Device.audienceMessages[skipFrettingMsg][length-2] != ASCII_TRUE
+            && Device.audienceMessages[skipFrettingMsg][length-2] != ASCII_FALSE)) {
+             initializeSkipFretting ();
+          }
           if (ensureCellBeforeHoldWait(Split[Global.currentPerSplit].colorAccent,
-                                       Split[Global.currentPerSplit].skipFretting ? cellOn : cellOff)) {
-            Split[Global.currentPerSplit].skipFretting = !Split[Global.currentPerSplit].skipFretting;
+                                    skipFretting[Global.currentPerSplit] == ASCII_TRUE ? cellOn : cellOff)) {
+            if {skipFretting[Global.currentPerSplit] == ASCII_TRUE {
+              skipFretting[Global.currentPerSplit] = ASCII_FALSE;
+            } else {
+              skipFretting[Global.currentPerSplit] = ASCII_TRUE;
+            }
           }
           break;
       }
@@ -2350,6 +2379,10 @@ void handleOctaveTransposeNewTouch() {
 }
 
 void handleOctaveTransposeNewTouchSplit(byte side) {
+  signed char oldTransposeOctave = Split[side].transposeOctave;         // these 3 lines are for skipFretting
+  signed char oldTransposePitch = Split[side].transposePitch;
+  signed char oldTransposeLights = Split[side].transposeLights;
+
   if (sensorRow == OCTAVE_ROW) {
     switch (sensorCol) {
       case 3: Split[side].transposeOctave = -60; break;
@@ -2376,6 +2409,51 @@ void handleOctaveTransposeNewTouchSplit(byte side) {
       Split[side].transposeLights = sensorCol - 8;
     }
   }
+
+  /********************** disable this code until LinnstrumentMicrotonal is ready ********************
+  // send CCs reporting the transposes to LinnstrumentMicrotonal app, it will do the transposing
+  // use the same two CCs that the foot switches are assigned to via long-pressing the CC65 option
+  // right footswitch is up, left is down. For octave transposing only, short-press latches, long-press doesn't
+  // repurpose semitones to be whole tones and lights to be arrows/edosteps, so that ±7 of each covers 41edo
+  // midi for octave transposing mimics footswitch midi: it reports each increment/decrement, plus a 0 CC for pedal release
+  // but midi for tone/arrow transposing directly reports the current amount of transpose, no zero CCs
+  // see also paintOctaveTransposeDisplay function in ls_displayModes.ino
+  // a 12edo Wicki-Hayden user wants to transpose normally, hence the rowOffset > 7 test
+  if (skipFretting[side] == ASCII_TRUE && Global.rowOffset > 7) {
+    byte ch = (side == LEFT ? 1 : 16);                                       // midi channel
+    
+    byte i = (Split[side].transposeOctave - oldTransposeOctave) / 12;        // octave up/down, mimic footswitch midi
+    if (i != 0) {
+      skipFrettingData[side].transposeOctave += Split[side].transposeOctave;
+    }
+    while (i > 0) {                                                
+      midiSendControlChange (Global.ccForSwitchCC65[SWITCH_FOOT_R], 127, ch, true);
+      midiSendControlChange (Global.ccForSwitchCC65[SWITCH_FOOT_R],   0, ch, true);
+      i--;
+    }
+    while (i < 0) {
+      midiSendControlChange (Global.ccForSwitchCC65[SWITCH_FOOT_L], 127, ch, true);
+      midiSendControlChange (Global.ccForSwitchCC65[SWITCH_FOOT_L],   0, ch, true);
+      i++;
+    }
+
+    if (Split[side].transposePitch != oldTransposePitch) {                             // tone up/down
+      skipFrettingData[side].transposeTone += Split[side].transposePitch;                           
+      midiSendControlChange (Global.ccForSwitchCC65[SWITCH_FOOT_R], 
+                             96 + Split[side].transposePitch, ch, true);               // range is 89-103                   
+    }
+
+    if (Split[side].transposeLights != oldTransposeLights) {                           // arrow up/down
+      skipFrettingData[side].transposeArrow += Split[side].transposeLights;                           
+      midiSendControlChange (Global.ccForSwitchCC65[SWITCH_FOOT_R], 
+                             64 + Split[side].transposePitch, ch, true);               // range is 57-71             
+    }
+
+    Split[side].transposeOctave = oldTransposeOctave;
+    Split[side].transposePitch  = oldTransposePitch;
+    Split[side].transposeLights = oldTransposeLights;
+  }
+  *********************************************************************************/
 }
 
 void handleOctaveTransposeRelease() {

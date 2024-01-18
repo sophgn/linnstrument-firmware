@@ -1722,7 +1722,7 @@ short getNoteNumColumn(byte split, byte notenum, byte row) {
 
   short col;
 
-  if (Split[split].skipFretting) {
+  if (skipFretting[split] == ASCII_TRUE) {
     // we add 2 instead of 1 for skip fretting, since we add 1 everywhere for some reason
     // pitch transposition is only reflected on this side, not in getNoteNumber
     col = notenum - (row_offset_note + Split[split].transposeOctave) + 2         
