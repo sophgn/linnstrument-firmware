@@ -1383,6 +1383,7 @@ void paintVolumeDisplayRow(byte side) {
   paintCCFaderDisplayRow(side, 5, Split[side].colorMain, 7, 1, NUMCOLS-2);
 }
 
+/********************** disable this code until LinnstrumentMicrotonal is ready ********************
 void paintOctaveTransposeDisplaySkipFretting(byte side) {     // alternate version of paintOctaveTransposeDisplay
   clearDisplay();                                             // see handleOctaveTransposeNewTouchSplit in ls_settings.ino
   blinkMiddleRootNote = true;
@@ -1434,6 +1435,7 @@ void paintOctaveTransposeDisplaySkipFretting(byte side) {     // alternate versi
 
   paintShowSplitSelection(side);
 }
+******************************************************************/
 
 
 void paintOctaveTransposeDisplay(byte side) {
