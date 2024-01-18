@@ -390,12 +390,12 @@ void initializeSkipFretting() {
   //EXPERIMENT --- paint a rainbow
   for (byte i = 0; i < 25; i++) {
     skipFrettingExperiment[i+53] = 9;
-    skipFrettingExperiment[1+79] = 17;
-    skipFrettingExperiment[1+105] = 25;
-    skipFrettingExperiment[1+131] = 41;
+    skipFrettingExperiment[i+79] = 17;
+    skipFrettingExperiment[i+105] = 25;
+    skipFrettingExperiment[i+131] = 41;
   }
   if (skipFrettingExperiment[60] == 9) {
-    Device.audienceMessages[m][0] = '*';
+    Device.audienceMessages[m][0] = 'X';
     skipFrettingExperiment[10] = 9;
     skipFrettingExperiment[12] = 17;
     skipFrettingExperiment[14] = 25;
