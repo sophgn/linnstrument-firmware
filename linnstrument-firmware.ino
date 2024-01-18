@@ -873,6 +873,10 @@ struct Configuration {
 };
 struct Configuration config;
 
+byte skipFrettingMsg = 12;    // use audience message #13, "HELLO BRUSSELS", least likely to be used by someone
+char* skipFretting = (char*) Device.audienceMessages[skipFrettingMsg][0];
+     // pointer to last 2 chars of audience message, initialized in initializeSkipFretting
+
 /**************************************** SECRET SWITCHES ****************************************/
 
 #define SECRET_SWITCHES 6
@@ -1143,10 +1147,6 @@ void reset() {
 
   initializeSwitches();
 }
-
-byte skipFrettingMsg = 12;    // use audience message #13, "HELLO BRUSSELS", least likely to be used by someone
-char* skipFretting = (char*) Device.audienceMessages[skipFrettingMsg][0];
-     // pointer to last 2 chars of audience message, initialized in initializeSkipFretting
 
 boolean switchPressAtStartup(byte switchRow) {
   sensorCol = 0;
