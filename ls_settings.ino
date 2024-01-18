@@ -380,13 +380,13 @@ void initializeSkipFretting() {
   // this function runs only once, when user enables skip fretting for the very first time after updating to this fork
   // ideally it'd run immediately after user settings are restored after an update, but that involves forking the updater
   byte m = skipFrettingMsg;
-  byte length = strlen (Device.audienceMessages[m]);         
-  length = min (length, 28);                                 // if user entered in 30 chars, overwrite the last 2 chars
+  byte length = strlen (Device.audienceMessages[m]);    
+  length = min (length, 28);                             // if user entered in 30 chars, overwrite the last 2 chars
   //skipFretting = (char*)Device.audienceMessages + 31 * m + length; 
-  //skipFretting += length;                                  // skipFretting points to 1st char after audience message
-  Device.audienceMessages[m][length] = ASCII_FALSE;          // extend last message by 2 chars, store our 2 booleans there
-  Device.audienceMessages[m][length+1] = ASCII_FALSE;        // this line is same as saying "skipFretting[RIGHT] = ASCII_FALSE;"
-  Device.audienceMessages[m][length+2] = '\0';               // this line shouldn't be needed, but do it anyway just in case 
+  skipFretting += length;                                // skipFretting now points to 1st char after audience message
+  Device.audienceMessages[m][length] = ASCII_FALSE;      // extend last message by 2 chars, store our 2 booleans there
+  Device.audienceMessages[m][length+1] = ASCII_FALSE;    // this line is same as saying "skipFretting[RIGHT] = ASCII_FALSE;"
+  Device.audienceMessages[m][length+2] = '\0';           // this line shouldn't be needed, but do it anyway just in case 
 }
 
 void initializeNoteLights(GlobalSettings& g) {
