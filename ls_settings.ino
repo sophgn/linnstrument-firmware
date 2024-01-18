@@ -1719,16 +1719,22 @@ void handlePerSplitSettingRelease() {
       switch (sensorRow) {
         case 0: //hidden skip-fretting setting, not held
           // EXPERIMENT, DELETE LATER
-          Device.audienceMessages[0][0] = 'X';
-          Device.audienceMessages[0][1] = 'X';
-          Device.audienceMessages[0][2] = 'X';
+          Device.audienceMessages[0][0] = ASCII_TRUE;
+          Device.audienceMessages[0][1] = ASCII_FALSE;
+          if (Device.audienceMessages[0][0] == ASCII_TRUE) {
+            Device.audienceMessages[0][2] = ASCII_FALSE;
+            Device.audienceMessages[0][3] = ASCII_FALSE;
+            Device.audienceMessages[skipFrettingMsg][0] = ASCII_TRUE;
+            Device.audienceMessages[skipFrettingMsg][1] = ASCII_FALSE;
+          }
           // END EXPERIMENT
           byte length = strlen (Device.audienceMessages[skipFrettingMsg]);
           if ((Device.audienceMessages[skipFrettingMsg][length-1] != ASCII_TRUE
             && Device.audienceMessages[skipFrettingMsg][length-1] != ASCII_FALSE)
            || (Device.audienceMessages[skipFrettingMsg][length-2] != ASCII_TRUE
             && Device.audienceMessages[skipFrettingMsg][length-2] != ASCII_FALSE)) {
-             initializeSkipFretting ();
+              Device.audienceMessages[skipFrettingMsg][length] = ASCII_TRUE;  // for debugging
+              //initializeSkipFretting ();
           }
           if (ensureCellBeforeHoldWait(Split[Global.currentPerSplit].colorAccent,
                                     skipFretting[Global.currentPerSplit] == ASCII_TRUE ? cellOn : cellOff)) {
