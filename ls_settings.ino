@@ -1726,7 +1726,7 @@ void handlePerSplitSettingRelease() {
           }
           if (ensureCellBeforeHoldWait(Split[Global.currentPerSplit].colorAccent,
                                     skipFretting[Global.currentPerSplit] == ASCII_TRUE ? cellOn : cellOff)) {
-            if {skipFretting[Global.currentPerSplit] == ASCII_TRUE {
+            if (skipFretting[Global.currentPerSplit] == ASCII_TRUE) {
               skipFretting[Global.currentPerSplit] = ASCII_FALSE;
             } else {
               skipFretting[Global.currentPerSplit] = ASCII_TRUE;
