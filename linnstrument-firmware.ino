@@ -710,10 +710,6 @@ struct DeviceSettings {
 };
 #define Device config.device
 
-byte skipFrettingMsg = 12;    // use audience message #13, "HELLO BRUSSELS", least likely to be used by someone
-char* skipFretting = (char*) Device.audienceMessages[skipFrettingMsg][0];
-     // pointer to last 2 chars of audience message, initialized in initializeSkipFretting
-
 // The values here MUST match the row #'s for the leds that get lit up in GlobalSettings
 enum VelocitySensitivity {
   velocityLow,
@@ -1147,6 +1143,10 @@ void reset() {
 
   initializeSwitches();
 }
+
+byte skipFrettingMsg = 12;    // use audience message #13, "HELLO BRUSSELS", least likely to be used by someone
+char* skipFretting = (char*) Device.audienceMessages[skipFrettingMsg][0];
+     // pointer to last 2 chars of audience message, initialized in initializeSkipFretting
 
 boolean switchPressAtStartup(byte switchRow) {
   sensorCol = 0;
