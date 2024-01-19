@@ -49,7 +49,7 @@ const byte CUSTOM_LEDS_PATTERN1[LED_LAYER_SIZE] = {
    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0
 };
 
-const byte CUSTOM_LEDS_PATTERN2[LED_LAYER_SIZE] = {            // two rainbow zones
+const byte CUSTOM_LEDS_PATTERN2[LED_LAYER_SIZE] = {          // two rainbow zones for 41edo skipFretting
    0, 41, 25, 17,  9,  0, 41, 25, 17,  9,  0,  0,  0,  0,  0, 33, 49, 65, 41, 25, 17,  9, 65, 49,  0,  0,
    0, 49, 65, 41, 25, 17,  9, 65, 49, 33,  0,  0,  0,  0,  0, 41, 25, 17,  9,  0, 41, 25, 17,  9,  0,  0,
    0,  0, 33, 49, 65, 41, 25, 17,  9, 65, 49,  0,  0,  0,  0, 49, 65, 41, 25, 17,  9, 65, 49, 33,  0,  0,
@@ -72,7 +72,7 @@ const byte CUSTOM_LEDS_PATTERN2[LED_LAYER_SIZE] = {
    0, 25,  0, 41,  0,  9,  0, 17, 33,  0, 49,  0, 73, 25,  0, 41,  0,  9,  0, 17, 33,  0, 49,  0, 73, 25
 }; **********************************************************************/
 
-const byte CUSTOM_LEDS_PATTERN3[LED_LAYER_SIZE] = {            // two green kites
+const byte CUSTOM_LEDS_PATTERN3[LED_LAYER_SIZE] = {            // two green kites for 41edo skipFretting
    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
    0,  0,  0,  0,  0,  0,  0,  0,  0, 25,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 25,  0,  0,  0,  0,
@@ -387,9 +387,9 @@ void initializeDeviceSettings() {
   initializeAudienceMessages();
 
   memcpy(&Device.customLeds[0][0], &CUSTOM_LEDS_PATTERN1[0], LED_LAYER_SIZE);
-  memcpy(&Device.customLeds[1][0], &CUSTOM_LEDS_PATTERN2[0], LED_LAYER_SIZE);
-  memcpy(&Device.customLeds[2][0], &CUSTOM_LEDS_PATTERN3[0], LED_LAYER_SIZE);
-  //memset(&Device.customLeds[2][0], 0, LED_LAYER_SIZE);   // what the official code does - blank pattern
+  memcpy(&Device.customLeds[1][0], &CUSTOM_LEDS_PATTERN2[0], LED_LAYER_SIZE);      // two rainbow zones for 41edo skipFretting
+  memcpy(&Device.customLeds[2][0], &CUSTOM_LEDS_PATTERN3[0], LED_LAYER_SIZE);      // two green kites for 41edo Kite guitar
+  //memset(&Device.customLeds[2][0], 0, LED_LAYER_SIZE);                           // what the official code did - blank pattern
 }
 
 void initializeAudienceMessages() {

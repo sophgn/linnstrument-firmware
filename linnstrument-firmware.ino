@@ -890,13 +890,13 @@ char * skipFretting = (char *)Device.audienceMessages + 31 * skipFrettingMsg;   
 //                       + extendSkipFrettingAudienceMessage();                      // if needed, extend the message by 2 chars
 
 void checkSkipFrettingAudienceMessage () {                                         // called before reading or writing either boolean
-  byte len = strlen (Device.audienceMessages[skipFrettingMsg]);                    // find the 2nd to last char all over again,
-//  skipFretting = Device.audienceMessages + 31 * skipFrettingMsg + len - 2;         // in case the user edited the string
-  skipFretting = skipFrettingMsgStart + len - 2;                                   // in case the user edited the string
+  byte length = strlen (Device.audienceMessages[skipFrettingMsg]);                 // find the 2nd to last char of message #8
+  skipFretting = Device.audienceMessages + 31 * skipFrettingMsg + length - 2;
+//  skipFretting = skipFrettingMsgStart + length - 2; 
   if (!(skipFretting[0] == ASCII_TRUE || skipFretting[0] == ASCII_FALSE)           // if either trailing char is not valid,
    || !(skipFretting[1] == ASCII_TRUE || skipFretting[1] == ASCII_FALSE)) {        // (1st run of this fork, or the user edited the message)
-    skipFretting += min (2, 30 - len);                                             // extend the message (if no room, overwrite the last 2 chars)
-    skipFretting[LEFT] = skipFretting[RIGHT] = ASCII_FALSE;                        // initialize to false
+    skipFretting += min (2, 30 - length);                                          // extend the message (if no room, overwrite the last 2 chars)
+    skipFretting[LEFT] = skipFretting[RIGHT] = '.';//ASCII_FALSE;                        // initialize to false
     skipFretting[RIGHT + 1] = '\0';                                                // this line shouldn't be needed, but do it anyway just in case
   }
 }
@@ -906,7 +906,7 @@ boolean isSkipFretting (byte side) {
   return skipFretting [side] == ASCII_TRUE;                       // an invalid char (not a space or exclamation point) is assumed to be = FALSE
 }
 
-struct SkipFrettingData {                  // used to keep track of transposing, which is done via CCs to the LinnstrumentMicrotonal app
+struct SkipFrettingData {                           // used to keep track of transposing, which is done via CCs to the LinnstrumentMicrotonal app
   signed char transposeOctave;
   signed char transposeTone;
   signed char transposeArrow;
