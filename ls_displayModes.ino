@@ -1389,16 +1389,16 @@ void paintOctaveTransposeDisplaySkipFretting(byte side) {     // alternate versi
 
   // Paint the octave shift value
   if (!doublePerSplit || skipFrettingData[LEFT].transposeOctave == skipFrettingData[RIGHT].transposeOctave) {
-    paintOctave(Split[Global.currentPerSplit].colorMain, 8, OCTAVE_ROW, skipFrettingData[side].transposeOctave);
+    paintOctave(Split[Global.currentPerSplit].colorMain, 8, OCTAVE_ROW, 12 * skipFrettingData[side].transposeOctave);
   }
   else if (doublePerSplit) {
     if (abs(skipFrettingData[LEFT].transposeOctave) > abs(skipFrettingData[RIGHT].transposeOctave)) {
-      paintOctave(Split[LEFT].colorMain,  8, OCTAVE_ROW, skipFrettingData[LEFT].transposeOctave);
-      paintOctave(Split[RIGHT].colorMain, 8, OCTAVE_ROW, skipFrettingData[RIGHT].transposeOctave);
+      paintOctave(Split[LEFT].colorMain,  8, OCTAVE_ROW, 12 * skipFrettingData[LEFT].transposeOctave);
+      paintOctave(Split[RIGHT].colorMain, 8, OCTAVE_ROW, 12 * skipFrettingData[RIGHT].transposeOctave);
     }
     else {
-      paintOctave(Split[RIGHT].colorMain, 8, OCTAVE_ROW, skipFrettingData[RIGHT].transposeOctave);
-      paintOctave(Split[LEFT].colorMain,  8, OCTAVE_ROW, skipFrettingData[LEFT].transposeOctave);
+      paintOctave(Split[RIGHT].colorMain, 8, OCTAVE_ROW, 12 * skipFrettingData[RIGHT].transposeOctave);
+      paintOctave(Split[LEFT].colorMain,  8, OCTAVE_ROW, 12 * skipFrettingData[LEFT].transposeOctave);
     }
   }
 

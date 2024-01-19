@@ -72,7 +72,7 @@ const byte CUSTOM_LEDS_PATTERN2[LED_LAYER_SIZE] = {
    0, 25,  0, 41,  0,  9,  0, 17, 33,  0, 49,  0, 73, 25,  0, 41,  0,  9,  0, 17, 33,  0, 49,  0, 73, 25
 }; **********************************************************************/
 
-const byte CUSTOM_LEDS_PATTERN3[LED_LAYER_SIZE] = {            // two green kites for 41edo skipFretting
+const byte CUSTOM_LEDS_PATTERN3[LED_LAYER_SIZE] = {            // two green kites for 41edo Kite guitar
    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
    0,  0,  0,  0,  0,  0,  0,  0,  0, 25,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 25,  0,  0,  0,  0,
@@ -1726,9 +1726,6 @@ void handlePerSplitSettingRelease() {
           if (ensureCellBeforeHoldWait(Split[Global.currentPerSplit].colorAccent,
                  isSkipFretting(Global.currentPerSplit) ? cellOn : cellOff)) {
             checkSkipFrettingAudienceMessage ();
-            byte length = strlen (Device.audienceMessages[skipFrettingMsg]);                 // DEBUGGING
-            skipFretting = (char *)Device.audienceMessages + 31 * skipFrettingMsg + length;  
-            skipFretting -= min (length, 2); 
             if (isSkipFretting(Global.currentPerSplit)) {                           
               skipFretting[Global.currentPerSplit] = ASCII_FALSE;  
             } else {
@@ -2382,6 +2379,7 @@ void handleOctaveTransposeNewTouch() {
 }
 
 void handleOctaveTransposeNewTouchSplitSkipFretting(byte side) {
+  // alternate version of handleOctaveTransposeNewTouchSplit
   // send CCs reporting the transposes to LinnstrumentMicrotonal app, it will do the transposing
   // use the CC that the right foot switch is assigned to via long-pressing the CC65 option
   // repurpose semitones to be whole tones and lights to be arrows/edosteps, so that ±7 of each covers 41edo

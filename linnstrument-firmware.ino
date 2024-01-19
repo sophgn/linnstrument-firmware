@@ -897,7 +897,7 @@ void checkSkipFrettingAudienceMessage () {                                      
   if (!(skipFretting[0] == ASCII_TRUE || skipFretting[0] == ASCII_FALSE)           // if either trailing char is not valid,
    || !(skipFretting[1] == ASCII_TRUE || skipFretting[1] == ASCII_FALSE)) {        // (1st run of this fork, or the user edited the message)
     skipFretting += min (2, 30 - length);                                          // extend the message (if no room, overwrite the last 2 chars)
-    skipFretting[LEFT] = skipFretting[RIGHT] = '.';//ASCII_FALSE;                        // initialize to false
+    skipFretting[LEFT] = skipFretting[RIGHT] = ASCII_FALSE;                        // initialize to false
     skipFretting[RIGHT + 1] = '\0';                                                // this line shouldn't be needed, but do it anyway just in case
   }
 }
