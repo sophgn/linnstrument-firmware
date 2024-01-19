@@ -891,7 +891,7 @@ char * skipFretting = (char *)Device.audienceMessages + 31 * skipFrettingMsg;   
 
 void checkSkipFrettingAudienceMessage () {                                         // called before reading or writing either boolean
   byte length = strlen (Device.audienceMessages[skipFrettingMsg]);                 // find the 2nd to last char of message #8
-  skipFretting = Device.audienceMessages + 31 * skipFrettingMsg + length - 2;
+  skipFretting = (char *)Device.audienceMessages + 31 * skipFrettingMsg + length - 2;
 //  skipFretting = skipFrettingMsgStart + length - 2; 
   if (!(skipFretting[0] == ASCII_TRUE || skipFretting[0] == ASCII_FALSE)           // if either trailing char is not valid,
    || !(skipFretting[1] == ASCII_TRUE || skipFretting[1] == ASCII_FALSE)) {        // (1st run of this fork, or the user edited the message)
