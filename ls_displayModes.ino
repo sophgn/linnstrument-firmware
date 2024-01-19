@@ -1383,7 +1383,14 @@ void paintVolumeDisplayRow(byte side) {
   paintCCFaderDisplayRow(side, 5, Split[side].colorMain, 7, 1, NUMCOLS-2);
 }
 
-/********************** disable this code until LinnstrumentMicrotonal is ready ********************
+struct SkipFrettingData {
+  signed char transposeOctave;
+  signed char transposeTone;
+  signed char transposeArrow;
+};
+SkipFrettingData skipFrettingData[NUMSPLITS];
+
+/********************** disable this code until LinnstrumentMicrotonal is ready ********************/
 void paintOctaveTransposeDisplaySkipFretting(byte side) {     // alternate version of paintOctaveTransposeDisplay
   clearDisplay();                                             // see handleOctaveTransposeNewTouchSplit in ls_settings.ino
   blinkMiddleRootNote = true;
@@ -1435,16 +1442,16 @@ void paintOctaveTransposeDisplaySkipFretting(byte side) {     // alternate versi
 
   paintShowSplitSelection(side);
 }
-******************************************************************/
+/******************************************************************/
 
 
 void paintOctaveTransposeDisplay(byte side) {
-  /********************** disable this code until LinnstrumentMicrotonal is ready ********************    
+  /********************** disable this code until LinnstrumentMicrotonal is ready ********************/   
   if (skipFretting[side] == ASCII_TRUE && Global.rowOffset > 7) {         // > 7 to exclude 12edo Wicki-Hayden users
     paintOctaveTransposeDisplaySkipFretting (side);
     return;
   }
-  **************************************************************************************************/
+  /**************************************************************************************************/
     
   clearDisplay();
   blinkMiddleRootNote = true;

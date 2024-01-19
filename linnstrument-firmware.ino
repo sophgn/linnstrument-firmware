@@ -434,13 +434,6 @@ struct NoteTouchMapping {
 };
 NoteTouchMapping noteTouchMapping[NUMSPLITS];
 
-struct SkipFrettingData {
-  signed char transposeOctave;
-  signed char transposeTone;
-  signed char transposeArrow;
-};
-SkipFrettingData skipFrettingData[NUMSPLITS];
-
 /**************************************** DISPLAY STATE ******************************************/
 
 enum CellDisplay {
@@ -874,8 +867,8 @@ struct Configuration {
 struct Configuration config;
 
 // hijack an audience message to store the user's preferences for skipfretting on each split
-byte skipFrettingMsg = 12;    // use audience message #13, "HELLO BRUSSELS", least likely to be used by someone
-// pointer to first 2 chars of audience message #13, adjusted in initializeSkipFretting to last 2 chars
+byte skipFrettingMsg = 7;    // use audience message #8, "HELLO NEW YORK", least likely to be used by someone
+// pointer to first 2 chars of audience message #8, adjusted in initializeSkipFretting to last 2 chars
 char * skipFretting = (char *)Device.audienceMessages + 31 * skipFrettingMsg;
 
 /**************************************** SECRET SWITCHES ****************************************/
