@@ -1726,6 +1726,9 @@ void handlePerSplitSettingRelease() {
           if (ensureCellBeforeHoldWait(Split[Global.currentPerSplit].colorAccent,
                  isSkipFretting(Global.currentPerSplit) ? cellOn : cellOff)) {
             checkSkipFrettingAudienceMessage ();
+            byte length = strlen (Device.audienceMessages[skipFrettingMsg]);                 // DEBUGGING
+            skipFretting = (char *)Device.audienceMessages + 31 * skipFrettingMsg + length;  
+            skipFretting -= min (length, 2); 
             if (isSkipFretting(Global.currentPerSplit)) {                           
               skipFretting[Global.currentPerSplit] = ASCII_FALSE;  
             } else {
