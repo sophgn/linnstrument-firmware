@@ -862,42 +862,19 @@ struct Configuration {
 };
 struct Configuration config;
 
-// SKIP FRETTING: extend audience message #8 by 2 chars, to store the user's preferences for skip fretting on each split
+// SKIP FRETTING: extend audience message #8 by 2 chars, to store the user's choice of skip fretting or not for each split as 2 pseudo-booleans
 const char ASCII_FALSE = ' ';                                                      // ascii 32, the lowest ascii char allowed in audienceMessages
 const char ASCII_TRUE  = '!';                                                      // ascii 33, the 2nd lowest, plus it looks good!
 const byte skipFrettingMsg = 7;                                                    // "HELLO NEW YORK" becomes "HELLO NEW YORK!!"
+char * skipFretting = (char *)Device.audienceMessages + 31 * skipFrettingMsg;      // the skipFretting[2] array overlaps the messages array
 
-/********
-byte extendSkipFrettingAudienceMessage () {                                        // called when skipFretting is declared
-  byte numChars = 0;                                                               // number of chars to extend by
+void checkSkipFrettingAudienceMessage () {                                         // called before reading or writing either pseudo-boolean
   byte len = strlen (Device.audienceMessages[skipFrettingMsg]);
-  char skipL = Device.audienceMessages[skipFrettingMsg][len - 2];                  // the 2nd to last char of message #8
-  char skipR = Device.audienceMessages[skipFrettingMsg][len - 1];                  // the last char of message #8
-  if (!(skipL == ASCII_TRUE || skipL == ASCII_FALSE)                               // if either trailing char is not valid,
-   || !(skipR == ASCII_TRUE || skipR == ASCII_FALSE)) {                            // (1st run of this fork, or the user edited the message)
-    numChars = min (2, 30 - len);  len += numChars;                                // extend the message (if no room, overwrite the last 2 chars)
-    Device.audienceMessages[skipFrettingMsg][len - 2] = ASCII_FALSE;               // store our 2 booleans in the last 2 spots
-    Device.audienceMessages[skipFrettingMsg][len - 1] = ASCII_FALSE; 
-    Device.audienceMessages[skipFrettingMsg][len] = '\0';                          // this line shouldn't be needed, but do it anyway just in case
-  }
-  return numChars;
-}
-************/
-
-//char * skipFrettingMsgStart = (char *)Device.audienceMessages + 31 * skipFrettingMsg;
-char * skipFretting = (char *)Device.audienceMessages + 31 * skipFrettingMsg;       // the skipFretting[2] array overlaps the messages array,
-//                       + strlen (Device.audienceMessages[skipFrettingMsg]) - 2     // starting at the 2nd to last char of message #8
-//                       + extendSkipFrettingAudienceMessage();                      // if needed, extend the message by 2 chars
-
-void checkSkipFrettingAudienceMessage () {                                         // called before reading or writing either boolean
-  byte length = strlen (Device.audienceMessages[skipFrettingMsg]);                 // find the 2nd to last char of message #8
-  skipFretting = (char *)Device.audienceMessages + 31 * skipFrettingMsg + length;  // point to the 2nd to last char
-  skipFretting -= min (length, 2); 
-//  skipFretting = skipFrettingMsgStart + length - 2; 
+  skipFretting = (char *)Device.audienceMessages + 31 * skipFrettingMsg + len - 2; // find the 2nd to last char of message #8
   if (!(skipFretting[0] == ASCII_TRUE || skipFretting[0] == ASCII_FALSE)           // if either trailing char is not valid,
    || !(skipFretting[1] == ASCII_TRUE || skipFretting[1] == ASCII_FALSE)) {        // (1st run of this fork, or the user edited the message)
-    skipFretting += min (2, 30 - length);                                          // extend the message (if no room, overwrite the last 2 chars)
-    skipFretting[LEFT] = skipFretting[RIGHT] = ASCII_FALSE;                        // initialize to false
+    skipFretting += min (2, 30 - len);                                             // extend the message (if no room, overwrite the last 2 chars)
+    skipFretting[LEFT] = skipFretting[RIGHT] = ASCII_FALSE;                        // if there were invalid chars, best to initialize to false
     skipFretting[RIGHT + 1] = '\0';                                                // this line shouldn't be needed, but do it anyway just in case
   }
 }
