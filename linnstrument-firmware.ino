@@ -866,22 +866,25 @@ struct Configuration config;
 const char ASCII_FALSE = ' ';                                                      // ascii 32, the lowest ascii char allowed in audienceMessages
 const char ASCII_TRUE  = '!';                                                      // ascii 33, the 2nd lowest, plus it looks good!
 const byte skipFrettingMsg = 7;                                                    // "HELLO NEW YORK" becomes "HELLO NEW YORK!!"
-char * skipFretting = (char *)Device.audienceMessages + 31 * skipFrettingMsg       // the skipFretting[2] array overlaps the messages array,
-                       + strlen (Device.audienceMessages[skipFrettingMsg]) - 2     // starting at the 2nd to last char of message #8
-                       + extendSkipFrettingAudienceMessage();                      // if needed, extend the message by 2 chars
 
 byte extendSkipFrettingAudienceMessage () {                                        // called when skipFretting is declared
   byte numChars = 0;                                                               // number of chars to extend by
   byte len = strlen (Device.audienceMessages[skipFrettingMsg]);
-  char * skip = (char *)Device.audienceMessages + 31 * skipFrettingMsg + len - 2;  // point to the 2nd to last char of message #8
-  if (!(skip[0] == ASCII_TRUE || skip[0] == ASCII_FALSE)                           // if either trailing char is not valid,
-   || !(skip[1] == ASCII_TRUE || skip[1] == ASCII_FALSE)) {                        // (1st run of this fork, or the user edited the message)
-    numChars = min (2, 30 - len);  skip += numChars;                               // extend the message (if no room, overwrite the last 2 chars)
-    skip[LEFT] = skip[RIGHT] = ASCII_FALSE;                                        // store our 2 booleans in the last 2 spots
-    skip[RIGHT + 1] = '\0';                                                        // this line shouldn't be needed, but do it anyway just in case
+  char skipL = Device.audienceMessages[skipFrettingMsg][len - 2];                  // the 2nd to last char of message #8
+  char skipR = Device.audienceMessages[skipFrettingMsg][len - 1];                  // the last char of message #8
+  if (!(skipL== ASCII_TRUE || skipL == ASCII_FALSE)                                // if either trailing char is not valid,
+   || !(skipR== ASCII_TRUE || skipR == ASCII_FALSE)) {                             // (1st run of this fork, or the user edited the message)
+    numChars = min (2, 30 - len);  len += numChars;                                // extend the message (if no room, overwrite the last 2 chars)
+    Device.audienceMessages[skipFrettingMsg][len - 2] = ASCII_FALSE;               // store our 2 booleans in the last 2 spots
+    Device.audienceMessages[skipFrettingMsg][len - 1] = ASCII_FALSE; 
+    Device.audienceMessages[skipFrettingMsg][len] = '\0';                          // this line shouldn't be needed, but do it anyway just in case
   }
   return numChars;
 }
+
+char * skipFretting = (char *)Device.audienceMessages + 31 * skipFrettingMsg       // the skipFretting[2] array overlaps the messages array,
+                       + strlen (Device.audienceMessages[skipFrettingMsg]) - 2     // starting at the 2nd to last char of message #8
+                       + extendSkipFrettingAudienceMessage();                      // if needed, extend the message by 2 chars
 
 void checkSkipFrettingAudienceMessage () {                                         // called before reading or writing either boolean
   byte len = strlen (Device.audienceMessages[skipFrettingMsg]);                    // find the 2nd to last char all over again,
