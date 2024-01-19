@@ -2410,7 +2410,7 @@ void handleOctaveTransposeNewTouchSplit(byte side) {
     }
   }
 
-  /********************** disable this code until LinnstrumentMicrotonal is ready ********************
+  /********************** disable this code until LinnstrumentMicrotonal is ready ********************/
   // send CCs reporting the transposes to LinnstrumentMicrotonal app, it will do the transposing
   // use the same two CCs that the foot switches are assigned to via long-pressing the CC65 option
   // right footswitch is up, left is down. For octave transposing only, short-press latches, long-press doesn't
@@ -2444,7 +2444,7 @@ void handleOctaveTransposeNewTouchSplit(byte side) {
     Split[side].transposePitch  = oldTransposePitch;
     Split[side].transposeLights = oldTransposeLights;
   }
-  *********************************************************************************/
+  /*********************************************************************************/
 }
 
 void handleOctaveTransposeRelease() {

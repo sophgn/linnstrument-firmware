@@ -1396,47 +1396,47 @@ void paintOctaveTransposeDisplaySkipFretting(byte side) {     // alternate versi
   blinkMiddleRootNote = true;
 
   // Paint the octave shift value
-  if (!doublePerSplit || SkipFrettingData[LEFT].transposeOctave == SkipFrettingData[RIGHT].transposeOctave) {
-    paintOctave(Split[Global.currentPerSplit].colorMain, 8, OCTAVE_ROW, SkipFrettingData[side].transposeOctave);
+  if (!doublePerSplit || skipFrettingData[LEFT].transposeOctave == skipFrettingData[RIGHT].transposeOctave) {
+    paintOctave(Split[Global.currentPerSplit].colorMain, 8, OCTAVE_ROW, skipFrettingData[side].transposeOctave);
   }
   else if (doublePerSplit) {
-    if (abs(SkipFrettingData[LEFT].transposeOctave) > abs(SkipFrettingData[RIGHT].transposeOctave)) {
-      paintOctave(Split[LEFT].colorMain,  8, OCTAVE_ROW, SkipFrettingData[LEFT].transposeOctave);
-      paintOctave(Split[RIGHT].colorMain, 8, OCTAVE_ROW, SkipFrettingData[RIGHT].transposeOctave);
+    if (abs(skipFrettingData[LEFT].transposeOctave) > abs(skipFrettingData[RIGHT].transposeOctave)) {
+      paintOctave(Split[LEFT].colorMain,  8, OCTAVE_ROW, skipFrettingData[LEFT].transposeOctave);
+      paintOctave(Split[RIGHT].colorMain, 8, OCTAVE_ROW, skipFrettingData[RIGHT].transposeOctave);
     }
     else {
-      paintOctave(Split[RIGHT].colorMain, 8, OCTAVE_ROW, SkipFrettingData[RIGHT].transposeOctave);
-      paintOctave(Split[LEFT].colorMain,  8, OCTAVE_ROW, SkipFrettingData[LEFT].transposeOctave);
+      paintOctave(Split[RIGHT].colorMain, 8, OCTAVE_ROW, skipFrettingData[RIGHT].transposeOctave);
+      paintOctave(Split[LEFT].colorMain,  8, OCTAVE_ROW, skipFrettingData[LEFT].transposeOctave);
     }
   }
 
   // Paint the whole tone transpose values
-  if (!doublePerSplit || SkipFrettingData[LEFT].transposeTone == SkipFrettingData[RIGHT].transposeTone) {
-    paintTranspose(Split[Global.currentPerSplit].colorMain, SWITCH_1_ROW, SkipFrettingData[side].transposeTone);
+  if (!doublePerSplit || skipFrettingData[LEFT].transposeTone == skipFrettingData[RIGHT].transposeTone) {
+    paintTranspose(Split[Global.currentPerSplit].colorMain, SWITCH_1_ROW, skipFrettingData[side].transposeTone);
   }
   else if (doublePerSplit) {
-    if (abs(SkipFrettingData[LEFT].transposeTone) > abs(SkipFrettingData[RIGHT].transposeTone)) {
-      paintTranspose(Split[LEFT].colorMain,  SWITCH_1_ROW, SkipFrettingData[LEFT].transposeTone);
-      paintTranspose(Split[RIGHT].colorMain, SWITCH_1_ROW, SkipFrettingData[RIGHT].transposeTone);
+    if (abs(skipFrettingData[LEFT].transposeTone) > abs(skipFrettingData[RIGHT].transposeTone)) {
+      paintTranspose(Split[LEFT].colorMain,  SWITCH_1_ROW, skipFrettingData[LEFT].transposeTone);
+      paintTranspose(Split[RIGHT].colorMain, SWITCH_1_ROW, skipFrettingData[RIGHT].transposeTone);
     }
     else {
-      paintTranspose(Split[RIGHT].colorMain, SWITCH_1_ROW, SkipFrettingData[RIGHT].transposeTone);
-      paintTranspose(Split[LEFT].colorMain,  SWITCH_1_ROW, SkipFrettingData[LEFT].transposeTone);
+      paintTranspose(Split[RIGHT].colorMain, SWITCH_1_ROW, skipFrettingData[RIGHT].transposeTone);
+      paintTranspose(Split[LEFT].colorMain,  SWITCH_1_ROW, skipFrettingData[LEFT].transposeTone);
     }
   }
 
   // Paint the arrow transpose values
-  if (!doublePerSplit || SkipFrettingData[LEFT].transposeArrow == SkipFrettingData[RIGHT].transposeArrow) {
-    paintTranspose(Split[Global.currentPerSplit].colorMain, SWITCH_2_ROW, SkipFrettingData[side].transposeArrow);
+  if (!doublePerSplit || skipFrettingData[LEFT].transposeArrow == skipFrettingData[RIGHT].transposeArrow) {
+    paintTranspose(Split[Global.currentPerSplit].colorMain, SWITCH_2_ROW, skipFrettingData[side].transposeArrow);
   }
   else if (doublePerSplit) {
-    if (abs(SkipFrettingData[LEFT].transposeArrow) > abs(SkipFrettingData[RIGHT].transposeArrow)) {
-      paintTranspose(Split[LEFT].colorMain,  SWITCH_2_ROW, SkipFrettingData[LEFT].transposeArrow);
-      paintTranspose(Split[RIGHT].colorMain, SWITCH_2_ROW, SkipFrettingData[RIGHT].transposeArrow);
+    if (abs(skipFrettingData[LEFT].transposeArrow) > abs(skipFrettingData[RIGHT].transposeArrow)) {
+      paintTranspose(Split[LEFT].colorMain,  SWITCH_2_ROW, skipFrettingData[LEFT].transposeArrow);
+      paintTranspose(Split[RIGHT].colorMain, SWITCH_2_ROW, skipFrettingData[RIGHT].transposeArrow);
     }
     else {
-      paintTranspose(Split[RIGHT].colorMain, SWITCH_2_ROW, SkipFrettingData[RIGHT].transposeArrow);
-      paintTranspose(Split[LEFT].colorMain,  SWITCH_2_ROW, SkipFrettingData[LEFT].transposeArrow);
+      paintTranspose(Split[RIGHT].colorMain, SWITCH_2_ROW, skipFrettingData[RIGHT].transposeArrow);
+      paintTranspose(Split[LEFT].colorMain,  SWITCH_2_ROW, skipFrettingData[LEFT].transposeArrow);
     }
   }
 
