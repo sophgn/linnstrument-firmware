@@ -230,10 +230,6 @@ const int LED_PATTERNS = 3;
 const unsigned long LED_LAYER_SIZE = MAXCOLS * MAXROWS;
 const unsigned long LED_ARRAY_SIZE = (MAX_LED_LAYERS+1) * LED_LAYER_SIZE;
 
-// these two constants are for storing skipFretting booleans in audienceMessages
-const char ASCII_FALSE = ' ';     // ascii 32, the lowest ascii char allowed in audienceMessages
-const char ASCII_TRUE  = '!';     // ascii 33
-
 /******************************************** VELOCITY *******************************************/
 
 #define VELOCITY_SAMPLES       4
@@ -866,10 +862,26 @@ struct Configuration {
 };
 struct Configuration config;
 
-// hijack an audience message to store the user's preferences for skipfretting on each split
-byte skipFrettingMsg = 7;    // use audience message #8, "HELLO NEW YORK", least likely to be used by someone
-// pointer to first 2 chars of audience message #8, adjusted in initializeSkipFretting to last 2 chars
-char * skipFretting = (char *)Device.audienceMessages + 31 * skipFrettingMsg;
+// SKIP FRETTING: extend audience message #8 by 2 chars, to store the user's preferences for skip fretting on each split
+const char ASCII_FALSE = ' ';                                                      // ascii 32, the lowest ascii char allowed in audienceMessages
+const char ASCII_TRUE  = '!';                                                      // ascii 33, the 2nd lowest, plus it looks good!
+const byte skipFrettingMsg = 7;                                                    // "HELLO NEW YORK" becomes "HELLO NEW YORK!!"
+char * skipFretting = (char *)Device.audienceMessages + 31 * skipFrettingMsg       // the skipFretting[2] array overlaps the messages array,
+                       + strlen (Device.audienceMessages[skipFrettingMsg]) - 2;    // starting at the 2nd to last char of message #8
+
+if (!(skipFretting[0] == ASCII_TRUE || skipFretting[0] == ASCII_FALSE)                 // if either trailing char is not valid,
+ || !(skipFretting[1] == ASCII_TRUE || skipFretting[1] == ASCII_FALSE)) {              // (1st run of this fork, or the user edited the messge)
+    skipFretting += min (2, 30 - strlen (Device.audienceMessages[skipFrettingMsg]));   // extend the message (if no room, overwrite last 2 chars)
+    skipFretting[LEFT] = skipFretting[RIGHT] = ASCII_FALSE;                            // store our 2 booleans in the last 2 spots
+    skipFretting[RIGHT + 1] = '\0';                                                    // this line shouldn't be needed, but do it anyway just in case
+}
+
+struct SkipFrettingData {                  // used to keep track of transposing, which is done via CCs to the LinnstrumentMicrotonal app
+  signed char transposeOctave;
+  signed char transposeTone;
+  signed char transposeArrow;
+};
+SkipFrettingData skipFrettingData[NUMSPLITS];
 
 /**************************************** SECRET SWITCHES ****************************************/
 

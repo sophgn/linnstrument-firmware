@@ -49,6 +49,18 @@ const byte CUSTOM_LEDS_PATTERN1[LED_LAYER_SIZE] = {
    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0
 };
 
+const byte CUSTOM_LEDS_PATTERN2[LED_LAYER_SIZE] = {            // two rainbow zones
+   0,  0,  0, 49, 65, 41, 25, 17,  9, 65, 49, 33,  0,  0,  0,  0,  0, 41, 25, 17,  9,  0, 41, 25, 17,  9,
+   0,  0,  0, 41, 25, 17,  9,  0, 41, 25, 17,  9,  0,  0,  0,  0,  0, 33, 49, 65, 41, 25, 17,  9, 65, 49,
+   0,  0,  0, 33, 49, 65, 41, 25, 17,  9, 65, 49,  0,  0,  0,  0, 49, 65, 41, 25, 17,  9, 65, 49, 33,  0,
+   0,  0, 49, 65, 41, 25, 17,  9, 65, 49, 33,  0,  0,  0,  0,  0, 41, 25, 17,  9,  0, 41, 25, 17,  9,  0,
+   0,  0, 41, 25, 17,  9,  0, 41, 25, 17,  9,  0,  0,  0,  0,  0, 33, 49, 65, 41, 25, 17,  9, 65, 49,  0,
+   0,  0, 33, 49, 65, 41, 25, 17,  9, 65, 49,  0,  0,  0,  0, 49, 65, 41, 25, 17,  9, 65, 49, 33,  0,  0,
+   0, 49, 65, 41, 25, 17,  9, 65, 49, 33,  0,  0,  0,  0,  0, 41, 25, 17,  9,  0, 41, 25, 17,  9,  0,  0,
+   0, 41, 25, 17,  9,  0, 41, 25, 17,  9,  0,  0,  0,  0,  0, 33, 49, 65, 41, 25, 17,  9, 65, 49,  0,  0,
+};
+
+/************************* original pattern #2 **************************
 const byte CUSTOM_LEDS_PATTERN2[LED_LAYER_SIZE] = {
    0,  0, 41,  0,  9,  0, 17, 33,  0, 49,  0, 73, 25,  0, 41,  0,  9,  0, 17, 33,  0, 49,  0, 73, 25,  0,
    0, 17, 33,  0, 49,  0, 73, 25,  0, 41,  0,  9,  0, 17, 33,  0, 49,  0, 73, 25,  0, 41,  0,  9,  0, 17,
@@ -58,6 +70,17 @@ const byte CUSTOM_LEDS_PATTERN2[LED_LAYER_SIZE] = {
    0, 41,  0,  9,  0, 17, 33,  0, 49,  0, 73, 25,  0, 41,  0,  9,  0, 17, 33,  0, 49,  0, 73, 25,  0, 41,
    0, 33,  0, 49,  0, 73, 25,  0, 41,  0,  9,  0, 17, 33,  0, 49,  0, 73, 25,  0, 41,  0,  9,  0, 17, 33,
    0, 25,  0, 41,  0,  9,  0, 17, 33,  0, 49,  0, 73, 25,  0, 41,  0,  9,  0, 17, 33,  0, 49,  0, 73, 25
+}; **********************************************************************/
+
+const byte CUSTOM_LEDS_PATTERN3[LED_LAYER_SIZE] = {            // two green kites
+   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+   0,  0,  0,  0,  0,  0,  0,  0,  0, 25,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 25,  0,  0,  0,  0,
+   0,  0,  0,  0,  0, 25,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 25,  0,  0,  0,  0,  0,  0,  0,  0,
+   0, 25,  0,  0,  0,  0,  0,  0,  0, 25,  0,  0,  0, 25,  0,  0,  0,  0,  0,  0,  0, 25,  0,  0,  0, 25,
+   0,  0,  0,  0,  0, 25,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 25,  0,  0,  0,  0,  0,  0,  0,  0,
+   0,  0,  0,  0,  0,  0,  0,  0,  0, 25,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 25,  0,  0,  0,  0,
+   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0
 };
 
 unsigned long tempoChangeTime = 0;           // time of last touch for tempo change
@@ -365,7 +388,8 @@ void initializeDeviceSettings() {
 
   memcpy(&Device.customLeds[0][0], &CUSTOM_LEDS_PATTERN1[0], LED_LAYER_SIZE);
   memcpy(&Device.customLeds[1][0], &CUSTOM_LEDS_PATTERN2[0], LED_LAYER_SIZE);
-  memset(&Device.customLeds[2][0], 0, LED_LAYER_SIZE);
+  memcpy(&Device.customLeds[2][0], &CUSTOM_LEDS_PATTERN3[0], LED_LAYER_SIZE);
+  //memset(&Device.customLeds[2][0], 0, LED_LAYER_SIZE);   // what the official code does - blank pattern
 }
 
 void initializeAudienceMessages() {
@@ -374,18 +398,6 @@ void initializeAudienceMessages() {
     strncpy(Device.audienceMessages[msg], defaultAudienceMessages[msg], 30);
     Device.audienceMessages[msg][30] = '\0';
   }
-}
-
-void initializeSkipFretting() {
-  // this function runs only once, when user enables skip fretting for the very first time after updating to this fork
-  // ideally it'd run immediately after user settings are restored after an update, but that involves forking the updater
-  byte m = skipFrettingMsg;
-  byte length = strlen (Device.audienceMessages[m]);    
-  length = min (length, 28);                             // if user entered in 30 chars, overwrite the last 2 chars
-  skipFretting += length;                                // skipFretting now points to 1st char after audience message
-  Device.audienceMessages[m][length] = ASCII_FALSE;      // extend the message by 2 chars, store our 2 booleans there
-  Device.audienceMessages[m][length+1] = ASCII_FALSE;    // this line is same as saying "skipFretting[1] = ASCII_FALSE;"
-  Device.audienceMessages[m][length+2] = '\0';           // this line shouldn't be needed, but do it anyway just in case 
 }
 
 void initializeNoteLights(GlobalSettings& g) {
@@ -1594,18 +1606,11 @@ void handlePerSplitSettingHold() {
 
       case 8: 
         switch (sensorRow) {
-          case 0: // hidden kite setting button held
+          case 0:                                             // long-press hidden skip fretting button
             Global.rowOffset = ROWOFFSET_OCTAVECUSTOM;        // use custom row offset to get 13
             Global.customRowOffset = 13;                      // kite guitar uses +13 row offset
             Split[LEFT].playedTouchMode = playedSame;         // turn on same-note lighting for familiarity
-            Split[RIGHT].playedTouchMode = playedSame;        // turn on same-note lighting for familiarity
-            byte length = strlen (Device.audienceMessages[skipFrettingMsg]);
-            if ((Device.audienceMessages[skipFrettingMsg][length-1] != ASCII_TRUE
-              && Device.audienceMessages[skipFrettingMsg][length-1] != ASCII_FALSE)
-             || (Device.audienceMessages[skipFrettingMsg][length-2] != ASCII_TRUE
-              && Device.audienceMessages[skipFrettingMsg][length-2] != ASCII_FALSE)) {
-               initializeSkipFretting ();
-            }
+            Split[RIGHT].playedTouchMode = playedSame;
             skipFretting[LEFT]  = ASCII_TRUE;
             skipFretting[RIGHT] = ASCII_TRUE;
             setDisplayMode(displayNormal);
@@ -1716,18 +1721,11 @@ void handlePerSplitSettingRelease() {
 
     case 8:
       switch (sensorRow) {
-        case 0: //hidden skip-fretting setting, not held
-          byte length = strlen (Device.audienceMessages[skipFrettingMsg]);
-          if ((Device.audienceMessages[skipFrettingMsg][length-1] != ASCII_TRUE
-            && Device.audienceMessages[skipFrettingMsg][length-1] != ASCII_FALSE)
-           || (Device.audienceMessages[skipFrettingMsg][length-2] != ASCII_TRUE
-            && Device.audienceMessages[skipFrettingMsg][length-2] != ASCII_FALSE)) {
-               initializeSkipFretting ();
-          }
+        case 0:                                                                      // short-press hidden skip-fretting button
           if (ensureCellBeforeHoldWait(Split[Global.currentPerSplit].colorAccent,
-                                    skipFretting[Global.currentPerSplit] == ASCII_TRUE ? cellOn : cellOff)) {
-            if (skipFretting[Global.currentPerSplit] == ASCII_TRUE) {
-              skipFretting[Global.currentPerSplit] = ASCII_FALSE;
+                 skipFretting[Global.currentPerSplit] == ASCII_TRUE ? cellOn : cellOff)) {
+            if (skipFretting[Global.currentPerSplit] == ASCII_TRUE) {                // if the char in the audience message is invalid,
+              skipFretting[Global.currentPerSplit] = ASCII_FALSE;                    // (not '!' or ' '), it will be treated as FALSE
             } else {
               skipFretting[Global.currentPerSplit] = ASCII_TRUE;
             }
@@ -2378,10 +2376,51 @@ void handleOctaveTransposeNewTouch() {
   updateDisplay();
 }
 
+void handleOctaveTransposeNewTouchSplitSkipFretting(byte side) {
+  // send CCs reporting the transposes to LinnstrumentMicrotonal app, it will do the transposing
+  // use the CC that the right foot switch is assigned to via long-pressing the CC65 option
+  // repurpose semitones to be whole tones and lights to be arrows/edosteps, so that ±7 of each covers 41edo
+  // midi for octave transposing via footswitch reports each increment/decrement, plus a 0 CC for pedal release
+  // but midi from here directly reports the current amount of transpose, no zero CCs
+  // the CCvalue is 93-99 for ±3 octaves, 57-71 for ±7 tones, or 25-39 for ±7 arrows
+  // see also paintOctaveTransposeDisplay function in ls_displayModes.ino
+
+  signed char newTransposeOctave = skipFrettingData[side].transposeOctave; 
+  signed char newTransposeTone   = skipFrettingData[side].transposeTone;
+  signed char newTransposeArrow  = skipFrettingData[side].transposeArrow;
+
+  if (sensorCol > 0 && sensorCol < 16) {
+         if (sensorRow == OCTAVE_ROW)   {newTransposeOctave = sensorCol - 8}
+    else if (sensorRow == SWITCH_1_ROW) {newTransposeTone   = sensorCol - 8}
+    else if (sensorRow == SWITCH_2_ROW) {newTransposeArrow  = sensorCol - 8}
+  }
+  newTransposeOctave = min (max (newTransposeOctave, -3), 3);
+
+  byte chan = (side == LEFT ? 1 : 16);                                        // midi channel
+  byte CCnum = Global.ccForSwitchCC65[SWITCH_FOOT_R];
+    
+  if (newTransposeOctave != skipFrettingData[side].transposeOctave) {
+    skipFrettingData[side].transposeOctave = newTransposeOctave;                           
+    midiSendControlChange (CCnum, 96 + newTransposeOctave, chan, true);       // range is 93-99                   
+  }
+
+  if (newTransposeTone != skipFrettingData[side].transposeTone) { 
+    skipFrettingData[side].transposeTone = newTransposeTone;                           
+    midiSendControlChange (CCnum, 64 + newTransposeTone, chan, true);         // range is 57-71                   
+  }
+
+  if (newTransposeArrow != skipFrettingData[side].transposeArrow) { 
+    skipFrettingData[side].transposeArrow = newTransposeArrow;                           
+    midiSendControlChange (CCnum, 32 + newTransposeArrow, chan, true);        // range is 25-39             
+  }
+}
+
 void handleOctaveTransposeNewTouchSplit(byte side) {
-  signed char oldTransposeOctave = Split[side].transposeOctave;         // these 3 lines are for skipFretting
-  signed char oldTransposePitch = Split[side].transposePitch;
-  signed char oldTransposeLights = Split[side].transposeLights;
+
+  if (skipFretting[side] == ASCII_TRUE && Global.rowOffset > 7) {         // rowOffset > 7 to exclude 12edo Wicki-Hayden users,
+    handleOctaveTransposeNewTouchSplitSkipFretting (side);                // who will want to transpose normally
+    return;
+  }
 
   if (sensorRow == OCTAVE_ROW) {
     switch (sensorCol) {
@@ -2409,42 +2448,6 @@ void handleOctaveTransposeNewTouchSplit(byte side) {
       Split[side].transposeLights = sensorCol - 8;
     }
   }
-
-  /********************** disable this code until LinnstrumentMicrotonal is ready ********************/
-  // send CCs reporting the transposes to LinnstrumentMicrotonal app, it will do the transposing
-  // use the same two CCs that the foot switches are assigned to via long-pressing the CC65 option
-  // right footswitch is up, left is down. For octave transposing only, short-press latches, long-press doesn't
-  // repurpose semitones to be whole tones and lights to be arrows/edosteps, so that ±7 of each covers 41edo
-  // midi for octave transposing via footswitch reports each increment/decrement, plus a 0 CC for pedal release
-  // but midi from here directly reports the current amount of transpose, no zero CCs
-  // see also paintOctaveTransposeDisplay function in ls_displayModes.ino
-  // a 12edo Wicki-Hayden user wants to transpose normally, hence the rowOffset > 7 test
-  if (skipFretting[side] == ASCII_TRUE && Global.rowOffset > 7) {
-    byte ch = (side == LEFT ? 1 : 16);                                       // midi channel
-    
-    if (Split[side].transposeOctave != oldTransposeOctave) {                           // octave up/down
-      skipFrettingData[side].transposeOctave += Split[side].transposeOctave;                           
-      midiSendControlChange (Global.ccForSwitchCC65[SWITCH_FOOT_R], 
-                             96 + Split[side].transposeOctave / 12, ch, true);         // range is 91-101                   
-    }
-
-    if (Split[side].transposePitch != oldTransposePitch) {                             // tone up/down
-      skipFrettingData[side].transposeTone += Split[side].transposePitch;                           
-      midiSendControlChange (Global.ccForSwitchCC65[SWITCH_FOOT_R], 
-                             64 + Split[side].transposePitch, ch, true);               // range is 57-71                   
-    }
-
-    if (Split[side].transposeLights != oldTransposeLights) {                           // arrow up/down
-      skipFrettingData[side].transposeArrow += Split[side].transposeLights;                           
-      midiSendControlChange (Global.ccForSwitchCC65[SWITCH_FOOT_R], 
-                             32 + Split[side].transposeLights, ch, true);              // range is 25-39             
-    }
-
-    Split[side].transposeOctave = oldTransposeOctave;                   // prevent internal transposing
-    Split[side].transposePitch  = oldTransposePitch;
-    Split[side].transposeLights = oldTransposeLights;
-  }
-  /*********************************************************************************/
 }
 
 void handleOctaveTransposeRelease() {
