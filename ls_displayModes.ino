@@ -643,10 +643,10 @@ void paintPerSplitDisplay(byte side) {
     setLed(8, 3, Split[side].colorMain, cellOn);
   }
 
-  if (Global.rowOffset == ROWOFFSET_OCTAVECUSTOM && Global.customRowOffset == 13 && skipFretting[side] == ASCII_TRUE) {
+  if (Global.rowOffset == ROWOFFSET_OCTAVECUSTOM && Global.customRowOffset == 13 && isSkipFretting(side)) {
     // kite settings are enabled, show in accent color
     setLed(8, 0, Split[side].colorAccent, cellOn);
-  } else if (skipFretting[side] == ASCII_TRUE) {
+  } else if (isSkipFretting(side)) {
     // skip fretting is on, show main color
     setLed(8, 0, Split[side].colorMain, cellOn);
   }
@@ -1437,7 +1437,7 @@ void paintOctaveTransposeDisplaySkipFretting(byte side) {     // alternate versi
 
 void paintOctaveTransposeDisplay(byte side) {
 
-  if (skipFretting[side] == ASCII_TRUE && Global.rowOffset > 7) {         // > 7 to exclude 12edo Wicki-Hayden users
+  if (isSkipFretting(side) && Global.rowOffset > 7) {         // rowOffset > 7 to exclude 12edo Wicki-Hayden users
     paintOctaveTransposeDisplaySkipFretting (side);
     return;
   }

@@ -1611,7 +1611,7 @@ void handlePerSplitSettingHold() {
             Global.customRowOffset = 13;                      // kite guitar uses +13 row offset
             Split[LEFT].playedTouchMode = playedSame;         // turn on same-note lighting for familiarity
             Split[RIGHT].playedTouchMode = playedSame;
-            //checkSkipFrettingAudienceMessage ();
+            checkSkipFrettingAudienceMessage ();
             skipFretting[LEFT]  = ASCII_TRUE;
             skipFretting[RIGHT] = ASCII_TRUE;
             setDisplayMode(displayNormal);
@@ -1724,10 +1724,10 @@ void handlePerSplitSettingRelease() {
       switch (sensorRow) {
         case 0:                                                                      // short-press hidden skip-fretting button
           if (ensureCellBeforeHoldWait(Split[Global.currentPerSplit].colorAccent,
-                 skipFretting[Global.currentPerSplit] == ASCII_TRUE ? cellOn : cellOff)) {
-            //checkSkipFrettingAudienceMessage ();
-            if (skipFretting[Global.currentPerSplit] == ASCII_TRUE) {                // if the char in the audience message is invalid,
-              skipFretting[Global.currentPerSplit] = ASCII_FALSE;                    // (not '!' or ' '), it will be treated as a FALSE
+                 isSkipFretting(Global.currentPerSplit) ? cellOn : cellOff)) {
+            checkSkipFrettingAudienceMessage ();
+            if (isSkipFretting(Global.currentPerSplit)) {                           
+              skipFretting[Global.currentPerSplit] = ASCII_FALSE;  
             } else {
               skipFretting[Global.currentPerSplit] = ASCII_TRUE;
             }
@@ -2419,7 +2419,7 @@ void handleOctaveTransposeNewTouchSplitSkipFretting(byte side) {
 
 void handleOctaveTransposeNewTouchSplit(byte side) {
 
-  if (skipFretting[side] == ASCII_TRUE && Global.rowOffset > 7) {         // rowOffset > 7 to exclude 12edo Wicki-Hayden users,
+  if (isSkipFretting(side) && Global.rowOffset > 7) {                     // rowOffset > 7 to exclude 12edo Wicki-Hayden users,
     handleOctaveTransposeNewTouchSplitSkipFretting (side);                // who will want to transpose normally
     return;
   }

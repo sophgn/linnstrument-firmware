@@ -1939,7 +1939,7 @@ byte getNoteNumber(byte split, byte col, byte row) {
 
   signed char transposeLights = Split[split].transposeLights;
 
-  if (skipFretting[split] == ASCII_TRUE) {
+  if (isSkipFretting(split)) {
     // subtract 1 needed everywhere, so do it again when doubling - this lets us start at note 0 instead of 1
     noteCol = noteCol*2 - 1;
     transposeLights = transposeLights*2;
@@ -1984,7 +1984,7 @@ short determineRowOffsetNote(byte split, byte row) {
     }
 
     else if (offset >= 12) {
-      if (skipFretting[split] == ASCII_TRUE) {        // handle skipFretting with high row offset (kite guitar is 13, only fills 194 pads)
+      if (isSkipFretting(split)) {                    // handle skip fretting with high row offset (kite guitar is 13, only fills 194 pads)
         lowest = 0;                                   // start at note 0 (why -1 gets us 0?) so that we show as many as possible and all disabled notes are in one place
       } else {
         lowest = 18;                                  // start the octave offset one octave lower to prevent having disabled notes at the top in the default configuration
