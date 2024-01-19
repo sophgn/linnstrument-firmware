@@ -2390,9 +2390,9 @@ void handleOctaveTransposeNewTouchSplitSkipFretting(byte side) {
   signed char newTransposeArrow  = skipFrettingData[side].transposeArrow;
 
   if (sensorCol > 0 && sensorCol < 16) {
-         if (sensorRow == OCTAVE_ROW)   {newTransposeOctave = sensorCol - 8}
-    else if (sensorRow == SWITCH_1_ROW) {newTransposeTone   = sensorCol - 8}
-    else if (sensorRow == SWITCH_2_ROW) {newTransposeArrow  = sensorCol - 8}
+         if (sensorRow == OCTAVE_ROW)   {newTransposeOctave = sensorCol - 8;}
+    else if (sensorRow == SWITCH_1_ROW) {newTransposeTone   = sensorCol - 8;}
+    else if (sensorRow == SWITCH_2_ROW) {newTransposeArrow  = sensorCol - 8;}
   }
   newTransposeOctave = min (max (newTransposeOctave, -3), 3);
 
