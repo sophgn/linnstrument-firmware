@@ -882,13 +882,15 @@ byte extendSkipFrettingAudienceMessage () {                                     
   return numChars;
 }
 
+char * skipFrettingMsgStart = (char *)Device.audienceMessages + 31 * skipFrettingMsg;
 char * skipFretting = (char *)Device.audienceMessages + 31 * skipFrettingMsg       // the skipFretting[2] array overlaps the messages array,
                        + strlen (Device.audienceMessages[skipFrettingMsg]) - 2     // starting at the 2nd to last char of message #8
                        + extendSkipFrettingAudienceMessage();                      // if needed, extend the message by 2 chars
 
 void checkSkipFrettingAudienceMessage () {                                         // called before reading or writing either boolean
   byte len = strlen (Device.audienceMessages[skipFrettingMsg]);                    // find the 2nd to last char all over again,
-  skipFretting = Device.audienceMessages + 31 * skipFrettingMsg + len - 2;         // in case the user edited the string
+//  skipFretting = Device.audienceMessages + 31 * skipFrettingMsg + len - 2;         // in case the user edited the string
+  skipFretting = skipFrettingMsgStart + len - 2;                                   // in case the user edited the string
   if (!(skipFretting[0] == ASCII_TRUE || skipFretting[0] == ASCII_FALSE)           // if either trailing char is not valid,
    || !(skipFretting[1] == ASCII_TRUE || skipFretting[1] == ASCII_FALSE)) {        // because the user edited the message,
     skipFretting += min (2, 30 - len);                                             // extend the message (if no room, overwrite the last 2 chars)
