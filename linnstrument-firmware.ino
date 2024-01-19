@@ -869,7 +869,7 @@ const byte skipFrettingMsg = 7;                                                 
 char * skipFretting = (char *)Device.audienceMessages + 31 * skipFrettingMsg       // the skipFretting[2] array overlaps the messages array,
                        + strlen (Device.audienceMessages[skipFrettingMsg]) - 2;    // starting at the 2nd to last char of message #8
 
-void setupSkipFrettingBooleans () {
+void checkSkipFrettingBooleans () {
   if (!(skipFretting[0] == ASCII_TRUE || skipFretting[0] == ASCII_FALSE)                 // if either trailing char is not valid,
    || !(skipFretting[1] == ASCII_TRUE || skipFretting[1] == ASCII_FALSE)) {              // (1st run of this fork, or the user edited the messge)
       skipFretting += min (2, 30 - strlen (Device.audienceMessages[skipFrettingMsg]));   // extend the message (if no room, overwrite last 2 chars)
@@ -877,7 +877,10 @@ void setupSkipFrettingBooleans () {
       skipFretting[RIGHT + 1] = '\0';                                                    // this line shouldn't be needed, but do it anyway just in case
   }
 }
-setupSkipFrettingBooleans ();
+
+boolean isSkipFretting (byte side) {
+  return skipFretting [side] == ASCII_TRUE;
+}
 
 struct SkipFrettingData {                  // used to keep track of transposing, which is done via CCs to the LinnstrumentMicrotonal app
   signed char transposeOctave;
