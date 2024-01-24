@@ -386,7 +386,7 @@ void initializeDeviceSettings() {
 
   initializeAudienceMessages();
 
-  initializeMicroLinn ();
+  //initializeMicroLinn ();
 
   memcpy(&Device.customLeds[0][0], &CUSTOM_LEDS_PATTERN1[0], LED_LAYER_SIZE);
   memcpy(&Device.customLeds[1][0], &CUSTOM_LEDS_PATTERN2[0], LED_LAYER_SIZE);      // two rainbow zones for 41edo skipFretting
@@ -1616,8 +1616,10 @@ void handlePerSplitSettingHold() {
             checkSkipFrettingAudienceMessage ();
             skipFretting[LEFT]  = ASCII_TRUE;
             skipFretting[RIGHT] = ASCII_TRUE;
+            //initializeMicroLinn();
             microLinn->skipFretting[LEFT] = true;
             microLinn->skipFretting[RIGHT] = true;
+            microLinn->EDO = 41;
             setDisplayMode(displayNormal);
             updateDisplay();
             break;
@@ -2231,6 +2233,28 @@ void handleGuitarTuningRelease() {
   }
 }
 
+void handleMicroLinnConfigNewTouch() {
+  if (sensorCol == 1) {
+    microLinnConfigRowNum = sensorRow;
+    updateDisplay();
+  } else {
+    byte padRow;
+    switch (sensorRow) {
+      case 0: handleNumericDataNewTouchCol(microLinn->anchorCents, -100, 100, true); break;
+      case 1: handleNumericDataNewTouchCol(microLinn->anchorNote,     0, 127, true); break;
+      case 2: handleNumericDataNewTouchCol(microLinnAnchorCol,    0, NUMCOLS, true); break;
+      case 3: handleNumericDataNewTouchCol(padRow, 0, NUMCOLS, true); microLinnAnchorRow = 8 - padRow; break;
+      case 7: handleNumericDataNewTouchCol(microLinn->EDO,            5,  72, true); break;
+    }
+  }
+}
+
+void handleMicroLinnConfigRelease() {
+  microLinn->anchorPad = 8 * microLinn->anchorCol + microLinn->anchorRow;
+  updateMicroLinnVars();
+  handleNumericDataReleaseCol(true);
+}
+
 void handleMinUSBMIDIIntervalNewTouch() {
   handleNumericDataNewTouchCol(Device.minUSBMIDIInterval, 0, 512, false);
 }
@@ -2305,14 +2329,6 @@ void handleSensorRangeZRelease() {
 void handleVolumeNewTouch(boolean newVelocity) {
   // don't change volume on the row that has the split selection
   if (sensorRow == 7) {
-    return;
-  }
-
-  if (sensorRow <= 3) {                              // skipFretting and microLinn uses rows 0-3
-    // skipFretting code and microLinn code goes here
-    // see handleTempoNewTouch function
-    // 5 new display modes:
-    // displayVolumeWithEDO, displayVolumeWithAnchorRow/Col/Note/Cents
     return;
   }
 
@@ -2491,7 +2507,6 @@ boolean isArpeggiatorTempoTriplet() {
   return Global.arpTempo == ArpEighthTriplet || Global.arpTempo == ArpSixteenthTriplet || Global.arpTempo == ArpThirtysecondTriplet;
 }
 
-// copy this code for skipFretting and microLinn-- set EDO, etc. this way
 void handleTempoNewTouch() {
   // keep track of how many cells are currently down
   numericActiveColDown++;
@@ -2667,7 +2682,7 @@ void handleGlobalSettingNewTouch() {
       }
       else {
         if (sensorRow == 1) {
-          setDisplayMode(displayOsVersion);
+          //setDisplayMode(displayOsVersion);                  // this is now handled on release instead, to accomodate  microLinnConfig
         }
         // reset feature
         else if ((sensorRow == 2 && cell(sensorCol, 0).touched != untouchedCell) ||
@@ -3057,6 +3072,9 @@ void handleGlobalSettingNewTouch() {
 
     case 16:
       switch (sensorRow) {
+        case 1: 
+          setLed(sensorCol, sensorRow, globalColor, cellSlowPulse);                        // for microLinnConfig
+          break;
         case 2:
           if (displayMode != displayReset) {
             setLed(sensorCol, sensorRow, globalColor, cellSlowPulse);
@@ -3192,6 +3210,11 @@ void handleGlobalSettingHold() {
 
       case 16:
         switch (sensorRow) {
+          case 1:
+            resetNumericDataChange();
+            setDisplayMode(displayMicroLinnConfig);                       // config EDO, anchor data, etc.
+            updateDisplay();
+            break;
           // handle switch to/from User Firmware Mode
           case 2:
             // ensure that this is not a reset operation instead
@@ -3217,7 +3240,7 @@ void handleGlobalSettingHold() {
       // fill in all 30 spaces of the message
       int strl = strlen(Device.audienceMessages[audienceMessageToEdit]);
       byte maxLen = 30;
-      if (audienceMessageToEdit == microLinnMsg) {
+      if (audienceMessageToEdit == microLinnMsg) {                        // truncate message, store skipFretting/microLinn data there
         maxLen = microLinnMsgLength;
       }
       if (strl < maxLen) {
@@ -3302,8 +3325,11 @@ void handleGlobalSettingRelease() {
     }
   }
   else if (sensorCol == 16) {
+      if (sensorRow == 1) {                       // now handled here on release not on touch, to accomodate microLinnConfig
+        setDisplayMode(displayOsVersion);
+      }
       // Toggle UPDATE OS value
-      if (sensorRow == 2) {
+      else if (sensorRow == 2) {
         byte resetColor = COLOR_BLACK;
         CellDisplay resetDisplay = cellOff;
         if (Device.serialMode) {

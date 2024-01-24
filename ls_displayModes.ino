@@ -60,6 +60,7 @@ displaySequencerDrum0107      : sequencer first 7 drum notes
 displaySequencerDrum0814      : sequencer second 7 drum notes
 displaySequencerColors        : sequencer low row colors
 displayCustomLedsEditor       : editor for custom LEDs
+displayMicroLinnConfig        : editor for EDO and anchor data
 
 These routines handle the painting of these display modes on LinnStument's 208 LEDs.
 **************************************************************************************************/
@@ -229,6 +230,9 @@ void updateDisplay() {
       break;
     case displayCustomLedsEditor:
       paintCustomLedsEditor();
+      break;
+    case displayMicroLinnConfig:
+      paintMicroLinnConfig();
       break;
   }
 
@@ -1271,6 +1275,32 @@ void paintGuitarTuning() {
   paintNoteDataDisplay(globalColor, Global.guitarTuning[guitarTuningRowNum], LINNMODEL == 200 ? 2 : 1);
 }
 
+void paintMicroLinnConfig() {
+  clearDisplay();
+
+  for (byte r = 0; r < NUMROWS; ++r) {
+    setLed(1, r, microLinnConfigRowNum == r ? Split[LEFT].colorAccent : Split[LEFT].colorMain, cellOn);
+    if (r == 3) {r = 6;}   // skip over rows 4-6
+  }
+  switch (sensorRow) {    
+    case 0:    // anchorCents
+      paintNumericDataDisplay(globalColor, microLinn->anchorCents, LINNMODEL == 200 ? 2 : 1);
+      break;
+    case 1:    // anchorNote
+      paintNoteDataDisplay   (globalColor, microLinn->anchorNote, LINNMODEL == 200 ? 2 : 1);
+      break;
+    case 2:    // anchorCol
+      paintNumericDataDisplay(globalColor, microLinn->anchorCol, LINNMODEL == 200 ? 2 : 1);
+      break;
+    case 3:    // anchorRow
+      paintNumericDataDisplay(globalColor, 8 - microLinn->anchorRow, LINNMODEL == 200 ? 2 : 1);
+      break;      
+    case 7:    // EDO
+      paintNumericDataDisplay(globalColor, microLinn->EDO, LINNMODEL == 200 ? 2 : 1);
+      break;
+  }
+}
+
 void paintMIDIThrough() {
   clearDisplay();
   if (Device.midiThrough) {
@@ -1377,21 +1407,6 @@ void paintVolumeDisplay(byte side) {
   clearDisplay();
   paintVolumeDisplayRow(side);
   paintShowSplitSelection(side);
-
-  if (isSkipFretting(side)) {                         // skip fretting
-    setLed(1, 0, Split[side].colorMain, cellOn);
-  }
-  if (microLinn->skipFretting[side]) { 
-    setLed(1, 1, Split[side].colorMain, cellOn);
-  }
-  if (microLinn->EDO == 12) {                         // EDO if not 12
-    setLed(1, 2, Split[side].colorMain, cellOn);
-  } else if (microLinn->EDO > 0) {
-    setLed(1, 2, Split[side].colorAccent, cellOn);
-  }
-  if (microLinn->anchorPad != 0) { 
-    setLed(2, 0, Split[side].colorMain, cellOn);
-  }
 }
 
 void paintVolumeDisplayRow(byte side) {

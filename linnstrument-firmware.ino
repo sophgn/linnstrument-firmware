@@ -485,7 +485,8 @@ enum DisplayMode {
   displaySequencerDrum0107,
   displaySequencerDrum0814,
   displaySequencerColors,
-  displayCustomLedsEditor
+  displayCustomLedsEditor,
+  displayMicroLinnConfig
 };
 DisplayMode displayMode = displayNormal;
 
@@ -896,7 +897,7 @@ SkipFrettingData skipFrettingData[NUMSPLITS];
 
 // SKIP FRETTING: NEW WAY =============================================
 // shorten the message by 6 bytes, store the user's settings there
-const byte microLinnMsg = 9;           // "HELLO NEW YORK!"  (but use SF msg while debugging)
+const byte microLinnMsg = 7;           // "HELLO NEW YORK!"
 const byte microLinnMsgLength = 24;    // 30 minus the 6 bytes we need for data storage makes 24 chars left
 
 struct MicroLinn {              // overlaps the audience messages array
@@ -934,8 +935,8 @@ void updateMicroLinnVars () {
   microLinnEDOtone = 2 * round (microLinn->EDO * log (3/2) / log (2)) - microLinn->EDO;       // whole tone = 9/8, calc as two 5ths minus an octave
 }
 
-byte microLinnMidiNote[NUMSPLITS][MAXROWS][MAXCOLS-1];                     // the midi note that is output for each pad
-float microLinnFineTuning[NUMSPLITS][MAXROWS][MAXCOLS-1];                  // the deviation from 12edo for each pad
+byte microLinnMidiNote[NUMSPLITS][MAXROWS][MAXCOLS-1];          // the midi note that is output for each pad
+float microLinnFineTuning[NUMSPLITS][MAXROWS][MAXCOLS-1];       // the deviation from 12edo for each pad, as a pitch bend number from -8K to 8K-1
 float microLinnTuningBends[NUMSPLITS][16][10];                  // 16 midi channels, up to 10 touches, tuning bends come from microLinnFineTuning
 float microLinnSlideBends[NUMSPLITS][16][10];                   // 16 midi channels, up to 10 touches, slide bends come from sliding along the Linnstrument
 
@@ -1193,6 +1194,8 @@ short restrictedRow = -1;                           // temporarily restrict touc
 byte guitarTuningRowNum = 0;                        // active row number for configuring the guitar tuning
 short guitarTuningPreviewNote = -1;                 // active note that is previewing the guitar tuning pitch
 short guitarTuningPreviewChannel = -1;              // active channel that is previewing the guitar tuning pitch
+
+byte microLinnRowNum = 0;                           // active row number for configuring the EDO and anchor data
 
 byte customLedColor = COLOR_GREEN;                  // color is used for drawing in the custom LED editor
 
@@ -1485,8 +1488,6 @@ void setup() {
     updateDisplay();
   }
 
-initializeMicroLinn ();                       // for skipFretting
-
 #ifdef DISPLAY_XFRAME_AT_LAUNCH
   #define DEBUG_ENABLED
   Device.serialMode = true;
@@ -1516,6 +1517,8 @@ initializeMicroLinn ();                       // for skipFretting
   Device.serialMode = true;
   SWITCH_FREERAM = true;
 #endif
+
+  initializeMicroLinn ();                       // for skipFretting, doesn't seem to run ???
 
   setupDone = true;
 

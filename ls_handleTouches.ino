@@ -706,6 +706,9 @@ void handleNonPlayingTouch() {
     case displayCustomLedsEditor:
       handleCustomLedsEditorNewTouch();
       break;
+    case displayMicroLinnConfig:
+      handleMicroLinnConfigNewTouch();
+      break;
   }
 }
 
@@ -1633,6 +1636,9 @@ boolean handleNonPlayingRelease() {
         break;
       case displayCustomLedsEditor:
         handleCustomLedsEditorRelease();
+        break;
+      case displayMicroLinnConfig:
+        handleMicroLinnConfigRelease();
         break;
       default:
         return false;
