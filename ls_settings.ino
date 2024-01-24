@@ -1616,6 +1616,8 @@ void handlePerSplitSettingHold() {
             checkSkipFrettingAudienceMessage ();
             skipFretting[LEFT]  = ASCII_TRUE;
             skipFretting[RIGHT] = ASCII_TRUE;
+            microLinn->skipFretting[LEFT] = true;
+            microLinn->skipFretting[RIGHT] = true;
             setDisplayMode(displayNormal);
             updateDisplay();
             break;
@@ -1733,6 +1735,7 @@ void handlePerSplitSettingRelease() {
             } else {
               skipFretting[Global.currentPerSplit] = ASCII_TRUE;
             }
+            microLinn->skipFretting[Global.currentPerSplit] = !microLinn->skipFretting[Global.currentPerSplit];
           }
           break;
       }

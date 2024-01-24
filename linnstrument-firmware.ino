@@ -896,7 +896,7 @@ SkipFrettingData skipFrettingData[NUMSPLITS];
 
 // SKIP FRETTING: NEW WAY =============================================
 // shorten the message by 6 bytes, store the user's settings there
-const byte microLinnMsg = 8;           // "HELLO NEW YORK!"  (but use SF msg while debugging)
+const byte microLinnMsg = 9;           // "HELLO NEW YORK!"  (but use SF msg while debugging)
 const byte microLinnMsgLength = 24;    // 30 minus the 6 bytes we need for data storage makes 24 chars left
 
 struct MicroLinn {              // overlaps the audience messages array
@@ -972,7 +972,7 @@ void microLinnMapPadToMidi () {                                                 
 }
 
 void initializeMicroLinn () {
-  if (microLinn->nullTerminator != '/0'      // if user had lengthened the audience message and we haven't truncated it yet,
+  if (microLinn->nullTerminator != '/0'       // if user had lengthened the audience message and we haven't truncated it yet,
    || microLinn->EDO == 0) {                  // or if user has never set the EDO, then this fork is running for the very first time
     microLinn->nullTerminator = '/0';
     microLinn->EDO = 12;                      
@@ -1255,6 +1255,8 @@ void reset() {
   initializeLastMidiTracking();
 
   initializeSwitches();
+
+  initializeMicroLinn ();          // for skipFretting
 }
 
 boolean switchPressAtStartup(byte switchRow) {

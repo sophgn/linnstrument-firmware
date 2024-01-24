@@ -1378,18 +1378,18 @@ void paintVolumeDisplay(byte side) {
   paintVolumeDisplayRow(side);
   paintShowSplitSelection(side);
 
-  if (microLinn->skipFretting[LEFT]) {                 // skip fretting
-    setLed(1, 0, Split[LEFT].colorMain, cellOn);
+  if (isSkipFretting(side)) {                         // skip fretting
+    setLed(1, 0, Split[side].colorMain, cellOn);
   }
-  if (microLinn->skipFretting[RIGHT]) { 
-    setLed(1, 1, Split[RIGHT].colorMain, cellOn);
+  if (microLinn->skipFretting[side]) { 
+    setLed(1, 1, Split[side].colorMain, cellOn);
   }
   if (microLinn->EDO == 12) {                         // EDO if not 12
-    setLed(1, 3, Split[side].colorMain, cellOn);
+    setLed(1, 2, Split[side].colorMain, cellOn);
   } else if (microLinn->EDO > 0) {
-    setLed(1, 3, Split[side].colorAccent, cellOn);
+    setLed(1, 2, Split[side].colorAccent, cellOn);
   }
-  if (microLinn->anchorCents != 0) {                  // cents if not 0
+  if (microLinn->anchorPad != 0) { 
     setLed(2, 0, Split[side].colorMain, cellOn);
   }
 }
