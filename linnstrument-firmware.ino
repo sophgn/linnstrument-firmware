@@ -970,7 +970,8 @@ void microLinnMapPadToMidi () {                                                 
     }
   }
 }
-// should be called in setup(), but it doesn't work, so it's called when user enters skipfretting or displayMicroLinnConfig
+
+// should be called in setup(), but it doesn't work, so it's called when user enters displayMicroLinnConfig or maybe activates skipfretting
 void initializeMicroLinn () {                 
   if (microLinn->nullTerminator != '/0'       // if user had lengthened the audience message and we haven't truncated it yet,
    || microLinn->EDO == 0) {                  // or if user has never set the EDO, then this fork must be running for the very first time
@@ -986,6 +987,24 @@ void initializeMicroLinn () {
   microLinnAnchorRowUser = 8 - microLinnAnchorRow;
   microLinnAnchorCol = microLinn->anchorPad >> 3;
   microLinnMapPadToMidi ();
+}
+
+// called when user enters displayMicroLinnConfig
+void initializeMicroLinn2 () {                 
+  if (microLinn->nullTerminator != '/0'       // if user had lengthened the audience message and we haven't truncated it yet,
+   || microLinn->EDO == 0) {                  // or if user has never set the EDO, then this fork must be running for the very first time
+    microLinn->nullTerminator = '/0';
+    microLinn->EDO = 12;                      
+    microLinn->anchorPad = 53;                // in 12edo, anchorPad and anchorNote are ignored
+    microLinn->anchorNote = 62;               // D3, Kite guitar standard tuning
+    microLinn->anchorCents = 0;
+    microLinn->skipFretting[LEFT] = false;
+    microLinn->skipFretting[RIGHT] = false;
+    microLinnAnchorRow = microLinn->anchorPad % 8;
+    microLinnAnchorRowUser = 8 - microLinnAnchorRow;
+    microLinnAnchorCol = microLinn->anchorPad >> 3;
+    microLinnMapPadToMidi ();
+  }
 }
 
 

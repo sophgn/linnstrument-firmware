@@ -1619,6 +1619,7 @@ void handlePerSplitSettingHold() {
             microLinn->skipFretting[RIGHT] = true;
             microLinn->EDO = 41;
             updateMicroLinnVars ();
+            microLinnMapPadToMidi();
             setDisplayMode(displayNormal);
             updateDisplay();
             break;
@@ -1738,6 +1739,7 @@ void handlePerSplitSettingRelease() {
             }
             //initializeMicroLinn();                            // should be done in setup() instead, but I can't make it work
             microLinn->skipFretting[Global.currentPerSplit] = !microLinn->skipFretting[Global.currentPerSplit];
+            microLinnMapPadToMidi();
           }
           break;
       }
@@ -2190,6 +2192,7 @@ void handleSplitHandednessNewTouch() {
 }
 
 void handleSplitHandednessRelease() {
+  microLinnMapPadToMidi();
   handleNumericDataReleaseCol(false);
 }
 
@@ -2234,7 +2237,7 @@ void handleGuitarTuningRelease() {
 }
 
 void handleMicroLinnConfigNewTouch() {
-  initializeMicroLinn();
+  initializeMicroLinn2();
   if (sensorCol == 1) {
     if (sensorRow != 4 && sensorRow < 6) {
       microLinnConfigRowNum = sensorRow;
@@ -2263,6 +2266,7 @@ void handleMicroLinnConfigNewTouch() {
 
 void handleMicroLinnConfigRelease() {
   updateMicroLinnVars();
+  microLinnMapPadToMidi();
   handleNumericDataReleaseCol(true);
 }
 
@@ -2494,6 +2498,7 @@ void handleOctaveTransposeNewTouchSplit(byte side) {
 }
 
 void handleOctaveTransposeRelease() {
+  microLinnMapPadToMidi();
   handleShowSplit();  // see if one of the "Show Split" cells have been hit
 }
 
@@ -3084,7 +3089,7 @@ void handleGlobalSettingNewTouch() {
     case 16:
       switch (sensorRow) {
         case 1: 
-          setLed(sensorCol, sensorRow, globalColor, cellSlowPulse);                        // now handled on release, for microLinnConfig
+          setLed(sensorCol, sensorRow, globalColor, cellSlowPulse);          // now handled here on release, for microLinnConfig to work
           break;
         case 2:
           if (displayMode != displayReset) {
@@ -3223,7 +3228,7 @@ void handleGlobalSettingHold() {
         switch (sensorRow) {
           case 1:
             resetNumericDataChange();
-            setDisplayMode(displayMicroLinnConfig);                // config EDO, anchor data, etc.
+            setDisplayMode(displayMicroLinnConfig);                // config EDO and anchor data
             updateDisplay();
             break;
           case 2:                                                  // handle switch to/from User Firmware Mode
@@ -3272,6 +3277,7 @@ void handleGlobalSettingRelease() {
   if (sensorCol == 1 && sensorRow == 3 &&
       ensureCellBeforeHoldWait(getSplitHandednessColor(), Device.otherHanded ? cellOn : cellOff)) {
     Device.otherHanded = !Device.otherHanded;
+    microLinnMapPadToMidi();
   }
   else if (sensorCol == 6 && sensorRow == 2 &&
       ensureCellBeforeHoldWait(globalColor, Global.rowOffset == ROWOFFSET_OCTAVECUSTOM ? cellOn : cellOff)) {
