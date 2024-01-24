@@ -895,19 +895,17 @@ SkipFrettingData skipFrettingData[NUMSPLITS];
 /******************************/
 
 
-// SKIP FRETTING: NEW WAY =============================================
-// shorten the message by 6 bytes, store the user's settings there
 /**************************************** SKIP FRETTING and MICROLINN ****************************************/
 
-const byte microLinnMsg = 7;           // "HELLO NEW YORK!"
+const byte microLinnMsg = 7;           // "HELLO NEW YORK!" will be truncated to make room for the user's settings
 const byte microLinnMsgLength = 24;    // 30 minus the 6 bytes we need for data storage makes 24 chars left
 
-struct MicroLinn {              // overlaps the audience messages array
-  char nullTerminator;          // truncates the audience message to 24 chars
-  byte EDO;                     // limited to 5-72
-  byte anchorPad;               // numbered 8-207, same for both splits, anchorPad = 8 * anchorCol + anchorRow
-  byte anchorNote;              // any midi note 0-127, same for both splits
-  signed char anchorCents;      // limited to ± 100 cents, same for both splits
+struct MicroLinn {                     // overlaps the audience messages array
+  char nullTerminator;                 // truncates the audience message to 24 chars
+  byte EDO;                            // limited to 5-72
+  byte anchorPad;                      // numbered 8-207, same for both splits, anchorPad = 8 * anchorCol + anchorRow
+  byte anchorNote;                     // any midi note 0-127, same for both splits
+  signed char anchorCents;             // limited to ± 100 cents, same for both splits
   boolean skipFretting[2];
 };
 MicroLinn* microLinn = (MicroLinn*)(Device.audienceMessages + 31 * microLinnMsg + microLinnMsgLength);
@@ -917,11 +915,11 @@ MicroLinn* microLinn = (MicroLinn*)(Device.audienceMessages + 31 * microLinnMsg 
 // then refer to skipFretting [LEFT], skipFretting [RIGHT], packs 2 booleans into 1 byte, set msglen to 25
 
 // anchorPad format:
-//           left edge   right edge
-// top row:  15 23 31... 135 or 207
+//           left edge    right edge
+// top row:  15 23 31...  135 or 207
 // 2nd row:  14 22 30...
 // ...
-// low row:   8 16 24... 128 or 200
+// low row:   8 16 24...  128 or 200
 
 byte microLinnAnchorRow;                        // numbered 0-7 bottom to top as usual
 byte microLinnAnchorRowUser;                    // what the user sees, numbered 1-8 top to bottom, more intuitive for the general public
@@ -972,8 +970,8 @@ void microLinnMapPadToMidi () {                                                 
     }
   }
 }
-
-void initializeMicroLinn () {
+// should be called in setup(), but it doesn't work, so it's called when user enters skipfretting or displayMicroLinnConfig
+void initializeMicroLinn () {                 
   if (microLinn->nullTerminator != '/0'       // if user had lengthened the audience message and we haven't truncated it yet,
    || microLinn->EDO == 0) {                  // or if user has never set the EDO, then this fork must be running for the very first time
     microLinn->nullTerminator = '/0';
@@ -1522,7 +1520,7 @@ void setup() {
   SWITCH_FREERAM = true;
 #endif
 
-  initializeMicroLinn ();
+  //initializeMicroLinn ();     // calling this here overwrites the user data on every power-up... audience messages hasn't been loaded yet?
 
   setupDone = true;
 

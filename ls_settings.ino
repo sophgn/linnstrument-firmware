@@ -1614,9 +1614,11 @@ void handlePerSplitSettingHold() {
             checkSkipFrettingAudienceMessage ();
             skipFretting[LEFT]  = ASCII_TRUE;
             skipFretting[RIGHT] = ASCII_TRUE;
+            //initializeMicroLinn();                            // should be done in setup() instead, but I can't make it work
             microLinn->skipFretting[LEFT] = true;
             microLinn->skipFretting[RIGHT] = true;
             microLinn->EDO = 41;
+            updateMicroLinnVars ();
             setDisplayMode(displayNormal);
             updateDisplay();
             break;
@@ -1734,6 +1736,7 @@ void handlePerSplitSettingRelease() {
             } else {
               skipFretting[Global.currentPerSplit] = ASCII_TRUE;
             }
+            //initializeMicroLinn();                            // should be done in setup() instead, but I can't make it work
             microLinn->skipFretting[Global.currentPerSplit] = !microLinn->skipFretting[Global.currentPerSplit];
           }
           break;
@@ -2231,6 +2234,7 @@ void handleGuitarTuningRelease() {
 }
 
 void handleMicroLinnConfigNewTouch() {
+  initializeMicroLinn();
   if (sensorCol == 1) {
     if (sensorRow != 4 && sensorRow < 6) {
       microLinnConfigRowNum = sensorRow;
@@ -3080,7 +3084,7 @@ void handleGlobalSettingNewTouch() {
     case 16:
       switch (sensorRow) {
         case 1: 
-          setLed(sensorCol, sensorRow, globalColor, cellSlowPulse);                        // for microLinnConfig
+          setLed(sensorCol, sensorRow, globalColor, cellSlowPulse);                        // now handled on release, for microLinnConfig
           break;
         case 2:
           if (displayMode != displayReset) {
