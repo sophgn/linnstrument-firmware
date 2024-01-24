@@ -2235,21 +2235,33 @@ void handleGuitarTuningRelease() {
 
 void handleMicroLinnConfigNewTouch() {
   if (sensorCol == 1) {
-    microLinnConfigRowNum = sensorRow;
-    updateDisplay();
+    if (sensorRow < 3 || sensorRow == 5) {
+      microLinnConfigRowNum = sensorRow;
+      updateDisplay();
+    }
   } else {
-    byte padRow;
-    switch (sensorRow) {
-      case 0: handleNumericDataNewTouchCol(microLinn->anchorCents, -100, 100, true); break;
-      case 1: handleNumericDataNewTouchCol(microLinn->anchorNote,     0, 127, true); break;
-      case 2: handleNumericDataNewTouchCol(microLinnAnchorCol,    0, NUMCOLS, true); break;
-      case 3: handleNumericDataNewTouchCol(padRow, 0, NUMCOLS, true); microLinnAnchorRow = 8 - padRow; break;
-      case 7: handleNumericDataNewTouchCol(microLinn->EDO,            5,  72, true); break;
+    switch (microLinnConfigRowNum) {
+      case 0: 
+        handleNumericDataNewTouchCol(microLinn->anchorCents, -100, 100, true); 
+        break;
+      case 1: 
+        handleNumericDataNewTouchCol(microLinn->anchorNote, 0, 127, true); 
+        break;
+      case 2: 
+        handleNumericDataNewTouchCol(microLinnAnchorCol, 1, NUMCOLS-1, true); 
+        break;
+      case 3: 
+        handleNumericDataNewTouchCol(microLinnAnchorRowUser, 1, 8, true);
+        break;
+      case 5: 
+        handleNumericDataNewTouchCol(microLinn->EDO, 5, 72, true); 
+        break;
     }
   }
 }
 
 void handleMicroLinnConfigRelease() {
+  microLinnAnchorRow = 8 - microLinnAnchorRowUser;
   microLinn->anchorPad = 8 * microLinnAnchorCol + microLinnAnchorRow;
   updateMicroLinnVars();
   handleNumericDataReleaseCol(true);
@@ -3212,13 +3224,11 @@ void handleGlobalSettingHold() {
         switch (sensorRow) {
           case 1:
             resetNumericDataChange();
-            setDisplayMode(displayMicroLinnConfig);                       // config EDO, anchor data, etc.
+            setDisplayMode(displayMicroLinnConfig);                // config EDO, anchor data, etc.
             updateDisplay();
             break;
-          // handle switch to/from User Firmware Mode
-          case 2:
-            // ensure that this is not a reset operation instead
-            if (cell(16, 0).touched == untouchedCell) {
+          case 2:                                                  // handle switch to/from User Firmware Mode
+            if (cell(16, 0).touched == untouchedCell) {            // ensure that this is not a reset operation instead
               changeUserFirmwareMode(!userFirmwareActive);
             }
             break;

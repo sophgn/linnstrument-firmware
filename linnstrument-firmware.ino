@@ -920,10 +920,8 @@ MicroLinn* microLinn = (MicroLinn*)(Device.audienceMessages + 31 * microLinnMsg 
 // ...
 // low row:  8 16 24... 128 or 200
 
-// anchorNote is stored as a midi note 0-127, but it's displayed as a note plus an octave number, as in the guitar tuning screen
-// anchorRow is stored as 0-7 but displayed as 8-1 (top row is #1), more intuitive for the general public
-
-byte microLinnAnchorRow;                        // numbered 0-7 as usual
+byte microLinnAnchorRow;                        // numbered 0-7 bottom to top as usual
+byte microLinnAnchorRowUser;                    // what the user sees, numbered 1-8 top to bottom, more intuitive for the general public
 byte microLinnAnchorCol;                        // numbered 1-25 as usual
 float microLinnAnchorPitch;                     // midi note, but with decimals
 byte microLinnEDOtone;                          // 9/8 in edosteps, used in transposing
