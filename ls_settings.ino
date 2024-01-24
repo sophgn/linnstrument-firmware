@@ -2235,7 +2235,7 @@ void handleGuitarTuningRelease() {
 
 void handleMicroLinnConfigNewTouch() {
   if (sensorCol == 1) {
-    if (sensorRow < 3 || sensorRow == 5) {
+    if (sensorRow <= 3 || sensorRow == 5) {
       microLinnConfigRowNum = sensorRow;
       updateDisplay();
     }
