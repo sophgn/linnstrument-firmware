@@ -915,10 +915,11 @@ MicroLinn* microLinn = (MicroLinn*)(Device.audienceMessages + 31 * microLinnMsg 
 // then refer to skipFretting [LEFT], skipFretting [RIGHT], packs 2 booleans into 1 byte, set msglen to 25
 
 // anchorPad format:
-// top row: 15 23 31... 135 or 207
-// 2nd row: 14 22 30...
+//           left edge   right edge
+// top row:  15 23 31... 135 or 207
+// 2nd row:  14 22 30...
 // ...
-// low row:  8 16 24... 128 or 200
+// low row:   8 16 24... 128 or 200
 
 byte microLinnAnchorRow;                        // numbered 0-7 bottom to top as usual
 byte microLinnAnchorRowUser;                    // what the user sees, numbered 1-8 top to bottom, more intuitive for the general public
@@ -927,7 +928,7 @@ float microLinnAnchorPitch;                     // midi note, but with decimals
 byte microLinnEDOtone;                          // 9/8 in edosteps, used in transposing
 
 void updateMicroLinnVars () {
-  microLinnAnchorRow = microLinn->anchorPad & 0x07; 
+  microLinnAnchorRow = microLinn->anchorPad % 8; 
   microLinnAnchorCol = microLinn->anchorPad >> 3;
   microLinnAnchorPitch = microLinn->anchorNote + microLinn->anchorCents/100;
   microLinnEDOtone = 2 * round (microLinn->EDO * log (3/2) / log (2)) - microLinn->EDO;       // whole tone = 9/8, calc as two 5ths minus an octave
