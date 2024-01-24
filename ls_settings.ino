@@ -386,10 +386,12 @@ void initializeDeviceSettings() {
 
   initializeAudienceMessages();
 
+  initializeMicroLinn ();
+
   memcpy(&Device.customLeds[0][0], &CUSTOM_LEDS_PATTERN1[0], LED_LAYER_SIZE);
   memcpy(&Device.customLeds[1][0], &CUSTOM_LEDS_PATTERN2[0], LED_LAYER_SIZE);      // two rainbow zones for 41edo skipFretting
   memcpy(&Device.customLeds[2][0], &CUSTOM_LEDS_PATTERN3[0], LED_LAYER_SIZE);      // two green kites for 41edo Kite guitar
-  //memset(&Device.customLeds[2][0], 0, LED_LAYER_SIZE);                           // what the official code did - blank pattern
+  //memset(&Device.customLeds[2][0], 0, LED_LAYER_SIZE);                           // what the official code used to do - blank pattern
 }
 
 void initializeAudienceMessages() {
@@ -2303,6 +2305,14 @@ void handleVolumeNewTouch(boolean newVelocity) {
     return;
   }
 
+  if (sensorRow <= 3) {                              // skipFretting and microLinn uses rows 0-3
+    // skipFretting code and microLinn code goes here
+    // see handleTempoNewTouch function
+    // 5 new display modes:
+    // displayVolumeWithEDO, displayVolumeWithAnchorRow/Col/Note/Cents
+    return;
+  }
+
   if (sensorCell->velocity) {
     // if a touch is already down, only consider new touches from the same row
     // this allows the volume slider to be used anywhere on the surface and
@@ -2478,6 +2488,7 @@ boolean isArpeggiatorTempoTriplet() {
   return Global.arpTempo == ArpEighthTriplet || Global.arpTempo == ArpSixteenthTriplet || Global.arpTempo == ArpThirtysecondTriplet;
 }
 
+// copy this code for skipFretting and microLinn-- set EDO, etc. this way
 void handleTempoNewTouch() {
   // keep track of how many cells are currently down
   numericActiveColDown++;
@@ -3202,12 +3213,16 @@ void handleGlobalSettingHold() {
 
       // fill in all 30 spaces of the message
       int strl = strlen(Device.audienceMessages[audienceMessageToEdit]);
-      if (strl < 30) {
-        for (byte ch = strl; ch < 30; ++ch) {
-          Device.audienceMessages[audienceMessageToEdit][ch] = ' ';
+      byte maxLen = 30;
+      if (audienceMessageToEdit == microLinnMsg) {
+        maxLen = microLinnMsgLength;
+      }
+      if (strl < maxLen) {
+        for (byte ch = strl; ch < maxLen; ++ch) {
+          Device.audienceMessages[audienceMessageToEdit][ch] = ' ';       // extend to full length will trailing spaces
         }
       }
-      Device.audienceMessages[audienceMessageToEdit][30] = '\0';
+      Device.audienceMessages[audienceMessageToEdit][maxLen] = '\0';      // null-terminated
 
       // calculate the length of the message to edit
       audienceMessageLength = font_width_string(Device.audienceMessages[audienceMessageToEdit], &bigFont) - NUMCOLS;
