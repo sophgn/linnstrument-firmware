@@ -897,6 +897,8 @@ SkipFrettingData skipFrettingData[NUMSPLITS];
 
 // SKIP FRETTING: NEW WAY =============================================
 // shorten the message by 6 bytes, store the user's settings there
+/**************************************** SKIP FRETTING and MICROLINN ****************************************/
+
 const byte microLinnMsg = 7;           // "HELLO NEW YORK!"
 const byte microLinnMsgLength = 24;    // 30 minus the 6 bytes we need for data storage makes 24 chars left
 
@@ -927,19 +929,19 @@ byte microLinnAnchorCol;                        // numbered 1-25 as usual
 float microLinnAnchorPitch;                     // midi note, but with decimals
 byte microLinnEDOtone;                          // 9/8 in edosteps, used in transposing
 
-void updateMicroLinnVars () {
-  microLinnAnchorRow = microLinn->anchorPad % 8; 
-  microLinnAnchorCol = microLinn->anchorPad >> 3;
+void updateMicroLinnVars () {                                   // called after user uses displayMicroLinnConfig
+  microLinnAnchorRow = 8 - microLinnAnchorRowUser;
+  microLinn->anchorPad = 8 * microLinnAnchorCol + microLinnAnchorRow;
   microLinnAnchorPitch = microLinn->anchorNote + microLinn->anchorCents/100;
-  microLinnEDOtone = 2 * round (microLinn->EDO * log (3/2) / log (2)) - microLinn->EDO;       // whole tone = 9/8, calc as two 5ths minus an octave
+  microLinnEDOtone = 2 * round (microLinn->EDO * log (3/2) / log (2)) - microLinn->EDO;     // whole tone = 9/8, calc as two 5ths minus an octave
 }
 
-byte microLinnMidiNote[NUMSPLITS][MAXROWS][MAXCOLS-1];          // the midi note that is output for each pad
-float microLinnFineTuning[NUMSPLITS][MAXROWS][MAXCOLS-1];       // the deviation from 12edo for each pad, as a pitch bend number from -8K to 8K-1
-float microLinnTuningBends[NUMSPLITS][16][10];                  // 16 midi channels, up to 10 touches, tuning bends come from microLinnFineTuning
-float microLinnSlideBends[NUMSPLITS][16][10];                   // 16 midi channels, up to 10 touches, slide bends come from sliding along the Linnstrument
+byte microLinnMidiNote[NUMSPLITS][MAXROWS][MAXCOLS-1];         // the midi note that is output for each pad
+float microLinnFineTuning[NUMSPLITS][MAXROWS][MAXCOLS-1];      // the deviation from 12edo for each pad, as a pitch bend number from -8K to 8K-1
+float microLinnTuningBend[NUMSPLITS][16][10];                  // 16 midi channels, up to 10 touches, tuning bends come from microLinnFineTuning
+float microLinnSlideBend[NUMSPLITS][16][10];                   // 16 midi channels, up to 10 touches, slide bends come from sliding along the Linnstrument
 
-short microLinnSumRowOffsets (byte row1, byte row2) {
+short microLinnSumOfRowOffsets (byte row1, byte row2) {
   switch (Global.rowOffset) {
     case ROWOFFSET_OCTAVECUSTOM: return Global.customRowOffset  * (row1 - row2);
     case ROWOFFSET_GUITAR:       return Global.guitarTuning[row1] - Global.guitarTuning[row2];
@@ -956,7 +958,7 @@ void microLinnMapPadToMidi () {                                                 
         short padDistance = col - microLinnAnchorCol;                            // distance from the anchor pad in edosteps
         if (isLeftHandedSplit(side)) {padDistance *= -1;}
         if (microLinn->skipFretting[side]) {padDistance *= 2;}
-        padDistance += microLinnSumRowOffsets (microLinnAnchorRow, row);
+        padDistance += microLinnSumOfRowOffsets (microLinnAnchorRow, row);
         padDistance += Split[side].transposeOctave * microLinn->EDO;
         padDistance += Split[side].transposePitch * microLinnEDOtone;
         padDistance += Split[side].transposeLights;
@@ -973,18 +975,21 @@ void microLinnMapPadToMidi () {                                                 
 
 void initializeMicroLinn () {
   if (microLinn->nullTerminator != '/0'       // if user had lengthened the audience message and we haven't truncated it yet,
-   || microLinn->EDO == 0) {                  // or if user has never set the EDO, then this fork is running for the very first time
+   || microLinn->EDO == 0) {                  // or if user has never set the EDO, then this fork must be running for the very first time
     microLinn->nullTerminator = '/0';
     microLinn->EDO = 12;                      
-    microLinn->anchorPad = 44;                // in 12edo, anchorPad and anchorNote are ignored
+    microLinn->anchorPad = 53;                // in 12edo, anchorPad and anchorNote are ignored
     microLinn->anchorNote = 62;               // D3, Kite guitar standard tuning
     microLinn->anchorCents = 0;
     microLinn->skipFretting[LEFT] = false;
     microLinn->skipFretting[RIGHT] = false;
   }
-  updateMicroLinnVars ();
+  microLinnAnchorRow = microLinn->anchorPad % 8;
+  microLinnAnchorRowUser = 8 - microLinnAnchorRow;
+  microLinnAnchorCol = microLinn->anchorPad >> 3;
   microLinnMapPadToMidi ();
 }
+
 
 /**************************************** SECRET SWITCHES ****************************************/
 
@@ -1517,7 +1522,7 @@ void setup() {
   SWITCH_FREERAM = true;
 #endif
 
-  initializeMicroLinn ();                       // for skipFretting, doesn't seem to run ???
+  initializeMicroLinn ();
 
   setupDone = true;
 

@@ -386,8 +386,6 @@ void initializeDeviceSettings() {
 
   initializeAudienceMessages();
 
-  //initializeMicroLinn ();
-
   memcpy(&Device.customLeds[0][0], &CUSTOM_LEDS_PATTERN1[0], LED_LAYER_SIZE);
   memcpy(&Device.customLeds[1][0], &CUSTOM_LEDS_PATTERN2[0], LED_LAYER_SIZE);      // two rainbow zones for 41edo skipFretting
   memcpy(&Device.customLeds[2][0], &CUSTOM_LEDS_PATTERN3[0], LED_LAYER_SIZE);      // two green kites for 41edo Kite guitar
@@ -1616,7 +1614,6 @@ void handlePerSplitSettingHold() {
             checkSkipFrettingAudienceMessage ();
             skipFretting[LEFT]  = ASCII_TRUE;
             skipFretting[RIGHT] = ASCII_TRUE;
-            //initializeMicroLinn();
             microLinn->skipFretting[LEFT] = true;
             microLinn->skipFretting[RIGHT] = true;
             microLinn->EDO = 41;
@@ -2261,8 +2258,6 @@ void handleMicroLinnConfigNewTouch() {
 }
 
 void handleMicroLinnConfigRelease() {
-  microLinnAnchorRow = 8 - microLinnAnchorRowUser;
-  microLinn->anchorPad = 8 * microLinnAnchorCol + microLinnAnchorRow;
   updateMicroLinnVars();
   handleNumericDataReleaseCol(true);
 }
