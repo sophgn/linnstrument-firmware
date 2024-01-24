@@ -1223,7 +1223,7 @@ inline unsigned short calculatePreferredPressureRange(unsigned short sensorRange
 
 /********************************************** SETUP ********************************************/
 
-void reset() {
+void reset() {                                // called when user presses updateOS and notesOff simultaneously, among other times
   lastReset = millis();
 
   Global.currentPerSplit = LEFT;
@@ -1256,7 +1256,6 @@ void reset() {
 
   initializeSwitches();
 
-  initializeMicroLinn ();          // for skipFretting
 }
 
 boolean switchPressAtStartup(byte switchRow) {
@@ -1485,6 +1484,8 @@ void setup() {
     // update the display for the last state
     updateDisplay();
   }
+
+initializeMicroLinn ();                       // for skipFretting
 
 #ifdef DISPLAY_XFRAME_AT_LAUNCH
   #define DEBUG_ENABLED
