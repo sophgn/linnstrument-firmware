@@ -2250,7 +2250,7 @@ void handleMicroLinnConfigNewTouch() {
 }
 
 void handleMicroLinnConfigRelease() {
-  microLinn->anchorPad = 8 * microLinn->anchorCol + microLinn->anchorRow;
+  microLinn->anchorPad = 8 * microLinnAnchorCol + microLinnAnchorRow;
   updateMicroLinnVars();
   handleNumericDataReleaseCol(true);
 }

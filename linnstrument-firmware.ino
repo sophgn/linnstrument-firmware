@@ -1195,7 +1195,7 @@ byte guitarTuningRowNum = 0;                        // active row number for con
 short guitarTuningPreviewNote = -1;                 // active note that is previewing the guitar tuning pitch
 short guitarTuningPreviewChannel = -1;              // active channel that is previewing the guitar tuning pitch
 
-byte microLinnRowNum = 0;                           // active row number for configuring the EDO and anchor data
+byte microLinnConfigRowNum = 0;                     // active row number for configuring the EDO and anchor data
 
 byte customLedColor = COLOR_GREEN;                  // color is used for drawing in the custom LED editor
 

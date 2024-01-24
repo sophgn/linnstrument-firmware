@@ -1284,19 +1284,19 @@ void paintMicroLinnConfig() {
   }
   switch (sensorRow) {    
     case 0:    // anchorCents
-      paintNumericDataDisplay(globalColor, microLinn->anchorCents, LINNMODEL == 200 ? 2 : 1);
+      paintNumericDataDisplay(globalColor, microLinn->anchorCents, 0, false);
       break;
     case 1:    // anchorNote
       paintNoteDataDisplay   (globalColor, microLinn->anchorNote, LINNMODEL == 200 ? 2 : 1);
       break;
     case 2:    // anchorCol
-      paintNumericDataDisplay(globalColor, microLinn->anchorCol, LINNMODEL == 200 ? 2 : 1);
-      break;
+      paintNumericDataDisplay(globalColor, microLinnAnchorCol, 0, false);
+      break;  
     case 3:    // anchorRow
-      paintNumericDataDisplay(globalColor, 8 - microLinn->anchorRow, LINNMODEL == 200 ? 2 : 1);
+      paintNumericDataDisplay(globalColor, 8 - microLinnAnchorRow, 0, false);
       break;      
     case 7:    // EDO
-      paintNumericDataDisplay(globalColor, microLinn->EDO, LINNMODEL == 200 ? 2 : 1);
+      paintNumericDataDisplay(globalColor, microLinn->EDO, 0, false);
       break;
   }
 }
