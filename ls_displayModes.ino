@@ -1377,6 +1377,19 @@ void paintVolumeDisplay(byte side) {
   clearDisplay();
   paintVolumeDisplayRow(side);
   paintShowSplitSelection(side);
+
+  if (MicroLinn->skipFretting[LEFT) {                 // skip fretting
+    setLed(1, 0, Split[LEFT].colorMain, cellOn);
+  }
+  if (MicroLinn->skipFretting[RIGHT) { 
+    setLed(1, 1, Split[RIGHT].colorMain, cellOn);
+  }
+  if (MicroLinn->EDO != 12) {                         // EDO if not 12
+    setLed(1, 3, Split[side].colorMain, cellOn);
+  }
+  if (MicroLinn->anchorCents != 0) {                  // cents if not 0
+    setLed(2, 0, Split[side].colorMain, cellOn);
+  }
 }
 
 void paintVolumeDisplayRow(byte side) {
