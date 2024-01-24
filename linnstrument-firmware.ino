@@ -862,7 +862,7 @@ struct Configuration {
 };
 struct Configuration config;
 
-/*********************/ SKIP FRETTING: OLD WAY
+/********************* OLD WAY  ****************/
 // extend audience message #8 by 2 chars, to store the user's choice of skip fretting or not for each split as 2 pseudo-booleans
 const char ASCII_FALSE = ' ';                                                      // ascii 32, the lowest ascii char allowed in audienceMessages
 const char ASCII_TRUE  = '!';                                                      // ascii 33, the 2nd lowest, plus it looks good!
@@ -956,7 +956,7 @@ void microLinnMapPadToMidi () {                                                 
         short padDistance = col - microLinnAnchorCol;                            // distance from the anchor pad in edosteps
         if (isLeftHandedSplit(side)) {padDistance *= -1;}
         if (microLinn->skipFretting[side]) {padDistance *= 2;}
-        padDistance += sumRowOffsets (microLinnAnchorRow, row);
+        padDistance += microLinnSumRowOffsets (microLinnAnchorRow, row);
         padDistance += Split[side].transposeOctave * microLinn->EDO;
         padDistance += Split[side].transposePitch * microLinnEDOtone;
         padDistance += Split[side].transposeLights;
@@ -972,8 +972,8 @@ void microLinnMapPadToMidi () {                                                 
 }
 
 void initializeMicroLinn () {
-  if (microLinn->nullTerminator != '/0')      // if user had lengthened the audience message and we haven't truncated it yet,
-  || (microLinn->EDO == 0) {                  // or if user has never set the EDO, then this fork is running for the very first time
+  if (microLinn->nullTerminator != '/0'      // if user had lengthened the audience message and we haven't truncated it yet,
+   || microLinn->EDO == 0) {                  // or if user has never set the EDO, then this fork is running for the very first time
     microLinn->nullTerminator = '/0';
     microLinn->EDO = 12;                      
     microLinn->anchorPad = 44;                // in 12edo, anchorPad and anchorNote are ignored
