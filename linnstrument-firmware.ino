@@ -863,6 +863,9 @@ struct Configuration {
 };
 struct Configuration config;
 
+
+/**************************************** SKIP FRETTING and MICROLINN ****************************************/
+
 /********************* OLD WAY  ****************/
 // extend audience message #8 by 2 chars, to store the user's choice of skip fretting or not for each split as 2 pseudo-booleans
 const char ASCII_FALSE = ' ';                                                      // ascii 32, the lowest ascii char allowed in audienceMessages
@@ -892,10 +895,8 @@ struct SkipFrettingData {                           // used to keep track of tra
   signed char transposeArrow;
 };
 SkipFrettingData skipFrettingData[NUMSPLITS];
-/******************************/
 
-
-/**************************************** SKIP FRETTING and MICROLINN ****************************************/
+/****************** NEW WAY ************/
 
 const byte microLinnMsg = 7;           // "HELLO NEW YORK!" will be truncated to make room for the user's settings
 const byte microLinnMsgLength = 24;    // 30 minus the 6 bytes we need for data storage makes 24 chars left
@@ -984,7 +985,7 @@ void microLinnMapPadToMidi () {                                                 
 void initializeMicroLinn () {                 
   if (microLinn->nullTerminator != '/0'       // if user had lengthened the audience message and we haven't truncated it yet,
    || microLinn->EDO == 0) {                  // or if user has never set the EDO, then this fork must be running for the very first time
-    microLinn->nullTerminator = '/0';
+    microLinn->nullTerminator = 'x';
     microLinn->EDO = 12;                      
     microLinn->anchorPad = 53;                // in 12edo, anchorPad and anchorNote are ignored
     microLinn->anchorNote = 62;               // D3, Kite guitar standard tuning
@@ -1004,7 +1005,7 @@ void initializeMicroLinn2 () {
    || microLinn->EDO == 0) {                  // or if user has never set the EDO, then this fork must be running for the very first time
 //  if (Device.audienceMessages[microLinnMsg][microLinnMsgLength] != '/0' 
 //   || Device.audienceMessages[microLinnMsg][microLinnMsgLength + 1] == 0) {  
-    microLinn->nullTerminator = '/0';
+    microLinn->nullTerminator = 'z';
     microLinn->EDO = 12;                      
     microLinn->anchorPad = 53;                // in 12edo, anchorPad and anchorNote are ignored
     microLinn->anchorNote = 62;               // D3, Kite guitar standard tuning
@@ -1562,7 +1563,7 @@ void setup() {
   SWITCH_FREERAM = true;
 #endif
 
-  //initializeMicroLinn ();     // calling this here overwrites the user data on every power-up... audience messages hasn't been loaded yet?
+  initializeMicroLinn ();     // calling this here overwrites the user data on every power-up... audience messages hasn't been loaded yet?
 
   setupDone = true;
 
