@@ -1866,6 +1866,7 @@ boolean handleShowSplit() {
         if (displayMode != displayPreset &&
             displayMode != displayVolume &&
             displayMode != displayOctaveTranspose &&
+            displayMode != displayGuitarTuning &&      // these screens should never be exited on split change
             !isSequencerSettingsDisplayMode()) {
           setDisplayMode(displayPerSplit);
         }
@@ -2230,7 +2231,7 @@ void handleGuitarTuningNewTouch() {
 }
 
 void handleGuitarTuningRelease() {
-  handleNumericDataReleaseCol(true);
+  handleNumericDataReleaseCol(false); // false because guitar tuning editor does not do splits, fixes #5
   if (cellsTouched == 0) {
     ensureGuitarTuningPreviewNoteRelease();
   }
