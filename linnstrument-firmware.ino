@@ -934,12 +934,14 @@ boolean* microLinnSkipFretting = (boolean*)Device.audienceMessages + 31 * microL
 byte microLinnAnchorRow;                        // numbered 0-7 bottom to top as usual
 byte microLinnAnchorRowUser;                    // what the user sees, numbered 1-8 top to bottom, more intuitive for the general public
 byte microLinnAnchorCol;                        // numbered 1-25 as usual
+byte microLinnAnchorCentsUser;                  // what the user sees, ranges from -60 to 60, stored in the string as 4 to 114
 float microLinnAnchorPitch;                     // midi note, but with 2 decimal places for anchorCents
 byte microLinnEDOtone;                          // 9/8 in edosteps, used in transposing
 
 void updateMicroLinnVars () {                                   // called when user releases a touch in displayMicroLinnConfig
   microLinnAnchorRow = 8 - microLinnAnchorRowUser;
   microLinn->anchorPad = 8 * microLinnAnchorCol + microLinnAnchorRow;
+  microLinn->anchorCents = microLinnAnchorCentsUser + 64;
   microLinnAnchorPitch = microLinn->anchorNote + microLinn->anchorCents/100;
   microLinnEDOtone = 2 * round (microLinn->EDO * log (3/2) / log (2)) - microLinn->EDO;     // whole tone = 9/8, calc as two 5ths minus an octave
 }
@@ -1000,6 +1002,7 @@ void initializeMicroLinn () {
   microLinnAnchorRow = microLinn->anchorPad % 8;
   microLinnAnchorRowUser = 8 - microLinnAnchorRow;
   microLinnAnchorCol = microLinn->anchorPad >> 3;
+  microLinnAnchorCentsUser = microLinn->anchorCents - 64;
   microLinnAnchorPitch = microLinn->anchorNote + microLinn->anchorCents/100;
   microLinnEDOtone = 2 * round (microLinn->EDO * log (3/2) / log (2)) - microLinn->EDO;     // whole tone = 9/8, calc as two 5ths minus an octave
   microLinnMapPadToMidi ();
@@ -1019,6 +1022,7 @@ void initializeMicroLinn2 () {
     microLinnAnchorRow = microLinn->anchorPad % 8;
     microLinnAnchorRowUser = 8 - microLinnAnchorRow;
     microLinnAnchorCol = microLinn->anchorPad >> 3;
+    microLinnAnchorCentsUser = microLinn->anchorCents - 64;
     microLinnAnchorPitch = microLinn->anchorNote + microLinn->anchorCents/100;
     microLinnEDOtone = 2 * round (microLinn->EDO * log (3/2) / log (2)) - microLinn->EDO;     // whole tone = 9/8, calc as two 5ths minus an octave
     /*
@@ -1032,6 +1036,9 @@ void initializeMicroLinn2 () {
     microLinnAnchorRow = microLinnAnchorPad % 8;
     microLinnAnchorRowUser = 8 - microLinnAnchorRow;
     microLinnAnchorCol = microLinnAnchorPad >> 3;
+    microLinnAnchorCentsUser = microLinn->anchorCents - 64;
+    microLinnAnchorPitch = microLinn->anchorNote + microLinn->anchorCents/100;
+    microLinnEDOtone = 2 * round (microLinn->EDO * log (3/2) / log (2)) - microLinn->EDO;     // whole tone = 9/8, calc as two 5ths minus an octave
     */
     microLinnMapPadToMidi ();
   }
