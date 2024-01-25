@@ -884,7 +884,7 @@ void checkSkipFrettingAudienceMessage () {                                      
   }
 }
 
-boolean isSkipFretting (byte side) {                          
+boolean isSkipFrettingOLD (byte side) {                          
   checkSkipFrettingAudienceMessage ();
   return skipFretting[side] == ASCII_TRUE;                       // an invalid char (not a space or exclamation point) is assumed to be = FALSE
 }
@@ -910,17 +910,17 @@ struct MicroLinn {                     // overlaps the audience messages array
   boolean skipFretting[2];
 };  
 MicroLinn* microLinn  = (MicroLinn*)(Device.audienceMessages + 31 * microLinnMsg + microLinnMsgLength);
+// anchorPad format:                 
+//           left edge    right edge           anchorRow          anchorRowUser              
+// top row:  15 23 31...  135 or 207              7                     1
+// 2nd row:  14 22 30...                          6                     2
+// ...                                           ...                   ...
+// low row:   8 16 24...  128 or 200              0                     8
 
-// will this work?
-// bitset skipFretting;
-// then refer to skipFretting [LEFT], skipFretting [RIGHT], packs 2 booleans into 1 byte, set msglen to 25
 
-// anchorPad format:
-//           left edge    right edge
-// top row:  15 23 31...  135 or 207
-// 2nd row:  14 22 30...
-// ...
-// low row:   8 16 24...  128 or 200
+boolean isSkipFretting (byte side) {                          
+  return microLinn->skipFretting[side];         // to do: global replace isSkipFretting(side) with microLinn->skipFretting[side]
+}
 
 byte microLinnAnchorRow;                        // numbered 0-7 bottom to top as usual
 byte microLinnAnchorRowUser;                    // what the user sees, numbered 1-8 top to bottom, more intuitive for the general public
@@ -938,7 +938,7 @@ void updateMicroLinnVars () {                                                   
 }
 
 byte microLinnMidiNote[NUMSPLITS][MAXROWS][MAXCOLS-1];         // the midi note that is output for each pad
-short microLinnFineTuning[NUMSPLITS][MAXROWS][MAXCOLS-1];      // the deviation from 12edo for each pad, as a pitch bend number from -8K to 8K-1
+short microLinnFineTuning[NUMSPLITS][MAXROWS][MAXCOLS-1];      // the deviation from 12edo for each pad, as a pitch bend number from -8192 to 8191
 short microLinnTuningBend[NUMSPLITS][16][10];                  // 16 midi channels, up to 10 touches, tuning bends come from microLinnFineTuning
 short microLinnSlideBend[NUMSPLITS][16][10];                   // 16 midi channels, up to 10 touches, slide bends come from sliding along the Linnstrument
 
@@ -952,42 +952,36 @@ short microLinnSumOfRowOffsets (byte row1, byte row2) {
   }
 }
 
-void microLinnMapPadToMidi () {                                                  // maps e.g. pad[LEFT][4][13] to note #60 - 5.0¢
+void microLinnCalcTuningOfEachPad () {                                           // maps e.g. pad[LEFT][4][13] to note #60 - 5.0¢
   for (byte side = 0; side < 2; side++) {                                        // called on change to EDO, anchor, transpose, skipFretting, lefty
     for (byte row = 0; row < 8; row++) {
       for (byte col = 1; col <= 25; col++) {
-        short padDistance = col - microLinnAnchorCol;                            // distance from the anchor pad in edosteps
+        short padDistance = col - microLinnAnchorCol;                            // padDistance = distance from the anchor pad in edosteps
         if (isLeftHandedSplit(side)) {padDistance *= -1;}
         if (microLinn->skipFretting[side]) {padDistance *= 2;}
         padDistance += microLinnSumOfRowOffsets (microLinnAnchorRow, row);
         padDistance += Split[side].transposeOctave * microLinn->EDO;
         padDistance += Split[side].transposePitch * microLinnEDOtone;
         padDistance += Split[side].transposeLights;
-        float note = microLinnAnchorPitch + padDistance * 12 / microLinn->EDO;    // convert to fractional 12edo midi note
+        float note = microLinnAnchorPitch + padDistance * 12 / microLinn->EDO;   // convert to fractional 12edo midi note
         note = min (max (note, 0), 127); 
         microLinnMidiNote[side][row][col] = round (note);
-        float bend = note - microLinnMidiNote[side][row][col];                    // fine-tuning bend as fraction of a semitone
-        bend *= 8192 / getBendRange (side);                                       // fine-tuning bend as a zero-centered signed 13-bit integer
-        microLinnFineTuning[side][row][col] = round (bend);                       // (to convert to midi, add 8192 and split into two bytes)
+        float bend = note - microLinnMidiNote[side][row][col];                   // fine-tuning bend as fraction of a semitone
+        bend *= 8192 / getBendRange (side);                                      // fine-tuning bend as a zero-centered signed 13-bit integer
+        microLinnFineTuning[side][row][col] = round (bend);                      // (to convert to midi, add 8192 and split into two bytes)
       }
     }
   }
 }
 
-// delete the JELLY stuff later
-
-char &MLtest1 = Device.audienceMessages[microLinnMsg][0];
-char &MLtest2 = Device.audienceMessages[microLinnMsg][4];
 void initializeMicroLinn () {                 // called in setup()
-  MLtest1 = 'J';               
-  if (MLtest2 == 'O') {MLtest2 = 'Y';}
   if (microLinn->nullTerminator != '\0'       // if user had lengthened the audience message and we haven't truncated it yet,
    || microLinn->EDO == 0) {                  // or if user has never set the EDO, then this fork must be running for the very first time
     microLinn->nullTerminator = '\0';
     microLinn->EDO = 12;                      
     microLinn->anchorPad = 53;                // in 12edo, anchorPad and anchorNote are ignored
     microLinn->anchorNote = 62;               // D3, Kite guitar standard tuning
-    microLinn->anchorCents = 0;
+    microLinn->anchorCents = 4;               // 4 is really zero
     microLinn->skipFretting[LEFT] = false;
     microLinn->skipFretting[RIGHT] = false;
   }
@@ -997,7 +991,7 @@ void initializeMicroLinn () {                 // called in setup()
   microLinnAnchorCentsUser = microLinn->anchorCents - 64;
   microLinnAnchorPitch = microLinn->anchorNote + microLinn->anchorCents/100;
   microLinnEDOtone = 2 * round (microLinn->EDO * log (3/2) / log (2)) - microLinn->EDO;     // whole tone = 9/8, calc as two 5ths minus an octave
-  microLinnMapPadToMidi ();
+  microLinnCalcTuningOfEachPad ();
 }
 
 

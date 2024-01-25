@@ -1622,7 +1622,7 @@ void handlePerSplitSettingHold() {
             microLinn->anchorNote = 62;                       // D3, Kite guitar standard tuning
             microLinnAnchorCentsUser = 0;
             updateMicroLinnVars();
-            microLinnMapPadToMidi();
+            microLinnCalcTuningOfEachPad();
             setDisplayMode(displayNormal);
             updateDisplay();
             break;
@@ -1741,7 +1741,7 @@ void handlePerSplitSettingRelease() {
               skipFretting[Global.currentPerSplit] = ASCII_TRUE;
             }
             microLinn->skipFretting[Global.currentPerSplit] = !microLinn->skipFretting[Global.currentPerSplit];
-            microLinnMapPadToMidi();
+            microLinnCalcTuningOfEachPad();
           }
           break;
       }
@@ -2195,7 +2195,7 @@ void handleSplitHandednessNewTouch() {
 }
 
 void handleSplitHandednessRelease() {
-  microLinnMapPadToMidi();
+  microLinnCalcTuningOfEachPad();
   handleNumericDataReleaseCol(false);
 }
 
@@ -2268,7 +2268,7 @@ void handleMicroLinnConfigNewTouch() {
 
 void handleMicroLinnConfigRelease() {
   updateMicroLinnVars();
-  microLinnMapPadToMidi();
+  microLinnCalcTuningOfEachPad();
   handleNumericDataReleaseCol(true);
 }
 
@@ -2500,7 +2500,7 @@ void handleOctaveTransposeNewTouchSplit(byte side) {
 }
 
 void handleOctaveTransposeRelease() {
-  microLinnMapPadToMidi();
+  microLinnCalcTuningOfEachPad();
   handleShowSplit();  // see if one of the "Show Split" cells have been hit
 }
 
@@ -3279,7 +3279,7 @@ void handleGlobalSettingRelease() {
   if (sensorCol == 1 && sensorRow == 3 &&
       ensureCellBeforeHoldWait(getSplitHandednessColor(), Device.otherHanded ? cellOn : cellOff)) {
     Device.otherHanded = !Device.otherHanded;
-    microLinnMapPadToMidi();
+    microLinnCalcTuningOfEachPad();
   }
   else if (sensorCol == 6 && sensorRow == 2 &&
       ensureCellBeforeHoldWait(globalColor, Global.rowOffset == ROWOFFSET_OCTAVECUSTOM ? cellOn : cellOff)) {

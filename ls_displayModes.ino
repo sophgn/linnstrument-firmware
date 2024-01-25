@@ -1284,10 +1284,10 @@ void paintMicroLinnConfig() {
   if (microLinn->skipFretting[RIGHT]) {
     setLed(2, 7, Split[RIGHT].colorMain, cellOn);
   }
-  if (skipFretting[LEFT]) {
+  if (isSkipFretting(LEFT)) {
     setLed(1, 6, Split[LEFT].colorMain, cellOn);
   }
-  if (skipFretting[RIGHT]) {
+  if (isSkipFretting(RIGHT)) {
     setLed(2, 6, Split[RIGHT].colorMain, cellOn);
   }
 
@@ -1297,7 +1297,7 @@ void paintMicroLinnConfig() {
   }
   switch (microLinnConfigRowNum) {    
     case 0: 
-      paintNumericDataDisplay(globalColor, microLinnAnchorCentsUser, 0, false);
+      paintNumericDataDisplay(globalColor, microLinnAnchorCentsUser, microLinnAnchorCentsUser < -9 ? -3 : 0, false);
       break;
     case 1: 
       paintNoteDataDisplay(globalColor, microLinn->anchorNote, LINNMODEL == 200 ? 2 : 1);
