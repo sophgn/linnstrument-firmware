@@ -912,7 +912,7 @@ struct MicroLinn {                     // overlaps the audience messages array
 MicroLinn* microLinn  = (MicroLinn*)(Device.audienceMessages + 31 * microLinnMsg + microLinnMsgLength);
 MicroLinn* microLinn2 = (MicroLinn*)(Device.audienceMessages + 31 * microLinnMsg);    // experiment
 
-/*  // try another way
+/* // try another way
 char* microLinnNullTerminator = (char*)Device.audienceMessages + 31 * microLinnMsg + microLinnMsgLength;
 byte* microLinnEDO = (byte*)Device.audienceMessages + 31 * microLinnMsg + microLinnMsgLength + 1;
 byte* microLinnAnchorPad = (byte*)Device.audienceMessages + 31 * microLinnMsg + microLinnMsgLength + 2;
@@ -920,6 +920,8 @@ byte* microLinnAnchorNote = (byte*)Device.audienceMessages + 31 * microLinnMsg +
 signed char* microLinnAnchorCents = (signed char*)Device.audienceMessages + 31 * microLinnMsg + microLinnMsgLength + 4;
 byte* microLinnSkipFretting = (byte*)Device.audienceMessages + 31 * microLinnMsg + microLinnMsgLength + 5;
 */
+char* microLinnNullTerminator2 = (char*)Device.audienceMessages + 31 * microLinnMsg;
+byte* microLinnEDO2            = (byte*)Device.audienceMessages + 31 * microLinnMsg + 4;
 
 // will this work?
 // bitset skipFretting;
@@ -984,7 +986,7 @@ void microLinnMapPadToMidi () {                                                 
 
 // should be called in setup(), but it doesn't work, so it's called when user enters displayMicroLinnConfig or maybe activates skipfretting
 void initializeMicroLinn () {  
-  microLinn2->nullTerminator = 'J';               
+  microLinnNullTerminator2 = 'J';               
   if (microLinn->nullTerminator != '\0'       // if user had lengthened the audience message and we haven't truncated it yet,
    || microLinn->EDO == 0) {                  // or if user has never set the EDO, then this fork must be running for the very first time
     microLinn->nullTerminator = '\0';
@@ -1003,7 +1005,7 @@ void initializeMicroLinn () {
 
 // called when user enters displayMicroLinnConfig by long-pressing the OSversion button
 void initializeMicroLinn2 () {    
-    microLinn2->EDO = 'Y';                
+    microLinnEDO2 = 'Y';                
   if (microLinn->nullTerminator != '\0'       // if user had lengthened the audience message and we haven't truncated it yet,
    || microLinn->EDO == 0) {                  // or if user has never set the EDO, then this fork must be running for the very first time
 //  if (Device.audienceMessages[microLinnMsg][microLinnMsgLength] != '\0' 
