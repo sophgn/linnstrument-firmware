@@ -987,7 +987,7 @@ void microLinnMapPadToMidi () {                                                 
 
 // should be called in setup(), but it doesn't work, so it's called when user enters displayMicroLinnConfig or maybe activates skipfretting
 void initializeMicroLinn () {  
-  //MLtest1 = 'J';               
+  MLtest1 = 'J';               
   //MLtest2 = 'Y';  
   if (microLinn->nullTerminator != '\0'       // if user had lengthened the audience message and we haven't truncated it yet,
    || microLinn->EDO == 0) {                  // or if user has never set the EDO, then this fork must be running for the very first time
@@ -1002,12 +1002,14 @@ void initializeMicroLinn () {
   microLinnAnchorRow = microLinn->anchorPad % 8;
   microLinnAnchorRowUser = 8 - microLinnAnchorRow;
   microLinnAnchorCol = microLinn->anchorPad >> 3;
+  microLinnAnchorPitch = microLinn->anchorNote + microLinn->anchorCents/100;
+  microLinnEDOtone = 2 * round (microLinn->EDO * log (3/2) / log (2)) - microLinn->EDO;     // whole tone = 9/8, calc as two 5ths minus an octave
   microLinnMapPadToMidi ();
 }
 
 // called when user enters displayMicroLinnConfig by long-pressing the OSversion button
 void initializeMicroLinn2 () {    
-  //microLinnAnchorCents2 = 'Y';                
+  MLtest1 = 'J';            
   if (microLinn->nullTerminator != '\0'       // if user had lengthened the audience message and we haven't truncated it yet,
    || microLinn->EDO == 0) {                  // or if user has never set the EDO, then this fork must be running for the very first time
 //  if (Device.audienceMessages[microLinnMsg][microLinnMsgLength] != '\0' 
@@ -1022,6 +1024,8 @@ void initializeMicroLinn2 () {
     microLinnAnchorRow = microLinn->anchorPad % 8;
     microLinnAnchorRowUser = 8 - microLinnAnchorRow;
     microLinnAnchorCol = microLinn->anchorPad >> 3;
+    microLinnAnchorPitch = microLinn->anchorNote + microLinn->anchorCents/100;
+    microLinnEDOtone = 2 * round (microLinn->EDO * log (3/2) / log (2)) - microLinn->EDO;     // whole tone = 9/8, calc as two 5ths minus an octave
     /*
     microLinnNullTerminator = '/0';
     microLinnEDO = 12;                      
@@ -1570,7 +1574,7 @@ void setup() {
   SWITCH_FREERAM = true;
 #endif
 
-  initializeMicroLinn ();     // calling this here overwrites the user data on every power-up... audience messages hasn't been loaded yet?
+  //initializeMicroLinn ();     // calling this here overwrites the user data on every power-up... audience messages hasn't been loaded yet?
 
   setupDone = true;
 

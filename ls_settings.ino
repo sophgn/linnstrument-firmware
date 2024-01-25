@@ -1614,7 +1614,7 @@ void handlePerSplitSettingHold() {
             checkSkipFrettingAudienceMessage ();
             skipFretting[LEFT]  = ASCII_TRUE;
             skipFretting[RIGHT] = ASCII_TRUE;
-            //initializeMicroLinn();                            // should be done in setup() instead, but I can't make it work
+            initializeMicroLinn2();                            // should be done in setup() instead, but I can't make it work
             microLinn->skipFretting[LEFT] = true;
             microLinn->skipFretting[RIGHT] = true;
             microLinn->EDO = 41;
@@ -1737,7 +1737,7 @@ void handlePerSplitSettingRelease() {
             } else {
               skipFretting[Global.currentPerSplit] = ASCII_TRUE;
             }
-            //initializeMicroLinn();                            // should be done in setup() instead, but I can't make it work
+            initializeMicroLinn2();                            // should be done in setup() instead, but I can't make it work
             microLinn->skipFretting[Global.currentPerSplit] = !microLinn->skipFretting[Global.currentPerSplit];
             microLinnMapPadToMidi();
           }
@@ -3227,7 +3227,7 @@ void handleGlobalSettingHold() {
       case 16:
         switch (sensorRow) {
           case 1:
-            initializeMicroLinn2();
+            //initializeMicroLinn2();
             resetNumericDataChange();
             setDisplayMode(displayMicroLinnConfig);                // config EDO and anchor data
             updateDisplay();
