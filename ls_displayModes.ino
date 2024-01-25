@@ -1278,13 +1278,26 @@ void paintGuitarTuning() {
 void paintMicroLinnConfig() {
   clearDisplay();
 
+  if (microLinn->skipFretting[LEFT]) {
+    setLed(1, 7, Split[LEFT].colorMain, cellOn);
+  }
+  if (microLinn->skipFretting[RIGHT]) {
+    setLed(2, 7, Split[RIGHT].colorMain, cellOn);
+  }
+  if (skipFretting[LEFT]) {
+    setLed(1, 6, Split[LEFT].colorMain, cellOn);
+  }
+  if (skipFretting[RIGHT]) {
+    setLed(2, 6, Split[RIGHT].colorMain, cellOn);
+  }
+
   for (byte r = 0; r < 6; ++r) {
     setLed(1, r, microLinnConfigRowNum == r ? Split[LEFT].colorAccent : Split[LEFT].colorMain, cellOn);
-    if (r == 3) {r = 4;}   // skip over rows 4-6
+    if (r == 3) {r = 4;}   // skip over row 4
   }
   switch (microLinnConfigRowNum) {    
     case 0: 
-      paintNumericDataDisplay(globalColor, microLinnAnchorCentsUser, 0, true);
+      paintNumericDataDisplay(globalColor, microLinnAnchorCentsUser, 0, false);
       break;
     case 1: 
       paintNoteDataDisplay(globalColor, microLinn->anchorNote, LINNMODEL == 200 ? 2 : 1);

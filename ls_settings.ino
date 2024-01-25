@@ -1613,11 +1613,15 @@ void handlePerSplitSettingHold() {
             Split[RIGHT].playedTouchMode = playedSame;
             checkSkipFrettingAudienceMessage ();
             skipFretting[LEFT]  = ASCII_TRUE;
-            skipFretting[RIGHT] = ASCII_TRUE;
-            initializeMicroLinn();                            // should be done in setup() instead, but I can't make it work
+            skipFretting[RIGHT] = ASCII_TRUE;                      
             microLinn->skipFretting[LEFT] = true;
             microLinn->skipFretting[RIGHT] = true;
             microLinn->EDO = 41;
+            microLinnAnchorRowUser = 3;
+            microLinnAnchorCol = 6;
+            microLinn->anchorNote = 62;                       // D3, Kite guitar standard tuning
+            microLinnAnchorCentsUser = 0;
+            updateMicroLinnVars();
             microLinnMapPadToMidi();
             setDisplayMode(displayNormal);
             updateDisplay();
@@ -1736,7 +1740,6 @@ void handlePerSplitSettingRelease() {
             } else {
               skipFretting[Global.currentPerSplit] = ASCII_TRUE;
             }
-            initializeMicroLinn2();                            // should be done in setup() instead, but I can't make it work
             microLinn->skipFretting[Global.currentPerSplit] = !microLinn->skipFretting[Global.currentPerSplit];
             microLinnMapPadToMidi();
           }
@@ -3226,7 +3229,6 @@ void handleGlobalSettingHold() {
       case 16:
         switch (sensorRow) {
           case 1:
-            //initializeMicroLinn2();
             resetNumericDataChange();
             setDisplayMode(displayMicroLinnConfig);                // config EDO and anchor data
             updateDisplay();

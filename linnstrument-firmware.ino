@@ -911,15 +911,6 @@ struct MicroLinn {                     // overlaps the audience messages array
 };  
 MicroLinn* microLinn  = (MicroLinn*)(Device.audienceMessages + 31 * microLinnMsg + microLinnMsgLength);
 
-/* doesn't compile  
-char &microLinnNullTerminator = Device.audienceMessages[microLinnMsg][microLinnMsgLength];
-byte &microLinnEDO            = Device.audienceMessages[microLinnMsg][microLinnMsgLength] + 1;
-byte &microLinnAnchorPad      = Device.audienceMessages[microLinnMsg][microLinnMsgLength] + 2;
-byte &microLinnAnchorNote     = Device.audienceMessages[microLinnMsg][microLinnMsgLength] + 3;
-byte &microLinnAnchorCents    = Device.audienceMessages[microLinnMsg][microLinnMsgLength] +  4;
-boolean* microLinnSkipFretting = (boolean*)Device.audienceMessages + 31 * microLinnMsg + microLinnMsgLength + 5;
-*/
-
 // will this work?
 // bitset skipFretting;
 // then refer to skipFretting [LEFT], skipFretting [RIGHT], packs 2 booleans into 1 byte, set msglen to 25
@@ -934,12 +925,12 @@ boolean* microLinnSkipFretting = (boolean*)Device.audienceMessages + 31 * microL
 byte microLinnAnchorRow;                        // numbered 0-7 bottom to top as usual
 byte microLinnAnchorRowUser;                    // what the user sees, numbered 1-8 top to bottom, more intuitive for the general public
 byte microLinnAnchorCol;                        // numbered 1-25 as usual
-byte microLinnAnchorCentsUser;                  // what the user sees, ranges from -60 to 60, stored in the string as 4 to 114
+signed char microLinnAnchorCentsUser;           // what the user sees, ranges from -60 to 60, stored in the string as 4 to 114
 float microLinnAnchorPitch;                     // midi note, but with 2 decimal places for anchorCents
 byte microLinnEDOtone;                          // 9/8 in edosteps, used in transposing
 
-void updateMicroLinnVars () {                                   // called when user releases a touch in displayMicroLinnConfig
-  microLinnAnchorRow = 8 - microLinnAnchorRowUser;
+void updateMicroLinnVars () {                                                      // called when user releases a touch in displayMicroLinnConfig
+  microLinnAnchorRow = 8 - microLinnAnchorRowUser;                                 // also when user long-presses the skip-fretting pad
   microLinn->anchorPad = 8 * microLinnAnchorCol + microLinnAnchorRow;
   microLinn->anchorCents = microLinnAnchorCentsUser + 64;
   microLinnAnchorPitch = microLinn->anchorNote + microLinn->anchorCents/100;
@@ -962,7 +953,7 @@ short microLinnSumOfRowOffsets (byte row1, byte row2) {
 }
 
 void microLinnMapPadToMidi () {                                                  // maps e.g. pad[LEFT][4][13] to note #60 - 5.0¢
-  for (byte side = 0; side < 2; side++) {                                        // called on change to EDO, anchor, transpose, skipfretting, lefty
+  for (byte side = 0; side < 2; side++) {                                        // called on change to EDO, anchor, transpose, skipFretting, lefty
     for (byte row = 0; row < 8; row++) {
       for (byte col = 1; col <= 25; col++) {
         short padDistance = col - microLinnAnchorCol;                            // distance from the anchor pad in edosteps
@@ -983,10 +974,11 @@ void microLinnMapPadToMidi () {                                                 
   }
 }
 
-// should be called in setup(), but it doesn't work, so it's called when user enters displayMicroLinnConfig or maybe activates skipfretting
+// delete the JELLY stuff later
+
 char &MLtest1 = Device.audienceMessages[microLinnMsg][0];
 char &MLtest2 = Device.audienceMessages[microLinnMsg][4];
-void initializeMicroLinn () {  
+void initializeMicroLinn () {                 // called in setup()
   MLtest1 = 'J';               
   if (MLtest2 == 'O') {MLtest2 = 'Y';}
   if (microLinn->nullTerminator != '\0'       // if user had lengthened the audience message and we haven't truncated it yet,
@@ -1006,42 +998,6 @@ void initializeMicroLinn () {
   microLinnAnchorPitch = microLinn->anchorNote + microLinn->anchorCents/100;
   microLinnEDOtone = 2 * round (microLinn->EDO * log (3/2) / log (2)) - microLinn->EDO;     // whole tone = 9/8, calc as two 5ths minus an octave
   microLinnMapPadToMidi ();
-}
-
-// called when user enters displayMicroLinnConfig by long-pressing the OSversion button
-void initializeMicroLinn2 () {               
-  if (microLinn->nullTerminator != '\0'       // if user had lengthened the audience message and we haven't truncated it yet,
-   || microLinn->EDO == 0) {                  // or if user has never set the EDO, then this fork must be running for the very first time
-    microLinn->nullTerminator = '\0';
-    microLinn->EDO = 12;                      
-    microLinn->anchorPad = 53;                // in 12edo, anchorPad and anchorNote are ignored
-    microLinn->anchorNote = 62;               // D3, Kite guitar standard tuning
-    microLinn->anchorCents = 0;
-    //microLinn->skipFretting[LEFT] = false;
-    //microLinn->skipFretting[RIGHT] = false;
-    microLinnAnchorRow = microLinn->anchorPad % 8;
-    microLinnAnchorRowUser = 8 - microLinnAnchorRow;
-    microLinnAnchorCol = microLinn->anchorPad >> 3;
-    microLinnAnchorCentsUser = microLinn->anchorCents - 64;
-    microLinnAnchorPitch = microLinn->anchorNote + microLinn->anchorCents/100;
-    microLinnEDOtone = 2 * round (microLinn->EDO * log (3/2) / log (2)) - microLinn->EDO;     // whole tone = 9/8, calc as two 5ths minus an octave
-    /*
-    microLinnNullTerminator = '/0';
-    microLinnEDO = 12;                      
-    microLinnAnchorPad = 53;                // in 12edo, anchorPad and anchorNote are ignored
-    microLinnAnchorNote = 62;               // D3, Kite guitar standard tuning
-    microLinnAnchorCents = 0;
-    //microLinnSkipFretting[LEFT] = false;
-    //microLinnSkipFretting[RIGHT] = false;
-    microLinnAnchorRow = microLinnAnchorPad % 8;
-    microLinnAnchorRowUser = 8 - microLinnAnchorRow;
-    microLinnAnchorCol = microLinnAnchorPad >> 3;
-    microLinnAnchorCentsUser = microLinn->anchorCents - 64;
-    microLinnAnchorPitch = microLinn->anchorNote + microLinn->anchorCents/100;
-    microLinnEDOtone = 2 * round (microLinn->EDO * log (3/2) / log (2)) - microLinn->EDO;     // whole tone = 9/8, calc as two 5ths minus an octave
-    */
-    microLinnMapPadToMidi ();
-  }
 }
 
 
@@ -1253,7 +1209,7 @@ byte guitarTuningRowNum = 0;                        // active row number for con
 short guitarTuningPreviewNote = -1;                 // active note that is previewing the guitar tuning pitch
 short guitarTuningPreviewChannel = -1;              // active channel that is previewing the guitar tuning pitch
 
-byte microLinnConfigRowNum = 0;                     // active row number for configuring the EDO and anchor data
+byte microLinnConfigRowNum = 5;                     // active row number for configuring the EDO and anchor data
 
 byte customLedColor = COLOR_GREEN;                  // color is used for drawing in the custom LED editor
 
@@ -1576,7 +1532,7 @@ void setup() {
   SWITCH_FREERAM = true;
 #endif
 
-  initializeMicroLinn ();     // calling this here overwrites the user data on every power-up... audience messages hasn't been loaded yet?
+  initializeMicroLinn ();  
 
   setupDone = true;
 
