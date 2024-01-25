@@ -1284,10 +1284,10 @@ void paintMicroLinnConfig() {
   }
   switch (microLinnConfigRowNum) {    
     case 0: 
-      paintNumericDataDisplay(globalColor, microLinn->anchorCents, 0, true);
+      paintNumericDataDisplay(globalColor, microLinnAnchorCentsUser, 0, true);
       break;
     case 1: 
-      paintNoteDataDisplay(globalColor, microLinn->anchorNote, LINNMODEL == 200 ? 2 : 1);
+      paintNoteDataDisplay(globalColor, microLinnAnchorNote, LINNMODEL == 200 ? 2 : 1);
       break;
     case 2:  
       paintNumericDataDisplay(globalColor, microLinnAnchorCol, 0, false);
@@ -1296,7 +1296,7 @@ void paintMicroLinnConfig() {
       paintNumericDataDisplay(globalColor, microLinnAnchorRowUser, 0, false);
       break;      
     case 5: 
-      paintNumericDataDisplay(globalColor, microLinn->EDO, 0, false);
+      paintNumericDataDisplay(globalColor, microLinnEDO, 0, false);
       break;
   }
 }

@@ -1615,9 +1615,9 @@ void handlePerSplitSettingHold() {
             skipFretting[LEFT]  = ASCII_TRUE;
             skipFretting[RIGHT] = ASCII_TRUE;
             initializeMicroLinn2();                            // should be done in setup() instead, but I can't make it work
-            microLinn->skipFretting[LEFT] = true;
-            microLinn->skipFretting[RIGHT] = true;
-            microLinn->EDO = 41;
+            microLinnSkipFretting[LEFT] = true;
+            microLinnSkipFretting[RIGHT] = true;
+            microLinnEDO = 41;
             updateMicroLinnVars ();
             microLinnMapPadToMidi();
             setDisplayMode(displayNormal);
@@ -1738,7 +1738,7 @@ void handlePerSplitSettingRelease() {
               skipFretting[Global.currentPerSplit] = ASCII_TRUE;
             }
             initializeMicroLinn2();                            // should be done in setup() instead, but I can't make it work
-            microLinn->skipFretting[Global.currentPerSplit] = !microLinn->skipFretting[Global.currentPerSplit];
+            microLinnSkipFretting[Global.currentPerSplit] = !microLinnSkipFretting[Global.currentPerSplit];
             microLinnMapPadToMidi();
           }
           break;
@@ -2246,10 +2246,10 @@ void handleMicroLinnConfigNewTouch() {
   } else {
     switch (microLinnConfigRowNum) {
       case 0: 
-        handleNumericDataNewTouchCol(microLinn->anchorCents, -100, 100, true); 
+        handleNumericDataNewTouchCol(microLinnAnchorCentsUser, -60, 60, true); 
         break;
       case 1: 
-        handleNumericDataNewTouchCol(microLinn->anchorNote, 0, 127, true); 
+        handleNumericDataNewTouchCol(microLinnAnchorNote, 1, 127, true);           // minimum is 1, to avoid a terminating null
         break;
       case 2: 
         handleNumericDataNewTouchCol(microLinnAnchorCol, 1, NUMCOLS-1, true); 
@@ -2258,7 +2258,7 @@ void handleMicroLinnConfigNewTouch() {
         handleNumericDataNewTouchCol(microLinnAnchorRowUser, 1, 8, true);
         break;
       case 5: 
-        handleNumericDataNewTouchCol(microLinn->EDO, 5, 72, true); 
+        handleNumericDataNewTouchCol(microLinnEDO, 5, 72, true); 
         break;
     }
   }
