@@ -896,7 +896,7 @@ struct SkipFrettingData {                           // used to keep track of tra
 };
 SkipFrettingData skipFrettingData[NUMSPLITS];
 
-/****************** NEW WAY ************/
+/************************************ NEW WAY ******************************************/
 
 const byte microLinnMsg = 7;           // "HELLO NEW YORK!" will be truncated to make room for the user's settings
 const byte microLinnMsgLength = 24;    // 30 minus the 6 bytes we need for data storage makes 24 chars left
@@ -909,7 +909,8 @@ struct MicroLinn {                     // overlaps the audience messages array
   signed char anchorCents;             // limited to ± 100 cents, same for both splits
   boolean skipFretting[2];
 };
-MicroLinn* microLinn = (MicroLinn*)(Device.audienceMessages + 31 * microLinnMsg + microLinnMsgLength);
+MicroLinn* microLinn  = (MicroLinn*)(Device.audienceMessages + 31 * microLinnMsg + microLinnMsgLength);
+MicroLinn* microLinn2 = (MicroLinn*)(Device.audienceMessages + 31 * microLinnMsg);    // experiment
 
 /*  // try another way
 char* microLinnNullTerminator = (char*)Device.audienceMessages + 31 * microLinnMsg + microLinnMsgLength;
@@ -982,10 +983,11 @@ void microLinnMapPadToMidi () {                                                 
 }
 
 // should be called in setup(), but it doesn't work, so it's called when user enters displayMicroLinnConfig or maybe activates skipfretting
-void initializeMicroLinn () {                 
-  if (microLinn->nullTerminator != '/0'       // if user had lengthened the audience message and we haven't truncated it yet,
+void initializeMicroLinn () {  
+  microLinn2->nullTerminator = 'J';               
+  if (microLinn->nullTerminator != '\0'       // if user had lengthened the audience message and we haven't truncated it yet,
    || microLinn->EDO == 0) {                  // or if user has never set the EDO, then this fork must be running for the very first time
-    microLinn->nullTerminator = 'x';
+    microLinn->nullTerminator = '\0';
     microLinn->EDO = 12;                      
     microLinn->anchorPad = 53;                // in 12edo, anchorPad and anchorNote are ignored
     microLinn->anchorNote = 62;               // D3, Kite guitar standard tuning
@@ -1000,12 +1002,13 @@ void initializeMicroLinn () {
 }
 
 // called when user enters displayMicroLinnConfig by long-pressing the OSversion button
-void initializeMicroLinn2 () {                 
-  if (microLinn->nullTerminator != '/0'       // if user had lengthened the audience message and we haven't truncated it yet,
+void initializeMicroLinn2 () {    
+    microLinn2->EDO = 'Y';                
+  if (microLinn->nullTerminator != '\0'       // if user had lengthened the audience message and we haven't truncated it yet,
    || microLinn->EDO == 0) {                  // or if user has never set the EDO, then this fork must be running for the very first time
-//  if (Device.audienceMessages[microLinnMsg][microLinnMsgLength] != '/0' 
+//  if (Device.audienceMessages[microLinnMsg][microLinnMsgLength] != '\0' 
 //   || Device.audienceMessages[microLinnMsg][microLinnMsgLength + 1] == 0) {  
-    microLinn->nullTerminator = 'z';
+    microLinn->nullTerminator = '\0';
     microLinn->EDO = 12;                      
     microLinn->anchorPad = 53;                // in 12edo, anchorPad and anchorNote are ignored
     microLinn->anchorNote = 62;               // D3, Kite guitar standard tuning
