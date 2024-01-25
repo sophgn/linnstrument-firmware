@@ -888,7 +888,6 @@ boolean isSkipFrettingOLD (byte side) {
   checkSkipFrettingAudienceMessage ();
   return skipFretting[side] == ASCII_TRUE;                       // an invalid char (not a space or exclamation point) is assumed to be = FALSE
 }
-*/
 
 struct SkipFrettingData {                           // used to keep track of transposing, which is done via CCs to the LinnstrumentMicrotonal app
   signed char transposeOctave;
@@ -896,6 +895,7 @@ struct SkipFrettingData {                           // used to keep track of tra
   signed char transposeArrow;
 };
 SkipFrettingData skipFrettingData[NUMSPLITS];
+*/
 
 /************************************ NEW WAY ******************************************/
 
@@ -910,7 +910,7 @@ struct MicroLinn {                     // overlaps the audience messages array
   signed char anchorCents;             // limited to ± 100 cents, same for both splits
   boolean skipFretting[2];
 };  
-MicroLinn* microLinn  = (MicroLinn*)(Device.audienceMessages + 31 * microLinnMsg + microLinnMsgLength);
+MicroLinn* microLinn = (MicroLinn*)(Device.audienceMessages + 31 * microLinnMsg + microLinnMsgLength);
 // anchorPad format:                 
 //           left edge    right edge           anchorRow          anchorRowUser              
 // top row:  15 23 31...  135 or 207              7                     1

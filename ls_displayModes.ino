@@ -1409,6 +1409,7 @@ void paintNoteDataDisplay(byte color, short noteNumber, short offset) {
   condfont_draw_string(offset, 0, str, color, false);
 }
 
+/**************************** DELETE THIS ONCE NEW MIDI IS WORKING ******************
 // draw a horizontal line to indicate volume for a particular side
 void paintVolumeDisplay(byte side) {
   clearDisplay();
@@ -1471,12 +1472,13 @@ void paintOctaveTransposeDisplaySkipFretting(byte side) {     // alternate versi
 
   paintShowSplitSelection(side);
 }
+********************************* DELETE CALL BELOW TO THIS FUNCTION TOO ************************/
 
 void paintOctaveTransposeDisplay(byte side) {
 
   if (isSkipFretting(side) && Global.rowOffset > 7) {         // rowOffset > 7 to exclude 12edo Wicki-Hayden users
-    paintOctaveTransposeDisplaySkipFretting (side);
-    return;
+    //paintOctaveTransposeDisplaySkipFretting (side);
+    //return;
   }
     
   clearDisplay();

@@ -1611,9 +1611,6 @@ void handlePerSplitSettingHold() {
             Global.customRowOffset = 13;                      // kite guitar uses +13 row offset
             Split[LEFT].playedTouchMode = playedSame;         // turn on same-note lighting for familiarity
             Split[RIGHT].playedTouchMode = playedSame;
-            //checkSkipFrettingAudienceMessage ();
-            //skipFretting[LEFT]  = ASCII_TRUE;
-            //skipFretting[RIGHT] = ASCII_TRUE;                      
             microLinn->skipFretting[LEFT] = true;
             microLinn->skipFretting[RIGHT] = true;
             microLinn->EDO = 41;
@@ -1734,14 +1731,6 @@ void handlePerSplitSettingRelease() {
         case 0:                                                                      // short-press hidden skip-fretting button
           if (ensureCellBeforeHoldWait(Split[Global.currentPerSplit].colorAccent,
                  isSkipFretting(Global.currentPerSplit) ? cellOn : cellOff)) {
-            /*
-            checkSkipFrettingAudienceMessage ();
-            if (isSkipFretting(Global.currentPerSplit)) {                           
-              skipFretting[Global.currentPerSplit] = ASCII_FALSE;  
-            } else {
-              skipFretting[Global.currentPerSplit] = ASCII_TRUE;
-            }
-            */
             microLinn->skipFretting[Global.currentPerSplit] = !microLinn->skipFretting[Global.currentPerSplit];
             microLinnCalcTuningOfEachPad();
           }
@@ -2202,8 +2191,8 @@ void handleSplitHandednessRelease() {
 }
 
 void handleRowOffsetNewTouch() {
-  handleNumericDataNewTouchCol(Global.customRowOffset, -17, 16, true);
-}
+  handleNumericDataNewTouchCol(Global.customRowOffset, -17, 31, true);    // increased from 16 to 31 for microLinn users
+}                                                                         // 31 because 53edo's 5th is 31 edosteps
 
 void handleRowOffsetRelease() {
   handleNumericDataReleaseCol(false);
@@ -2426,6 +2415,7 @@ void handleOctaveTransposeNewTouch() {
   updateDisplay();
 }
 
+/**************************** DELETE THIS ONCE NEW MIDI IS WORKING ******************
 void handleOctaveTransposeNewTouchSplitSkipFretting(byte side) {
   // alternate version of handleOctaveTransposeNewTouchSplit
   // send CCs reporting the transposes to LinnstrumentMicrotonal app, it will do the transposing
@@ -2465,12 +2455,13 @@ void handleOctaveTransposeNewTouchSplitSkipFretting(byte side) {
     midiSendControlChange (CCnum, 32 + newTransposeArrow, chan, true);        // range is 25-39             
   }
 }
+********************************* DELETE CALL BELOW TO THIS FUNCTION TOO ************************/
 
 void handleOctaveTransposeNewTouchSplit(byte side) {
 
   if (isSkipFretting(side) && Global.rowOffset > 7) {                     // rowOffset > 7 to exclude 12edo Wicki-Hayden users,
-    handleOctaveTransposeNewTouchSplitSkipFretting (side);                // who will want to transpose normally
-    return;
+    //handleOctaveTransposeNewTouchSplitSkipFretting (side);                // who will want to transpose normally
+    //return;
   }
 
   if (sensorRow == OCTAVE_ROW) {
