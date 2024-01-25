@@ -2245,7 +2245,7 @@ void handleMicroLinnConfigNewTouch() {
   } else {
     switch (microLinnConfigRowNum) {
       case 0: 
-        handleNumericDataNewTouchCol(microLinn->microLinnAnchorCentsUser, -60, 60, true); 
+        handleNumericDataNewTouchCol(microLinnAnchorCentsUser, -60, 60, true); 
         break;
       case 1: 
         handleNumericDataNewTouchCol(microLinn->anchorNote, 1, 127, true);       // minimum is 1 to avoid a string-terminating null
