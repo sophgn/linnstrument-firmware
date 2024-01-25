@@ -1611,9 +1611,9 @@ void handlePerSplitSettingHold() {
             Global.customRowOffset = 13;                      // kite guitar uses +13 row offset
             Split[LEFT].playedTouchMode = playedSame;         // turn on same-note lighting for familiarity
             Split[RIGHT].playedTouchMode = playedSame;
-            checkSkipFrettingAudienceMessage ();
-            skipFretting[LEFT]  = ASCII_TRUE;
-            skipFretting[RIGHT] = ASCII_TRUE;                      
+            //checkSkipFrettingAudienceMessage ();
+            //skipFretting[LEFT]  = ASCII_TRUE;
+            //skipFretting[RIGHT] = ASCII_TRUE;                      
             microLinn->skipFretting[LEFT] = true;
             microLinn->skipFretting[RIGHT] = true;
             microLinn->EDO = 41;
@@ -1734,12 +1734,14 @@ void handlePerSplitSettingRelease() {
         case 0:                                                                      // short-press hidden skip-fretting button
           if (ensureCellBeforeHoldWait(Split[Global.currentPerSplit].colorAccent,
                  isSkipFretting(Global.currentPerSplit) ? cellOn : cellOff)) {
+            /*
             checkSkipFrettingAudienceMessage ();
             if (isSkipFretting(Global.currentPerSplit)) {                           
               skipFretting[Global.currentPerSplit] = ASCII_FALSE;  
             } else {
               skipFretting[Global.currentPerSplit] = ASCII_TRUE;
             }
+            */
             microLinn->skipFretting[Global.currentPerSplit] = !microLinn->skipFretting[Global.currentPerSplit];
             microLinnCalcTuningOfEachPad();
           }

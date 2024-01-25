@@ -1284,12 +1284,6 @@ void paintMicroLinnConfig() {
   if (microLinn->skipFretting[RIGHT]) {
     setLed(2, 7, Split[RIGHT].colorMain, cellOn);
   }
-  if (isSkipFretting(LEFT)) {
-    setLed(1, 6, Split[LEFT].colorMain, cellOn);
-  }
-  if (isSkipFretting(RIGHT)) {
-    setLed(2, 6, Split[RIGHT].colorMain, cellOn);
-  }
 
   for (byte r = 0; r < 6; ++r) {
     setLed(1, r, microLinnConfigRowNum == r ? Split[LEFT].colorAccent : Split[LEFT].colorMain, cellOn);

@@ -866,7 +866,7 @@ struct Configuration config;
 
 /**************************************** SKIP FRETTING and MICROLINN ****************************************/
 
-/********************* OLD WAY  ****************/
+/********************* OLD WAY  ****************
 // extend audience message #8 by 2 chars, to store the user's choice of skip fretting or not for each split as 2 pseudo-booleans
 const char ASCII_FALSE = ' ';                                                      // ascii 32, the lowest ascii char allowed in audienceMessages
 const char ASCII_TRUE  = '!';                                                      // ascii 33, the 2nd lowest, plus it looks good!
@@ -888,6 +888,7 @@ boolean isSkipFrettingOLD (byte side) {
   checkSkipFrettingAudienceMessage ();
   return skipFretting[side] == ASCII_TRUE;                       // an invalid char (not a space or exclamation point) is assumed to be = FALSE
 }
+*/
 
 struct SkipFrettingData {                           // used to keep track of transposing, which is done via CCs to the LinnstrumentMicrotonal app
   signed char transposeOctave;
