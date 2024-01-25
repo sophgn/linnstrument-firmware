@@ -913,16 +913,12 @@ struct MicroLinn {                     // overlaps the audience messages array
 MicroLinn* microLinn  = (MicroLinn*)(Device.audienceMessages + 31 * microLinnMsg + microLinnMsgLength);
 *****************/
 
-byte microLinnMsgLength1 = microLinnMsgLength + 1;      // stupid, but the compiler insists on it
-byte microLinnMsgLength2 = microLinnMsgLength + 2;
-byte microLinnMsgLength3 = microLinnMsgLength + 3;
-byte microLinnMsgLength4 = microLinnMsgLength + 4;
 // six aliases, each one references an element of the audience messages array
-char &microLinnNullTerminator = Device.audienceMessages[microLinnMsg][microLinnMsgLength];      // truncates the audience message to 24 chars
-byte &microLinnEDO            = Device.audienceMessages[microLinnMsg][microLinnMsgLength1];     // limited to 5-72
-byte &microLinnAnchorPad      = Device.audienceMessages[microLinnMsg][microLinnMsgLength2];     // numbered 8-207
-byte &microLinnAnchorNote     = Device.audienceMessages[microLinnMsg][microLinnMsgLength3];     // any midi note 0-127
-byte &microLinnAnchorCents    = Device.audienceMessages[microLinnMsg][microLinnMsgLength4];     // limited to ±50 cents, 0 is stored as 64
+char &microLinnNullTerminator =     Device.audienceMessages[microLinnMsg][microLinnMsgLength];         // truncates the audience message to 24 chars
+byte &microLinnEDO         = (byte*)Device.audienceMessages[microLinnMsg][microLinnMsgLength + 1];     // limited to 5-72
+byte &microLinnAnchorPad   = (byte*)Device.audienceMessages[microLinnMsg][microLinnMsgLength + 2];     // numbered 8-207
+byte &microLinnAnchorNote  = (byte*)Device.audienceMessages[microLinnMsg][microLinnMsgLength + 3];     // any midi note 0-127
+byte &microLinnAnchorCents = (byte*)Device.audienceMessages[microLinnMsg][microLinnMsgLength + 4];     // limited to ±50 cents, 0 is stored as 64
 boolean* microLinnSkipFretting = (boolean*)Device.audienceMessages + 31 * microLinnMsg + microLinnMsgLength + 5;    // an array of 2 bytes
 
 // will this work?
