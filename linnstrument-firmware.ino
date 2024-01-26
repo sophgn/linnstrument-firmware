@@ -486,7 +486,7 @@ enum DisplayMode {
   displaySequencerDrum0814,
   displaySequencerColors,
   displayCustomLedsEditor,
-  displayCommunityForkMenu,
+  displayForkMenu,
   displayMicroLinnConfig
 };
 DisplayMode displayMode = displayNormal;
@@ -936,11 +936,11 @@ struct MicroLinn {                     // overlaps the audience messages array
   boolean skipFretting[2];             // can be set on either side
 };  
 MicroLinn* microLinn = (MicroLinn*)(Device.audienceMessages + 31 * microLinnMsg + microLinnMsgLength);
-// anchorPad format:                left edge    right edge          anchorRow           anchorRowUser              
-//                        top row:  15 23 31...  135 or 207              7                     1
-//                        2nd row:  14 22 30...                          6                     2
-//                        ...                                           ...                   ...
-//                        low row:   8 16 24...  128 or 200              0                     8
+// anchorPad format:                left edge    right edge          anchorRow         anchorRowUser              
+//                        top row:  15 23 31...  135 or 207              7                  1
+//                        2nd row:  14 22 30...                          6                  2
+//                        ...                                           ...                ...
+//                        low row:   8 16 24...  128 or 200              0                  8
 
 boolean isSkipFretting (byte side) {       
   return microLinn->skipFretting[side];
@@ -950,7 +950,7 @@ void toggleSkipFretting (byte side) {
   microLinn->skipFretting[side] = !microLinn->skipFretting[side]; 
 }
 
-byte microLinnConfigRowNum = 5;                 // active row number for configuring the EDO and anchor data
+byte microLinnConfigRowNum = -1;                // active row number for configuring the EDO and anchor data
 byte microLinnAnchorRow;                        // numbered 0-7 bottom to top as usual
 byte microLinnAnchorRowUser;                    // what the user sees, numbered 1-8 top to bottom, more intuitive for the general public
 byte microLinnAnchorCol;                        // numbered 1-25 as usual
@@ -1072,6 +1072,8 @@ void handleSkipFrettingLongPress () {               // long-press skip fretting 
   updateMicroLinnVars();
   microLinnCalcTuningOfEachPad();
 }
+
+byte forkMenuColNum = 0;
 
 /**************************** DELETE THIS ONCE NEW MIDI IS WORKING ******************
 

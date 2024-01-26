@@ -3108,7 +3108,7 @@ void handleGlobalSettingHold() {
         switch (sensorRow) {
           case 1:
             resetNumericDataChange();
-            setDisplayMode(displayMicroLinnConfig);                // config EDO and anchor data
+            setDisplayMode(displayForkMenu);
             updateDisplay();
             break;
           case 2:                                                  // handle switch to/from User Firmware Mode
@@ -3368,5 +3368,54 @@ void handleCustomLedsEditorRelease() {
       setLed(sensorCol, sensorRow, customLedColor, cellOn, LED_LAYER_CUSTOM1);
     }
     sensorCell->lastTouch = 0;
+  }
+}
+
+void handleForkMenuNewTouch() {
+  if (sensorRow == 0) {
+    forkMenuColNum = sensorCol;
+    setLed(sensorCol, sensorRow, Split[LEFT].colorAccent, cellSlowPulse);
+  } else if (forkMenuColNum > 0) {
+    switch (sensorCol) {
+      case 1:
+        forkMenuColNum = 0;
+        microLinnConfigRowNum = -1;
+        resetNumericDataChange();
+        setDisplayMode(displayMicroLinnConfig);                // config EDO and anchor data
+        updateDisplay();
+        break;
+
+      case 2:
+      case 3:
+      case 4:
+        break;
+    }
+    
+  }
+}
+
+void handleForkMenuHold() {
+  if (sensorRow == 0) {
+    switch (forkMenuColNum) {       // or should this be sensorCol?
+      case 1:
+        forkMenuColNum = 0;
+        microLinnConfigRowNum = -1;
+        resetNumericDataChange();
+        setDisplayMode(displayMicroLinnConfig);                // config EDO and anchor data
+        updateDisplay();
+        break;
+
+      case 2:
+      case 3:
+      case 4:
+        break;
+    }
+  }
+}
+
+void handleForkMenuRelease() {
+  if (sensorRow == 0) {
+    forkMenuColNum = sensorCol;
+    setLed(sensorCol, 0, COLOR_WHITE, cellOn);
   }
 }

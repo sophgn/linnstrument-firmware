@@ -706,6 +706,9 @@ void handleNonPlayingTouch() {
     case displayCustomLedsEditor:
       handleCustomLedsEditorNewTouch();
       break;
+    case displayForkMenu:
+      handleForkMenuNewTouch();
+      break;
     case displayMicroLinnConfig:
       handleMicroLinnConfigNewTouch();
       break;
@@ -751,6 +754,10 @@ boolean handleXYZupdate() {
       case displayCustomLedsEditor:
         handleCustomLedsEditorHold();
         return false;
+
+      case displayForkMenu:
+        handleForkMenuHold();
+        break;
 
       default:
         // other displays don't need hold features
@@ -1636,6 +1643,9 @@ boolean handleNonPlayingRelease() {
         break;
       case displayCustomLedsEditor:
         handleCustomLedsEditorRelease();
+        break;
+      case displayForkMenu:
+        handleForkMenuRelease();
         break;
       case displayMicroLinnConfig:
         handleMicroLinnConfigRelease();

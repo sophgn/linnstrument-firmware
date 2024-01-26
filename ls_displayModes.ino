@@ -60,7 +60,7 @@ displaySequencerDrum0107      : sequencer first 7 drum notes
 displaySequencerDrum0814      : sequencer second 7 drum notes
 displaySequencerColors        : sequencer low row colors
 displayCustomLedsEditor       : editor for custom LEDs
-displayCommunityForkMenu      : menu to access config screens of various forks
+displayForkMenu               : menu to access config screens of various forks
 displayMicroLinnConfig        : editor for EDO and anchor data
 
 These routines handle the painting of these display modes on LinnStument's 208 LEDs.
@@ -231,6 +231,9 @@ void updateDisplay() {
       break;
     case displayCustomLedsEditor:
       paintCustomLedsEditor();
+      break;
+    case displayForkMenu:
+      paintForkMenu();
       break;
     case displayMicroLinnConfig:
       paintMicroLinnConfig();
@@ -1276,32 +1279,6 @@ void paintGuitarTuning() {
   paintNoteDataDisplay(globalColor, Global.guitarTuning[guitarTuningRowNum], LINNMODEL == 200 ? 2 : 1);
 }
 
-void paintMicroLinnConfig() {
-  clearDisplay();
-
-  for (byte r = 0; r < 6; ++r) {
-    setLed(1, r, microLinnConfigRowNum == r ? Split[LEFT].colorAccent : Split[LEFT].colorMain, cellOn);
-    if (r == 3) {r = 4;}   // skip over row 4
-  }
-  switch (microLinnConfigRowNum) {    
-    case 0: 
-      paintNumericDataDisplay(globalColor, microLinnAnchorCentsUser, microLinnAnchorCentsUser < -9 ? -3 : 0, false);
-      break;
-    case 1: 
-      paintNoteDataDisplay(globalColor, microLinn->anchorNote, LINNMODEL == 200 ? 2 : 1);
-      break;
-    case 2:  
-      paintNumericDataDisplay(globalColor, microLinnAnchorCol, 0, false);
-      break;  
-    case 3:   
-      paintNumericDataDisplay(globalColor, microLinnAnchorRowUser, 0, false);
-      break;      
-    case 5: 
-      paintNumericDataDisplay(globalColor, microLinn->EDO, 0, false);
-      break;
-  }
-}
-
 void paintMIDIThrough() {
   clearDisplay();
   if (Device.midiThrough) {
@@ -1984,5 +1961,53 @@ void paintLowRowPressureBar() {
     else {
       clearLed(c, 0);
     }
+  }
+}
+
+void paintForkMenu() {
+  clearDisplay();
+
+  for (byte col = 1; col <= 3; ++col) {
+    setLed(col, 0, forkMenuColNum == col ? Split[LEFT].colorAccent : Split[LEFT].colorMain, cellOn);
+  }
+  switch (forkMenuColNum) {    
+    case 1: 
+      tinyfont_draw_string(1, 5, "micro", Split[LEFT].colorMain);
+      tinyfont_draw_string(1, 2, "Linn",  Split[LEFT].colorMain);
+      break;
+    case 2: 
+      tinyfont_draw_string(1, 5, "skip", Split[LEFT].colorMain);
+      tinyfont_draw_string(1, 2, "col",  Split[LEFT].colorMain);
+      break;
+    case 3:  
+      tinyfont_draw_string(1, 5, "brite", Split[LEFT].colorMain);
+      tinyfont_draw_string(1, 2, "ness",  Split[LEFT].colorMain);
+      break;  
+  }
+}
+
+void paintMicroLinnConfig() {
+  clearDisplay();
+
+  for (byte row = 0; row < 6; ++row) {
+    setLed(1, row, microLinnConfigRowNum == row ? Split[LEFT].colorAccent : Split[LEFT].colorMain, cellOn);
+    if (row == 3) {row = 4;}   // skip over row 4
+  }
+  switch (microLinnConfigRowNum) {
+    case 0: 
+      paintNumericDataDisplay(globalColor, microLinnAnchorCentsUser, microLinnAnchorCentsUser < -9 ? -3 : 0, false);
+      break;
+    case 1: 
+      paintNoteDataDisplay(globalColor, microLinn->anchorNote, LINNMODEL == 200 ? 2 : 1);
+      break;
+    case 2:  
+      paintNumericDataDisplay(globalColor, microLinnAnchorCol, 0, false);
+      break;  
+    case 3:   
+      paintNumericDataDisplay(globalColor, microLinnAnchorRowUser, 0, false);
+      break;      
+    case 5: 
+      paintNumericDataDisplay(globalColor, microLinn->EDO, 0, false);
+      break;
   }
 }
