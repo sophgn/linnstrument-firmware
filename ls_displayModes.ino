@@ -1409,7 +1409,6 @@ void paintNoteDataDisplay(byte color, short noteNumber, short offset) {
   condfont_draw_string(offset, 0, str, color, false);
 }
 
-/**************************** DELETE THIS ONCE NEW MIDI IS WORKING ******************
 // draw a horizontal line to indicate volume for a particular side
 void paintVolumeDisplay(byte side) {
   clearDisplay();
@@ -1420,6 +1419,8 @@ void paintVolumeDisplay(byte side) {
 void paintVolumeDisplayRow(byte side) {
   paintCCFaderDisplayRow(side, 5, Split[side].colorMain, 7, 1, NUMCOLS-2);
 }
+
+/**************************** DELETE THIS ONCE NEW MIDI IS WORKING ******************
 
 void paintOctaveTransposeDisplaySkipFretting(byte side) {     // alternate version of paintOctaveTransposeDisplay
   clearDisplay();                                             // see handleOctaveTransposeNewTouchSplit in ls_settings.ino
