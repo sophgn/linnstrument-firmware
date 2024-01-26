@@ -1945,7 +1945,7 @@ byte getNoteNumber(byte split, byte col, byte row) {
 
   signed char transposeLights = Split[split].transposeLights;
 
-  if (isSkipFretting(split)) {
+  if (isSkipFretting(split)) {             // part of the microLinn fork
     // subtract 1 needed everywhere, so do it again when doubling - this lets us start at note 0 instead of 1
     noteCol = noteCol*2 - 1;
     transposeLights = transposeLights*2;
@@ -1989,7 +1989,7 @@ short determineRowOffsetNote(byte split, byte row) {
       }
     }
 
-    else if (offset >= 12) {
+    else if (offset >= 12) {                          // part of the microLinn fork
       if (isSkipFretting(split)) {                    // handle skip fretting with high row offset (kite guitar is 13, only fills 194 pads)
         lowest = 0;                                   // start at note 0 (why -1 gets us 0?) so that we show as many as possible and all disabled notes are in one place
       } else {

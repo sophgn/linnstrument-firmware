@@ -60,6 +60,7 @@ displaySequencerDrum0107      : sequencer first 7 drum notes
 displaySequencerDrum0814      : sequencer second 7 drum notes
 displaySequencerColors        : sequencer low row colors
 displayCustomLedsEditor       : editor for custom LEDs
+displayCommunityForkMenu      : menu to access config screens of various forks
 displayMicroLinnConfig        : editor for EDO and anchor data
 
 These routines handle the painting of these display modes on LinnStument's 208 LEDs.
@@ -648,7 +649,7 @@ void paintPerSplitDisplay(byte side) {
   }
 
   if (Global.rowOffset == ROWOFFSET_OCTAVECUSTOM && Global.customRowOffset == 13 && isSkipFretting(side)) {
-    // kite settings are enabled, show in accent color
+    // microLinn 41edo kite guitar settings are enabled, show in accent color
     setLed(8, 0, Split[side].colorAccent, cellOn);
   } else if (isSkipFretting(side)) {
     // skip fretting is on, show main color
@@ -1278,13 +1279,6 @@ void paintGuitarTuning() {
 void paintMicroLinnConfig() {
   clearDisplay();
 
-  if (microLinn->skipFretting[LEFT]) {
-    setLed(1, 7, Split[LEFT].colorMain, cellOn);
-  }
-  if (microLinn->skipFretting[RIGHT]) {
-    setLed(2, 7, Split[RIGHT].colorMain, cellOn);
-  }
-
   for (byte r = 0; r < 6; ++r) {
     setLed(1, r, microLinnConfigRowNum == r ? Split[LEFT].colorAccent : Split[LEFT].colorMain, cellOn);
     if (r == 3) {r = 4;}   // skip over row 4
@@ -1420,67 +1414,7 @@ void paintVolumeDisplayRow(byte side) {
   paintCCFaderDisplayRow(side, 5, Split[side].colorMain, 7, 1, NUMCOLS-2);
 }
 
-/**************************** DELETE THIS ONCE NEW MIDI IS WORKING ******************
-
-void paintOctaveTransposeDisplaySkipFretting(byte side) {     // alternate version of paintOctaveTransposeDisplay
-  clearDisplay();                                             // see handleOctaveTransposeNewTouchSplit in ls_settings.ino
-  blinkMiddleRootNote = true;
-
-  // Paint the octave shift value
-  if (!doublePerSplit || skipFrettingData[LEFT].transposeOctave == skipFrettingData[RIGHT].transposeOctave) {
-    paintOctave(Split[Global.currentPerSplit].colorMain, 8, OCTAVE_ROW, 12 * skipFrettingData[side].transposeOctave);
-  }
-  else if (doublePerSplit) {
-    if (abs(skipFrettingData[LEFT].transposeOctave) > abs(skipFrettingData[RIGHT].transposeOctave)) {
-      paintOctave(Split[LEFT].colorMain,  8, OCTAVE_ROW, 12 * skipFrettingData[LEFT].transposeOctave);
-      paintOctave(Split[RIGHT].colorMain, 8, OCTAVE_ROW, 12 * skipFrettingData[RIGHT].transposeOctave);
-    }
-    else {
-      paintOctave(Split[RIGHT].colorMain, 8, OCTAVE_ROW, 12 * skipFrettingData[RIGHT].transposeOctave);
-      paintOctave(Split[LEFT].colorMain,  8, OCTAVE_ROW, 12 * skipFrettingData[LEFT].transposeOctave);
-    }
-  }
-
-  // Paint the whole tone transpose values
-  if (!doublePerSplit || skipFrettingData[LEFT].transposeTone == skipFrettingData[RIGHT].transposeTone) {
-    paintTranspose(Split[Global.currentPerSplit].colorMain, SWITCH_1_ROW, skipFrettingData[side].transposeTone);
-  }
-  else if (doublePerSplit) {
-    if (abs(skipFrettingData[LEFT].transposeTone) > abs(skipFrettingData[RIGHT].transposeTone)) {
-      paintTranspose(Split[LEFT].colorMain,  SWITCH_1_ROW, skipFrettingData[LEFT].transposeTone);
-      paintTranspose(Split[RIGHT].colorMain, SWITCH_1_ROW, skipFrettingData[RIGHT].transposeTone);
-    }
-    else {
-      paintTranspose(Split[RIGHT].colorMain, SWITCH_1_ROW, skipFrettingData[RIGHT].transposeTone);
-      paintTranspose(Split[LEFT].colorMain,  SWITCH_1_ROW, skipFrettingData[LEFT].transposeTone);
-    }
-  }
-
-  // Paint the arrow transpose values
-  if (!doublePerSplit || skipFrettingData[LEFT].transposeArrow == skipFrettingData[RIGHT].transposeArrow) {
-    paintTranspose(Split[Global.currentPerSplit].colorMain, SWITCH_2_ROW, skipFrettingData[side].transposeArrow);
-  }
-  else if (doublePerSplit) {
-    if (abs(skipFrettingData[LEFT].transposeArrow) > abs(skipFrettingData[RIGHT].transposeArrow)) {
-      paintTranspose(Split[LEFT].colorMain,  SWITCH_2_ROW, skipFrettingData[LEFT].transposeArrow);
-      paintTranspose(Split[RIGHT].colorMain, SWITCH_2_ROW, skipFrettingData[RIGHT].transposeArrow);
-    }
-    else {
-      paintTranspose(Split[RIGHT].colorMain, SWITCH_2_ROW, skipFrettingData[RIGHT].transposeArrow);
-      paintTranspose(Split[LEFT].colorMain,  SWITCH_2_ROW, skipFrettingData[LEFT].transposeArrow);
-    }
-  }
-
-  paintShowSplitSelection(side);
-}
-********************************* DELETE CALL BELOW TO THIS FUNCTION TOO ************************/
-
 void paintOctaveTransposeDisplay(byte side) {
-
-  if (isSkipFretting(side) && Global.rowOffset > 7) {         // rowOffset > 7 to exclude 12edo Wicki-Hayden users
-    //paintOctaveTransposeDisplaySkipFretting (side);
-    //return;
-  }
     
   clearDisplay();
   blinkMiddleRootNote = true;

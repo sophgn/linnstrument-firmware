@@ -486,6 +486,7 @@ enum DisplayMode {
   displaySequencerDrum0814,
   displaySequencerColors,
   displayCustomLedsEditor,
+  displayCommunityForkMenu,
   displayMicroLinnConfig
 };
 DisplayMode displayMode = displayNormal;
@@ -899,30 +900,57 @@ SkipFrettingData skipFrettingData[NUMSPLITS];
 
 /************************************ NEW WAY ******************************************/
 
+const byte CUSTOM_LEDS_PATTERN2_K[LED_LAYER_SIZE] = {        // two rainbow zones for 41edo skipFretting
+   0, 41, 25, 17,  9,  0, 41, 25, 17,  9,  0,  0,  0,  0,  0, 33, 49, 65, 41, 25, 17,  9, 65, 49,  0,  0,
+   0, 49, 65, 41, 25, 17,  9, 65, 49, 33,  0,  0,  0,  0,  0, 41, 25, 17,  9,  0, 41, 25, 17,  9,  0,  0,
+   0,  0, 33, 49, 65, 41, 25, 17,  9, 65, 49,  0,  0,  0,  0, 49, 65, 41, 25, 17,  9, 65, 49, 33,  0,  0,
+   0,  0, 41, 25, 17,  9,  0, 41, 25, 17,  9,  0,  0,  0,  0,  0, 33, 49, 65, 41, 25, 17,  9, 65, 49,  0,
+   0,  0, 49, 65, 41, 25, 17,  9, 65, 49, 33,  0,  0,  0,  0,  0, 41, 25, 17,  9,  0, 41, 25, 17,  9,  0,
+   0,  0,  0, 33, 49, 65, 41, 25, 17,  9, 65, 49,  0,  0,  0,  0, 49, 65, 41, 25, 17,  9, 65, 49, 33,  0,
+   0,  0,  0, 41, 25, 17,  9,  0, 41, 25, 17,  9,  0,  0,  0,  0,  0, 33, 49, 65, 41, 25, 17,  9, 65, 49,
+   0,  0,  0, 49, 65, 41, 25, 17,  9, 65, 49, 33,  0,  0,  0,  0,  0, 41, 25, 17,  9,  0, 41, 25, 17,  9
+};
+
+const byte CUSTOM_LEDS_PATTERN3[LED_LAYER_SIZE] = {            // two green kites for 41edo Kite guitar
+   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+   0,  0,  0,  0,  0,  0,  0,  0,  0, 25,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 25,  0,  0,  0,  0,
+   0,  0,  0,  0,  0, 25,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 25,  0,  0,  0,  0,  0,  0,  0,  0,
+   0, 25,  0,  0,  0,  0,  0,  0,  0, 25,  0,  0,  0, 25,  0,  0,  0,  0,  0,  0,  0, 25,  0,  0,  0, 25,
+   0,  0,  0,  0,  0, 25,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 25,  0,  0,  0,  0,  0,  0,  0,  0,
+   0,  0,  0,  0,  0,  0,  0,  0,  0, 25,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 25,  0,  0,  0,  0,
+   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0
+};
+
+const byte MAX_ROW_OFFSET = 31;        // increased from 16 to 31 (53edo's 5th)
+
 const byte microLinnMsg = 7;           // "HELLO NEW YORK!" will be truncated to make room for the user's settings
-const byte microLinnMsgLength = 24;    // 30 minus the 6 bytes we need for data storage makes 24 chars left
+const byte microLinnMsgLength = 24;    // 31 chars (including the null) minus the 7 bytes in MicroLinn = 24 chars left
 
 struct MicroLinn {                     // overlaps the audience messages array
   char nullTerminator;                 // truncates the audience message to 24 chars
   byte EDO;                            // limited to 5-72
   byte anchorPad;                      // numbered 8-207, same for both splits, anchorPad = 8 * anchorCol + anchorRow
   byte anchorNote;                     // any midi note 0-127, same for both splits
-  signed char anchorCents;             // limited to ± 100 cents, same for both splits
-  boolean skipFretting[2];
+  signed char anchorCents;             // limited to ± 60 cents, same for both splits
+  boolean skipFretting[2];             // can be set on either side
 };  
 MicroLinn* microLinn = (MicroLinn*)(Device.audienceMessages + 31 * microLinnMsg + microLinnMsgLength);
-// anchorPad format:                 
-//           left edge    right edge           anchorRow          anchorRowUser              
-// top row:  15 23 31...  135 or 207              7                     1
-// 2nd row:  14 22 30...                          6                     2
-// ...                                           ...                   ...
-// low row:   8 16 24...  128 or 200              0                     8
+// anchorPad format:                left edge    right edge          anchorRow           anchorRowUser              
+//                        top row:  15 23 31...  135 or 207              7                     1
+//                        2nd row:  14 22 30...                          6                     2
+//                        ...                                           ...                   ...
+//                        low row:   8 16 24...  128 or 200              0                     8
 
-
-boolean isSkipFretting (byte side) {                          
-  return microLinn->skipFretting[side];         // to do: global replace isSkipFretting(side) with microLinn->skipFretting[side]
+boolean isSkipFretting (byte side) {       
+  return microLinn->skipFretting[side];
 }
 
+void toggleSkipFretting (byte side) {
+  microLinn->skipFretting[side] = !microLinn->skipFretting[side]; 
+}
+
+byte microLinnConfigRowNum = 5;                 // active row number for configuring the EDO and anchor data
 byte microLinnAnchorRow;                        // numbered 0-7 bottom to top as usual
 byte microLinnAnchorRowUser;                    // what the user sees, numbered 1-8 top to bottom, more intuitive for the general public
 byte microLinnAnchorCol;                        // numbered 1-25 as usual
@@ -940,8 +968,9 @@ void updateMicroLinnVars () {                                                   
 
 byte microLinnMidiNote[NUMSPLITS][MAXROWS][MAXCOLS-1];         // the midi note that is output for each pad
 short microLinnFineTuning[NUMSPLITS][MAXROWS][MAXCOLS-1];      // the deviation from 12edo for each pad, as a pitch bend number from -8192 to 8191
-short microLinnTuningBend[NUMSPLITS][16][10];                  // 16 midi channels, up to 10 touches, tuning bends come from microLinnFineTuning
-short microLinnSlideBend[NUMSPLITS][16][10];                   // 16 midi channels, up to 10 touches, slide bends come from sliding along the Linnstrument
+short microLinnTuningBend[NUMSPLITS][16][10];                  // 16 midi channels, 10 touches, tuning bends come from microLinnFineTuning
+short microLinnSlideBend[NUMSPLITS][16][10];                   // 16 midi channels, 10 touches, slide bends come from sliding along the Linnstrument
+short microLinnLandingBend[NUMSPLITS][16][10];                 // 16 midi channels, 10 touches, landing bends come from the initial touch being off-center
 
 short microLinnSumOfRowOffsets (byte row1, byte row2) {
   switch (Global.rowOffset) {
@@ -994,6 +1023,172 @@ void initializeMicroLinn () {                 // called in setup()
   microLinnEDOtone = 2 * round (microLinn->EDO * log (3/2) / log (2)) - microLinn->EDO;     // whole tone = 9/8, calc as two 5ths minus an octave
   microLinnCalcTuningOfEachPad ();
 }
+
+void handleMicroLinnConfigNewTouch() {
+  if (sensorCol == 1) {
+    if (sensorRow != 4 && sensorRow < 6) {
+      microLinnConfigRowNum = sensorRow;
+      updateDisplay();
+    }
+  } else {
+    switch (microLinnConfigRowNum) {
+      case 0: 
+        handleNumericDataNewTouchCol(microLinnAnchorCentsUser, -60, 60, true); 
+        break;
+      case 1: 
+        handleNumericDataNewTouchCol(microLinn->anchorNote, 0, 127, true); 
+        break;
+      case 2: 
+        handleNumericDataNewTouchCol(microLinnAnchorCol, 1, NUMCOLS-1, true); 
+        break;
+      case 3: 
+        handleNumericDataNewTouchCol(microLinnAnchorRowUser, 1, 8, true);
+        break;
+      case 5: 
+        handleNumericDataNewTouchCol(microLinn->EDO, 5, 72, true); 
+        break;
+    }
+  }
+}
+
+void handleMicroLinnConfigRelease() {
+  handleNumericDataReleaseCol(false); 
+  updateMicroLinnVars();
+  microLinnCalcTuningOfEachPad();
+}
+
+void handleSkipFrettingLongPress () {               // long-press skip fretting button
+  Global.rowOffset = ROWOFFSET_OCTAVECUSTOM;        // use custom row offset to get 13
+  Global.customRowOffset = 13;                      // kite guitar uses +13 row offset
+  Split[LEFT].playedTouchMode = playedSame;         // turn on same-note lighting for familiarity
+  Split[RIGHT].playedTouchMode = playedSame;
+  microLinn->skipFretting[LEFT] = true;
+  microLinn->skipFretting[RIGHT] = true;
+  microLinn->EDO = 41;
+  microLinnAnchorRowUser = 3;
+  microLinnAnchorCol = 6;
+  microLinn->anchorNote = 62;                       // D3, Kite guitar standard tuning
+  microLinnAnchorCentsUser = 0;
+  updateMicroLinnVars();
+  microLinnCalcTuningOfEachPad();
+}
+
+/**************************** DELETE THIS ONCE NEW MIDI IS WORKING ******************
+
+void paintOctaveTransposeDisplaySkipFretting(byte side) {     // alternate version of paintOctaveTransposeDisplay
+  clearDisplay();                                             // see handleOctaveTransposeNewTouchSplit in ls_settings.ino
+  blinkMiddleRootNote = true;
+
+  // Paint the octave shift value
+  if (!doublePerSplit || skipFrettingData[LEFT].transposeOctave == skipFrettingData[RIGHT].transposeOctave) {
+    paintOctave(Split[Global.currentPerSplit].colorMain, 8, OCTAVE_ROW, 12 * skipFrettingData[side].transposeOctave);
+  }
+  else if (doublePerSplit) {
+    if (abs(skipFrettingData[LEFT].transposeOctave) > abs(skipFrettingData[RIGHT].transposeOctave)) {
+      paintOctave(Split[LEFT].colorMain,  8, OCTAVE_ROW, 12 * skipFrettingData[LEFT].transposeOctave);
+      paintOctave(Split[RIGHT].colorMain, 8, OCTAVE_ROW, 12 * skipFrettingData[RIGHT].transposeOctave);
+    }
+    else {
+      paintOctave(Split[RIGHT].colorMain, 8, OCTAVE_ROW, 12 * skipFrettingData[RIGHT].transposeOctave);
+      paintOctave(Split[LEFT].colorMain,  8, OCTAVE_ROW, 12 * skipFrettingData[LEFT].transposeOctave);
+    }
+  }
+
+  // Paint the whole tone transpose values
+  if (!doublePerSplit || skipFrettingData[LEFT].transposeTone == skipFrettingData[RIGHT].transposeTone) {
+    paintTranspose(Split[Global.currentPerSplit].colorMain, SWITCH_1_ROW, skipFrettingData[side].transposeTone);
+  }
+  else if (doublePerSplit) {
+    if (abs(skipFrettingData[LEFT].transposeTone) > abs(skipFrettingData[RIGHT].transposeTone)) {
+      paintTranspose(Split[LEFT].colorMain,  SWITCH_1_ROW, skipFrettingData[LEFT].transposeTone);
+      paintTranspose(Split[RIGHT].colorMain, SWITCH_1_ROW, skipFrettingData[RIGHT].transposeTone);
+    }
+    else {
+      paintTranspose(Split[RIGHT].colorMain, SWITCH_1_ROW, skipFrettingData[RIGHT].transposeTone);
+      paintTranspose(Split[LEFT].colorMain,  SWITCH_1_ROW, skipFrettingData[LEFT].transposeTone);
+    }
+  }
+
+  // Paint the arrow transpose values
+  if (!doublePerSplit || skipFrettingData[LEFT].transposeArrow == skipFrettingData[RIGHT].transposeArrow) {
+    paintTranspose(Split[Global.currentPerSplit].colorMain, SWITCH_2_ROW, skipFrettingData[side].transposeArrow);
+  }
+  else if (doublePerSplit) {
+    if (abs(skipFrettingData[LEFT].transposeArrow) > abs(skipFrettingData[RIGHT].transposeArrow)) {
+      paintTranspose(Split[LEFT].colorMain,  SWITCH_2_ROW, skipFrettingData[LEFT].transposeArrow);
+      paintTranspose(Split[RIGHT].colorMain, SWITCH_2_ROW, skipFrettingData[RIGHT].transposeArrow);
+    }
+    else {
+      paintTranspose(Split[RIGHT].colorMain, SWITCH_2_ROW, skipFrettingData[RIGHT].transposeArrow);
+      paintTranspose(Split[LEFT].colorMain,  SWITCH_2_ROW, skipFrettingData[LEFT].transposeArrow);
+    }
+  }
+
+  paintShowSplitSelection(side);
+}
+
+from ls_displayModes.ino
+void paintOctaveTransposeDisplay(byte side) {
+
+  if (isSkipFretting(side) && Global.rowOffset > 7) {       // rowOffset > 7 to exclude 12edo Wicki-Hayden users
+    paintOctaveTransposeDisplaySkipFretting (side);         // microLinn
+    return;
+  }
+
+*************************************************************************************/
+
+
+
+
+/**************************** DELETE THIS ONCE NEW MIDI IS WORKING ******************
+void handleOctaveTransposeNewTouchSplitSkipFretting(byte side) {
+  // alternate version of handleOctaveTransposeNewTouchSplit
+  // send CCs reporting the transposes to LinnstrumentMicrotonal app, it will do the transposing
+  // use the CC that the right foot switch is assigned to via long-pressing the CC65 option
+  // repurpose semitones to be whole tones and lights to be arrows/edosteps, so that ±7 of each covers 41edo
+  // midi for octave transposing via footswitch reports each increment/decrement, plus a 0 CC for pedal release
+  // but midi from here directly reports the current amount of transpose, no zero CCs
+  // the CCvalue is 93-99 for ±3 octaves, 57-71 for ±7 tones, or 25-39 for ±7 arrows
+  // see also paintOctaveTransposeDisplay function in ls_displayModes.ino
+
+  signed char newTransposeOctave = skipFrettingData[side].transposeOctave; 
+  signed char newTransposeTone   = skipFrettingData[side].transposeTone;
+  signed char newTransposeArrow  = skipFrettingData[side].transposeArrow;
+
+  if (sensorCol > 0 && sensorCol < 16) {
+         if (sensorRow == OCTAVE_ROW)   {newTransposeOctave = sensorCol - 8;}
+    else if (sensorRow == SWITCH_1_ROW) {newTransposeTone   = sensorCol - 8;}
+    else if (sensorRow == SWITCH_2_ROW) {newTransposeArrow  = sensorCol - 8;}
+  }
+  newTransposeOctave = min (max (newTransposeOctave, -3), 3);
+
+  byte chan = (side == LEFT ? 1 : 16);                                        // midi channel
+  byte CCnum = Global.ccForSwitchCC65[SWITCH_FOOT_R];
+    
+  if (newTransposeOctave != skipFrettingData[side].transposeOctave) {
+    skipFrettingData[side].transposeOctave = newTransposeOctave;                           
+    midiSendControlChange (CCnum, 96 + newTransposeOctave, chan, true);       // range is 93-99                   
+  }
+
+  if (newTransposeTone != skipFrettingData[side].transposeTone) { 
+    skipFrettingData[side].transposeTone = newTransposeTone;                           
+    midiSendControlChange (CCnum, 64 + newTransposeTone, chan, true);         // range is 57-71                   
+  }
+
+  if (newTransposeArrow != skipFrettingData[side].transposeArrow) { 
+    skipFrettingData[side].transposeArrow = newTransposeArrow;                           
+    midiSendControlChange (CCnum, 32 + newTransposeArrow, chan, true);        // range is 25-39             
+  }
+}
+
+from ls_settings.ino
+void handleOctaveTransposeNewTouchSplit(byte side) {
+
+  if (isSkipFretting(side) && Global.rowOffset > 7) {               // rowOffset > 7 to exclude 12edo Wicki-Hayden users,
+    handleOctaveTransposeNewTouchSplitSkipFretting (side);          // who will want to transpose normally
+    return;
+  }
+**********************************************************************************************/
 
 
 /**************************************** SECRET SWITCHES ****************************************/
@@ -1203,8 +1398,6 @@ short restrictedRow = -1;                           // temporarily restrict touc
 byte guitarTuningRowNum = 0;                        // active row number for configuring the guitar tuning
 short guitarTuningPreviewNote = -1;                 // active note that is previewing the guitar tuning pitch
 short guitarTuningPreviewChannel = -1;              // active channel that is previewing the guitar tuning pitch
-
-byte microLinnConfigRowNum = 5;                     // active row number for configuring the EDO and anchor data
 
 byte customLedColor = COLOR_GREEN;                  // color is used for drawing in the custom LED editor
 
