@@ -1673,9 +1673,9 @@ void highlightPossibleNoteCells(byte split, byte notenum) {
   if (Split[split].lowRowMode != lowRowNormal) {
     row = 1;
   }
-  for (; row < NUMROWS; ++row) {    // for all rows, starting from the bottom
-    short col = getNoteNumColumn(split, notenum, row); // see what column the note would be in
-    if (col > 0) { // for most rows it'd be negative (not in this row), if not, light up the note
+  for (; row < NUMROWS; ++row) {                         // for all rows, starting from the bottom
+    short col = getNoteNumColumn(split, notenum, row);   // see what column the note would be in
+    if (col > 0) {                                       // for most rows it'd be negative (not in this row), if not, light up the note
       setLed(col, row, Split[split].colorPlayed, cellOn, LED_LAYER_PLAYED);
     }
   }

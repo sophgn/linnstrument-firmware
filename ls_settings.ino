@@ -1323,10 +1323,6 @@ void handlePerSplitSettingNewTouch() {
         case 3:
           Split[Global.currentPerSplit].pitchResetOnRelease = !Split[Global.currentPerSplit].pitchResetOnRelease;
           break;
-
-        case 0:
-          // handled on release
-          break;
       }
       break;
 
@@ -1483,15 +1479,6 @@ void handlePerSplitSettingNewTouch() {
       }
       break;
 
-    case 8:
-      // custom skip-key setting button, long press for kite settings
-      switch (sensorRow) {
-        case 0:
-          setLed(sensorCol, sensorRow, Split[sensorSplit].colorAccent, cellSlowPulse);
-          break;
-      }
-      break;
-
     case 9:
       switch (sensorRow) {
         case 7:
@@ -1576,16 +1563,6 @@ void handlePerSplitSettingHold() {
           case 4:
             resetNumericDataChange();
             setDisplayMode(displayBendRange);
-            updateDisplay();
-            break;
-        }
-        break;
-
-      case 8: 
-        switch (sensorRow) {
-          case 0:    
-            handleSkipFrettingLongPress ();       // part of the microLinn fork
-            setDisplayMode(displayNormal);
             updateDisplay();
             break;
         }
@@ -1688,18 +1665,6 @@ void handlePerSplitSettingRelease() {
             midiSendMpePitchBendRange(Global.currentPerSplit);
           }
           break;
-      }
-      break;
-
-    case 8:
-      switch (sensorRow) {
-        case 0:   
-        if (ensureCellBeforeHoldWait(Split[Global.currentPerSplit].colorAccent,
-            isSkipFretting(Global.currentPerSplit) ? cellOn : cellOff)) {
-          toggleSkipFretting (Global.currentPerSplit);
-          microLinnCalcTuningOfEachPad();
-        }
-        break;
       }
       break;
 
@@ -2151,7 +2116,7 @@ void handleSplitHandednessNewTouch() {
 }
 
 void handleSplitHandednessRelease() {
-  microLinnCalcTuningOfEachPad();
+  microLinnCalcTuningOfEachCell();
   handleNumericDataReleaseCol(false);
 }
 
@@ -2189,7 +2154,7 @@ void handleGuitarTuningNewTouch() {
 }
 
 void handleGuitarTuningRelease() {
-  handleNumericDataReleaseCol(false); // false because guitar tuning editor does not do splits, fixes #5
+  handleNumericDataReleaseCol(false); // false because guitar tuning editor does not do splits, fixes issue #5
   if (cellsTouched == 0) {
     ensureGuitarTuningPreviewNoteRelease();
   }
@@ -2378,7 +2343,7 @@ void handleOctaveTransposeNewTouchSplit(byte side) {
 }
 
 void handleOctaveTransposeRelease() {
-  microLinnCalcTuningOfEachPad();
+  microLinnCalcTuningOfEachCell();
   handleShowSplit();  // see if one of the "Show Split" cells have been hit
 }
 
@@ -2578,7 +2543,7 @@ void handleGlobalSettingNewTouch() {
       }
       else {
         if (sensorRow == 1) {
-          //setDisplayMode(displayOsVersion);    // now handled on release instead, to accomodate community fork menu
+          //setDisplayMode(displayOsVersion);      // now handled on release instead, to accomodate the fork menu
         }
         // reset feature
         else if ((sensorRow == 2 && cell(sensorCol, 0).touched != untouchedCell) ||
@@ -2969,7 +2934,7 @@ void handleGlobalSettingNewTouch() {
     case 16:
       switch (sensorRow) {
         case 1:                                                        // OS version is now handled here on release
-          setLed(sensorCol, sensorRow, globalColor, cellSlowPulse);    // to allow longpress to the community fork menu
+          setLed(sensorCol, sensorRow, globalColor, cellSlowPulse);    // to allow longpress to the fork menu
           break;
         case 2:
           if (displayMode != displayReset) {
@@ -3107,9 +3072,11 @@ void handleGlobalSettingHold() {
       case 16:
         switch (sensorRow) {
           case 1:
+            forkMenuColNum = 0;
+            numTimesForkMenu += 1;
             resetNumericDataChange();
             setDisplayMode(displayForkMenu);
-            updateDisplay();
+            paintForkMenu();
             break;
           case 2:                                                  // handle switch to/from User Firmware Mode
             if (cell(16, 0).touched == untouchedCell) {            // ensure that this is not a reset operation instead
@@ -3157,7 +3124,7 @@ void handleGlobalSettingRelease() {
   if (sensorCol == 1 && sensorRow == 3 &&
       ensureCellBeforeHoldWait(getSplitHandednessColor(), Device.otherHanded ? cellOn : cellOff)) {
     Device.otherHanded = !Device.otherHanded;
-    microLinnCalcTuningOfEachPad();
+    microLinnCalcTuningOfEachCell();
   }
   else if (sensorCol == 6 && sensorRow == 2 &&
       ensureCellBeforeHoldWait(globalColor, Global.rowOffset == ROWOFFSET_OCTAVECUSTOM ? cellOn : cellOff)) {
@@ -3221,7 +3188,7 @@ void handleGlobalSettingRelease() {
   }
   else if (sensorCol == 16) { 
       if (sensorRow == 1) {                       // OS version is now handled here on release not on touch
-        setDisplayMode(displayOsVersion);         // to allow a long-press to display the community fork menu
+        setDisplayMode(displayOsVersion);         // to allow a long-press to display the fork menu
       }
       // Toggle UPDATE OS value
       else if (sensorRow == 2) {
@@ -3372,50 +3339,136 @@ void handleCustomLedsEditorRelease() {
 }
 
 void handleForkMenuNewTouch() {
-  if (sensorRow == 0) {
-    forkMenuColNum = sensorCol;
-    setLed(sensorCol, sensorRow, Split[LEFT].colorAccent, cellSlowPulse);
-  } else if (forkMenuColNum > 0) {
-    switch (sensorCol) {
-      case 1:
-        forkMenuColNum = 0;
-        microLinnConfigRowNum = -1;
-        resetNumericDataChange();
-        setDisplayMode(displayMicroLinnConfig);                // config EDO and anchor data
-        updateDisplay();
-        break;
-
-      case 2:
-      case 3:
-      case 4:
-        break;
+  // start tracking the touch duration to be able to enable hold functionality
+  sensorCell->lastTouch = millis();
+  forkMenuNowScrolling = false;
+  if (sensorRow == 0 && sensorCol <= NUM_FORKS) { 
+    if (forkMenuColNum > 0 && forkMenuColNum != sensorCol) {
+      setLed(forkMenuColNum, 0, Split[LEFT].colorMain, cellOn);   // turn off old button
     }
-    
+    forkMenuColNum = sensorCol;
+    setLed(sensorCol, 0, Split[LEFT].colorAccent, cellOn);        // turn on new button
   }
 }
 
 void handleForkMenuHold() {
-  if (sensorRow == 0) {
-    switch (forkMenuColNum) {       // or should this be sensorCol?
+  if (sensorRow == 0 && sensorCol <= NUM_FORKS
+      && isCellPastSensorHoldWait() && !forkMenuNowScrolling) {          // long-press bottom row
+    forkMenuNowScrolling = true;
+    paintForkMenu();                                                     // scroll the name of the fork
+  }
+}
+
+void handleForkMenuRelease() {
+  if (sensorRow == 0 && sensorCol <= NUM_FORKS
+      && !isCellPastSensorHoldWait()) {               // short-press bottom row
+    forkMenuColNum = 0;
+    switch (sensorCol) {
       case 1:
-        forkMenuColNum = 0;
-        microLinnConfigRowNum = -1;
+        microLinnConfigColNum = 0;
         resetNumericDataChange();
-        setDisplayMode(displayMicroLinnConfig);                // config EDO and anchor data
+        setDisplayMode(displayMicroLinnConfig);        // config EDO, anchor, skipfretting
         updateDisplay();
         break;
-
       case 2:
+        resetNumericDataChange();
+        setDisplayMode(displayBrightness);  
+        updateDisplay();
+        break;
       case 3:
-      case 4:
+        forkMenuColNum = 3;
         break;
     }
   }
 }
 
-void handleForkMenuRelease() {
-  if (sensorRow == 0) {
-    forkMenuColNum = sensorCol;
-    setLed(sensorCol, 0, COLOR_WHITE, cellOn);
+boolean isMicroLinnConfigButton () {
+  return sensorRow == 0 && sensorCol >= 3 && sensorCol <= 14 
+      && sensorCol != 9 && sensorCol != 12;
+}
+
+void handleMicroLinnConfigNewTouch() {
+  // start tracking the touch duration to be able to enable hold functionality
+  sensorCell->lastTouch = millis();
+
+  microLinnConfigNowScrolling = false;
+           
+  if (isMicroLinnConfigButton()) {                              // mostly handled on hold or release
+    if (microLinnConfigColNum > 0 && microLinnConfigColNum != sensorCol) {
+      setLed(microLinnConfigColNum, 0, Split[LEFT].colorMain, cellOn);        // turn off old button
+    }
+    microLinnConfigColNum = sensorCol;
+    setLed(microLinnConfigColNum, 0, Split[LEFT].colorAccent, cellOn);         // turn on new button
+    updateDisplay();
+    return;
+  }
+  
+  if (sensorRow > 0) {                                       // rows 1-7 are handled right away
+    switch (microLinnConfigColNum) {
+      case 3: 
+        handleNumericDataNewTouchCol(microLinn->EDO, 5, 72, true); 
+        break;
+      case 4: 
+        handleNumericDataNewTouchCol(microLinn->octaveStretch, 4, 124, true); 
+        break;
+      case 5: 
+        handleNumericDataNewTouchCol(microLinnAnchorRowUser, 1, 8, true);
+        break;
+      case 6: 
+        handleNumericDataNewTouchCol(microLinnAnchorCol, 1, NUMCOLS-1, true); 
+        break;
+      case 7: 
+        handleNumericDataNewTouchCol(microLinn->anchorNote, 0, 127, true); 
+        break;
+      case 8: 
+        handleNumericDataNewTouchCol(microLinn->anchorCents, 4, 124, true); 
+        break;
+      case 10: 
+        handleNumericDataNewTouchCol(microLinn->skipFretting[LEFT], 1, MAX_COL_OFFSET, true); 
+        break;
+      case 11: 
+        handleNumericDataNewTouchCol(microLinn->skipFretting[RIGHT], 1, MAX_COL_OFFSET, true); 
+        break;
+    }
+  }
+}
+
+void handleMicroLinnConfigHold() {
+  if (isMicroLinnConfigButton()                              // long-press bottom row
+      && isCellPastSensorHoldWait() && !microLinnConfigNowScrolling) {     
+    microLinnConfigNowScrolling = true;
+    paintMicroLinnConfig();                                // scroll the name of the button
+  }
+}
+
+void handleMicroLinnConfigRelease() {
+  if (isMicroLinnConfigButton() && !isCellPastSensorHoldWait()) {    // short-press bottom row
+    microLinnConfigColNum = sensorCol;
+    if (microLinnConfigColNum == 13) {
+      setWickiHaydenDefaults();
+      resetNumericDataChange();
+      setDisplayMode(displayNormal); 
+      updateDisplay();
+    }
+    if (microLinnConfigColNum == 14) {
+      setKiteGuitarDefaults();
+      resetNumericDataChange();
+      setDisplayMode(displayNormal); 
+      updateDisplay();
+    }
+  }
+  else if (sensorRow > 0) {
+    handleNumericDataReleaseCol(false); 
+    if (!sensorCell->slideTransfer) {             // to stop the flickering, doesn't work
+      updateMicroLinnVars();
+      microLinnCalcTuningOfEachCell();
+    }
+  }
+}
+
+void handleBrightnessNewTouch() {
+  if (sensorRow >=3 && sensorRow <= 5 && sensorCol >= 3 && sensorCol <= 16) {
+    brightness = min (max (sensorCol - 5, 0), 7);
+    updateDisplay(); 
   }
 }

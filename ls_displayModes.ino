@@ -61,7 +61,9 @@ displaySequencerDrum0814      : sequencer second 7 drum notes
 displaySequencerColors        : sequencer low row colors
 displayCustomLedsEditor       : editor for custom LEDs
 displayForkMenu               : menu to access config screens of various forks
-displayMicroLinnConfig        : editor for EDO and anchor data
+displayMicroLinnConfig        : select EDO, anchor data and column offsets
+displayAnchorPadChooser       : choose the anchor pad from the usual performance screen
+displayBrightness             : brightness knob
 
 These routines handle the painting of these display modes on LinnStument's 208 LEDs.
 **************************************************************************************************/
@@ -237,6 +239,9 @@ void updateDisplay() {
       break;
     case displayMicroLinnConfig:
       paintMicroLinnConfig();
+      break;
+    case displayBrightness:
+      paintBrightnessScreen();
       break;
   }
 
@@ -649,14 +654,6 @@ void paintPerSplitDisplay(byte side) {
 
   if (Split[side].pitchResetOnRelease == true) {
     setLed(8, 3, Split[side].colorMain, cellOn);
-  }
-
-  if (Global.rowOffset == ROWOFFSET_OCTAVECUSTOM && Global.customRowOffset == 13 && isSkipFretting(side)) {
-    // microLinn 41edo kite guitar settings are enabled, show in accent color
-    setLed(8, 0, Split[side].colorAccent, cellOn);
-  } else if (isSkipFretting(side)) {
-    // skip fretting is on, show main color
-    setLed(8, 0, Split[side].colorMain, cellOn);
   }
 
   // set Timbre/Y settings
@@ -1276,7 +1273,7 @@ void paintGuitarTuning() {
     setLed(1, r, guitarTuningRowNum == r ? Split[Global.currentPerSplit].colorAccent : Split[Global.currentPerSplit].colorMain, cellOn);
   }
 
-  paintNoteDataDisplay(globalColor, Global.guitarTuning[guitarTuningRowNum], LINNMODEL == 200 ? 2 : 1);
+  paintNoteDataDisplay(globalColor, Global.guitarTuning[guitarTuningRowNum], LINNMODEL == 200 ? 2 : 1, 0);
 }
 
 void paintMIDIThrough() {
@@ -1356,7 +1353,42 @@ void paintNumericDataDisplay(byte color, short value, short offset, boolean cond
   }
 }
 
-void paintNoteDataDisplay(byte color, short noteNumber, short offset) {
+void paintNumericDataDisplayRow(byte color, short value, short offset, byte row, boolean condensed) {
+  char str[10];
+  const char* format;
+  byte pos;
+
+  if (value < 100) {
+    format = "%2d";
+    pos = condensed ? 3 : 5;
+  }
+  else if (value >= 100 && value < 200) {
+    // Handle the "1" character specially, to get the spacing right
+    if (condensed) {
+      condfont_draw_string(offset, row, "1", color, false);
+    }
+    else {
+      smallfont_draw_string(offset + 2, row, "1", color, false);
+    }
+    value -= 100;
+    format = "%02d";     // to make sure a leading zero is included
+    pos = condensed ? 3 : 5;
+  }
+  else {
+    format = "%-d";
+    pos = 0;
+  }
+
+  snprintf(str, sizeof(str), format, value);
+  if (condensed) {
+    condfont_draw_string(pos+offset, row, str, color, false);
+  }
+  else {
+    smallfont_draw_string(pos+offset, row, str, color, false);
+  }
+}
+
+void paintNoteDataDisplay(byte color, short noteNumber, short offset, byte row) {
   char str[10];
   const char* format;
 
@@ -1377,7 +1409,7 @@ void paintNoteDataDisplay(byte color, short noteNumber, short offset) {
   }
 
   snprintf(str, sizeof(str), format, int(noteNumber/12) - 2);
-  condfont_draw_string(offset, 0, str, color, false);
+  condfont_draw_string(offset, row, str, color, false);
 }
 
 // draw a horizontal line to indicate volume for a particular side
@@ -1966,48 +1998,114 @@ void paintLowRowPressureBar() {
 
 void paintForkMenu() {
   clearDisplay();
-
-  for (byte col = 1; col <= 3; ++col) {
-    setLed(col, 0, forkMenuColNum == col ? Split[LEFT].colorAccent : Split[LEFT].colorMain, cellOn);
+  for (byte col = 1; col <= NUM_FORKS; ++col) {
+    setLed(col, 0, col == forkMenuColNum ? Split[LEFT].colorAccent : Split[LEFT].colorMain, cellOn);
   }
   switch (forkMenuColNum) {    
+    case 0:
+      if (numTimesForkMenu <= MAX_LONGPRESS_MESSAGES) {
+        small_scroll_text_row1("        LONG-PRESS FOR FORK NAMES", Split[LEFT].colorMain);
+      }
+      break;
     case 1: 
-      tinyfont_draw_string(1, 5, "micro", Split[LEFT].colorMain);
-      tinyfont_draw_string(1, 2, "Linn",  Split[LEFT].colorMain);
+      small_scroll_text_row1("      MICROLINN", Split[LEFT].colorMain);
       break;
     case 2: 
-      tinyfont_draw_string(1, 5, "skip", Split[LEFT].colorMain);
-      tinyfont_draw_string(1, 2, "col",  Split[LEFT].colorMain);
+      small_scroll_text_row1("      BRIGHTNESS", Split[LEFT].colorMain);
       break;
-    case 3:  
-      tinyfont_draw_string(1, 5, "brite", Split[LEFT].colorMain);
-      tinyfont_draw_string(1, 2, "ness",  Split[LEFT].colorMain);
+    case 3:
+      small_scroll_text_row1("      YOUR FORK HERE", Split[LEFT].colorMain);
       break;  
+  }
+  for (byte col = 1; col <= NUM_FORKS; ++col) {
+    setLed(col, 0, col == forkMenuColNum ? Split[LEFT].colorAccent : Split[LEFT].colorMain, cellOn);
   }
 }
 
 void paintMicroLinnConfig() {
   clearDisplay();
-
-  for (byte row = 0; row < 6; ++row) {
-    setLed(1, row, microLinnConfigRowNum == row ? Split[LEFT].colorAccent : Split[LEFT].colorMain, cellOn);
-    if (row == 3) {row = 4;}   // skip over row 4
+  for (byte col = 3; col <= 14; ++col) {                         // draw the buttons
+    if (col == 9 || col == 12) {col += 1;}          // skip over empty columns
+    setLed(col, 0, col == microLinnConfigColNum ? Split[LEFT].colorAccent : Split[LEFT].colorMain, cellOn);
   }
-  switch (microLinnConfigRowNum) {
-    case 0: 
-      paintNumericDataDisplay(globalColor, microLinnAnchorCentsUser, microLinnAnchorCentsUser < -9 ? -3 : 0, false);
+  setLed(11, 0, microLinnConfigColNum == 11 ? Split[RIGHT].colorAccent : Split[RIGHT].colorMain, cellOn);
+
+  if (microLinnConfigNowScrolling) {
+    switch (microLinnConfigColNum) {
+      case 3: 
+        small_scroll_text_row1("      NOTES PER OCTAVE", Split[LEFT].colorMain);
+        break;
+      case 4: 
+        small_scroll_text_row1("      OCTAVE STRETCH IN CENTS", Split[LEFT].colorMain);
+        break;
+      case 5: 
+        small_scroll_text_row1("      ANCHOR CELL ROW", Split[LEFT].colorMain);
+        break;
+      case 6: 
+        small_scroll_text_row1("      ANCHOR CELL COLUMN", Split[LEFT].colorMain);
+        break;
+      case 7: 
+        small_scroll_text_row1("      ANCHOR NOTE", Split[LEFT].colorMain);
+        break;
+      case 8: 
+        small_scroll_text_row1("      ANCHOR CENTS", Split[LEFT].colorMain);
+        break;
+      case 10: 
+        small_scroll_text_row1("      LEFT COLUMN OFFSET", Split[LEFT].colorMain);
+        break;
+      case 11: 
+        small_scroll_text_row1("      RIGHT COLUMN OFFSET", Split[RIGHT].colorMain);
+        break;
+      case 13: 
+        small_scroll_text_row1("      WICHI-HAYDEN DEFAULTS", Split[LEFT].colorMain);
+        break;
+      case 14: 
+        small_scroll_text_row1("      KITE GUITAR DEFAULTS", Split[LEFT].colorMain);
+        break;
+    }
+    for (byte col = 3; col <= 14; ++col) {                         // draw the buttons
+      if (col == 9 || col == 12) {col += 1;}          // skip over empty columns
+      setLed(col, 0, col == microLinnConfigColNum ? Split[LEFT].colorAccent : Split[LEFT].colorMain, cellOn);
+    }
+    setLed(11, 0, microLinnConfigColNum == 11 ? Split[RIGHT].colorAccent : Split[RIGHT].colorMain, cellOn);
+  }
+
+  switch (microLinnConfigColNum) {
+    case 3: 
+      paintNumericDataDisplayRow(globalColor, microLinn->EDO, 0, 1, false);
       break;
-    case 1: 
-      paintNoteDataDisplay(globalColor, microLinn->anchorNote, LINNMODEL == 200 ? 2 : 1);
+    case 4: 
+      paintNumericDataDisplayRow(globalColor, microLinn->octaveStretch - 64, microLinn->octaveStretch < 55 ? -3 : 0, 1, false);
       break;
-    case 2:  
-      paintNumericDataDisplay(globalColor, microLinnAnchorCol, 0, false);
+    case 5:   
+      paintNumericDataDisplayRow(globalColor, microLinnAnchorRowUser, 0, 1, false);
+     break;      
+    case 6:  
+      paintNumericDataDisplayRow(globalColor, microLinnAnchorCol, 0, 1, false);
       break;  
-    case 3:   
-      paintNumericDataDisplay(globalColor, microLinnAnchorRowUser, 0, false);
-      break;      
-    case 5: 
-      paintNumericDataDisplay(globalColor, microLinn->EDO, 0, false);
+    case 7: 
+      paintNoteDataDisplay(globalColor, microLinn->anchorNote, LINNMODEL == 200 ? 2 : 1, 1);
       break;
+    case 8: 
+      //paintNumericDataDisplay(globalColor, microLinnAnchorCentsUser, microLinnAnchorCentsUser < -9 ? -3 : 0, false);
+      paintNumericDataDisplayRow(globalColor, microLinn->anchorCents - 64, microLinn->anchorCents < 55 ? -3 : 0, 1, false);
+      break;
+    case 10:
+      paintNumericDataDisplayRow(Split[LEFT].colorMain, microLinn->skipFretting[LEFT], 0, 1, false);
+      break;
+    case 11: 
+      paintNumericDataDisplayRow(Split[RIGHT].colorMain, microLinn->skipFretting[RIGHT], 0, 1, false);
+      break;
+    case 13: 
+    case 14:
+      break;
+  }
+}
+
+void paintBrightnessScreen() {
+  clearDisplay();
+  setLed(4, 4, Split[LEFT].colorAccent, cellOn);     // zero marker, like on the transpose screen
+  for (byte col = 12; col >= 5; --col ) {
+    setLed(col, 4, col - 5 > brightness ? COLOR_BLACK : Split[LEFT].colorMain, cellOn);
   }
 }
