@@ -712,6 +712,9 @@ void handleNonPlayingTouch() {
     case displayMicroLinnConfig:
       handleMicroLinnConfigNewTouch();
       break;
+    case displayAnchorCellChooser:
+      handleAnchorCellChooserNewTouch();
+      break;
     case displayBrightness:
       handleBrightnessNewTouch();
       break;
@@ -760,7 +763,7 @@ boolean handleXYZupdate() {
 
       case displayForkMenu:
         handleForkMenuHold();
-        break;
+        break;                              // should this line be "return false;"?
 
       case displayMicroLinnConfig:
         handleMicroLinnConfigHold();
@@ -1962,7 +1965,7 @@ byte getNoteNumber(byte split, byte col, byte row) {
 
   signed char transposeLights = Split[split].transposeLights;
 
-  if (isSkipFretting(split)) {             // part of the microLinn fork
+  if (microLinn->colOffset[split] > 1) {             // part of the microLinn fork
     // subtract 1 needed everywhere, so do it again when doubling - this lets us start at note 0 instead of 1
     noteCol = noteCol*2 - 1;
     transposeLights = transposeLights*2;
@@ -2007,7 +2010,7 @@ short determineRowOffsetNote(byte split, byte row) {
     }
 
     else if (offset >= 12) {                          // part of the microLinn fork
-      if (isSkipFretting(split)) {                    // handle skip fretting with high row offset (kite guitar is 13, only fills 194 cells)
+      if (microLinn->colOffset[split] > 1) {          // handle skip fretting with high row offset (kite guitar is 13, only fills 194 cells)
         lowest = 0;                                   // start at note 0 (why -1 gets us 0?) so that we show as many as possible and all disabled notes are in one place
       } else {
         lowest = 18;                                  // start the octave offset one octave lower to prevent having disabled notes at the top in the default configuration

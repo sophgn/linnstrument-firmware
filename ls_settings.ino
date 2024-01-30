@@ -364,9 +364,8 @@ void initializeDeviceSettings() {
   initializeAudienceMessages();
 
   memcpy(&Device.customLeds[0][0], &CUSTOM_LEDS_PATTERN1[0], LED_LAYER_SIZE);
-  memcpy(&Device.customLeds[1][0], &CUSTOM_LEDS_PATTERN2_K[0], LED_LAYER_SIZE);    // two rainbow zones for 41edo microLinn
-  memcpy(&Device.customLeds[2][0], &CUSTOM_LEDS_PATTERN3[0], LED_LAYER_SIZE);      // two green kites for Kite guitar
-  //memset(&Device.customLeds[2][0], 0, LED_LAYER_SIZE);                           // the original code made a blank pattern
+  memcpy(&Device.customLeds[1][0], &CUSTOM_LEDS_PATTERN2[0], LED_LAYER_SIZE);
+  memset(&Device.customLeds[2][0], 0, LED_LAYER_SIZE);
 }
 
 void initializeAudienceMessages() {
@@ -1719,6 +1718,7 @@ void handlePerSplitSettingRelease() {
         case 5:
           if (ensureCellBeforeHoldWait(Split[Global.currentPerSplit].colorPlayed, cellOn)) {
             Split[Global.currentPerSplit].colorPlayed = colorCycle(Split[Global.currentPerSplit].colorPlayed, true);
+            microLinnColorPlayed[Global.currentPerSplit] = Split[Global.currentPerSplit].colorPlayed;      // see ls_microLinn.ino
           }
           break;
       }
@@ -2851,6 +2851,17 @@ void handleGlobalSettingNewTouch() {
             break;
         }
         break;
+#ifndef DEBUG_ENABLED
+      case 17:                                // avoid conflict, column 17 also sets the debug level
+        if (sensorRow == 1) {
+          forkMenuColNum = 0;  
+          numTimesForkMenu += 1;
+          resetNumericDataChange();
+          setDisplayMode(displayForkMenu);
+          paintForkMenu();                    // use paintForkMenu, updateDisplay() doesn't work here
+        }
+        break;
+#endif
     }
   }
 
@@ -3076,7 +3087,7 @@ void handleGlobalSettingHold() {
             numTimesForkMenu += 1;
             resetNumericDataChange();
             setDisplayMode(displayForkMenu);
-            paintForkMenu();
+            paintForkMenu();                                       // use paintForkMenu, updateDisplay() doesn't work here
             break;
           case 2:                                                  // handle switch to/from User Firmware Mode
             if (cell(16, 0).touched == untouchedCell) {            // ensure that this is not a reset operation instead
@@ -3101,8 +3112,8 @@ void handleGlobalSettingHold() {
       // fill in all 30 spaces of the message
       int strl = strlen(Device.audienceMessages[audienceMessageToEdit]);
       byte maxLen = 30;
-      if (audienceMessageToEdit == microLinnMsg) {         // truncate message, store skipFretting/microLinn data there
-        maxLen = microLinnMsgLength;
+      if (audienceMessageToEdit == MICROLINN_MSG) {         // truncate message, store microLinn data there
+        maxLen = MICROLINN_MSG_LEN;
       }
       if (strl < maxLen) {
         for (byte ch = strl; ch < maxLen; ++ch) {
@@ -3366,8 +3377,9 @@ void handleForkMenuRelease() {
     switch (sensorCol) {
       case 1:
         microLinnConfigColNum = 0;
+        microLinnConfigNowScrolling = false;
         resetNumericDataChange();
-        setDisplayMode(displayMicroLinnConfig);        // config EDO, anchor, skipfretting
+        setDisplayMode(displayMicroLinnConfig);
         updateDisplay();
         break;
       case 2:
@@ -3384,7 +3396,7 @@ void handleForkMenuRelease() {
 
 boolean isMicroLinnConfigButton () {
   return sensorRow == 0 && sensorCol >= 3 && sensorCol <= 14 
-      && sensorCol != 9 && sensorCol != 12;
+      && sensorCol != 5 && sensorCol != 9 && sensorCol != 12;
 }
 
 void handleMicroLinnConfigNewTouch() {
@@ -3403,67 +3415,69 @@ void handleMicroLinnConfigNewTouch() {
     return;
   }
   
-  if (sensorRow > 0) {                                       // rows 1-7 are handled right away
+  if (sensorRow > 0) {                                             // rows 1-7 are handled right away
     switch (microLinnConfigColNum) {
       case 3: 
         handleNumericDataNewTouchCol(microLinn->EDO, 5, 72, true); 
         break;
       case 4: 
-        handleNumericDataNewTouchCol(microLinn->octaveStretch, 4, 124, true); 
-        break;
-      case 5: 
-        handleNumericDataNewTouchCol(microLinnAnchorRowUser, 1, 8, true);
+        handleNumericDataNewTouchCol(microLinn->octaveStretch, -100, 100, true); 
         break;
       case 6: 
-        handleNumericDataNewTouchCol(microLinnAnchorCol, 1, NUMCOLS-1, true); 
+        resetNumericDataChange();
+        setDisplayMode(displayAnchorCellChooser);
+        updateDisplay();
         break;
       case 7: 
         handleNumericDataNewTouchCol(microLinn->anchorNote, 0, 127, true); 
         break;
       case 8: 
-        handleNumericDataNewTouchCol(microLinn->anchorCents, 4, 124, true); 
+        handleNumericDataNewTouchCol(microLinn->anchorCents, -100, 100, true); 
         break;
       case 10: 
-        handleNumericDataNewTouchCol(microLinn->skipFretting[LEFT], 1, MAX_COL_OFFSET, true); 
+        handleNumericDataNewTouchCol(microLinn->colOffset[LEFT], 1, MAX_COL_OFFSET, true); 
         break;
       case 11: 
-        handleNumericDataNewTouchCol(microLinn->skipFretting[RIGHT], 1, MAX_COL_OFFSET, true); 
+        handleNumericDataNewTouchCol(microLinn->colOffset[RIGHT], 1, MAX_COL_OFFSET, true); 
         break;
     }
   }
 }
 
 void handleMicroLinnConfigHold() {
-  if (isMicroLinnConfigButton()                              // long-press bottom row
+  if (isMicroLinnConfigButton()                                      // long-press bottom row
       && isCellPastSensorHoldWait() && !microLinnConfigNowScrolling) {     
     microLinnConfigNowScrolling = true;
-    paintMicroLinnConfig();                                // scroll the name of the button
+    paintMicroLinnConfig();                                  // scroll the name of the button
   }
 }
 
 void handleMicroLinnConfigRelease() {
   if (isMicroLinnConfigButton() && !isCellPastSensorHoldWait()) {    // short-press bottom row
-    microLinnConfigColNum = sensorCol;
-    if (microLinnConfigColNum == 13) {
-      setWickiHaydenDefaults();
-      resetNumericDataChange();
-      setDisplayMode(displayNormal); 
-      updateDisplay();
-    }
-    if (microLinnConfigColNum == 14) {
-      setKiteGuitarDefaults();
-      resetNumericDataChange();
-      setDisplayMode(displayNormal); 
-      updateDisplay();
+    switch (microLinnConfigColNum) {
+      case 13:
+      case 14:
+        setKiteGuitarDefaults(microLinnConfigColNum == 13);        // 13 = rainbows, 14 = dots
+        resetNumericDataChange();
+        setDisplayMode(displayNormal); 
+        updateDisplay();
+        break;
     }
   }
-  else if (sensorRow > 0) {
+
+  if (sensorRow > 0) {
     handleNumericDataReleaseCol(false); 
-    if (!sensorCell->slideTransfer) {             // to stop the flickering, doesn't work
-      updateMicroLinnVars();
+    if (sensorCell->slideTransfer == false) {             // to stop the flickering, doesn't work
       microLinnCalcTuningOfEachCell();
     }
   }
+}
+
+void handleAnchorCellChooserNewTouch() {
+  microLinn->anchorCell = 8 * sensorCol + sensorRow;
+  updateMicroLinnAnchorString ();
+  setDisplayMode(displayMicroLinnConfig); 
+  updateDisplay(); 
 }
 
 void handleBrightnessNewTouch() {

@@ -1,5 +1,9 @@
 /**************************************** SKIP FRETTING and MICROLINN ****************************************/
 
+// note to self:  "if (sensorCell->velocity)" means if another touch is already down on the same row
+// according to the comment by handleFaderRelease in ls_faders.ino
+
+
 /********************* OLD WAY  ****************
 // extend audience message #8 by 2 chars, to store the user's choice of skip fretting or not for each split as 2 pseudo-booleans
 const char ASCII_FALSE = ' ';                                                      // ascii 32, the lowest ascii char allowed in audienceMessages
@@ -147,4 +151,21 @@ void handleOctaveTransposeNewTouchSplit(byte side) {
     handleOctaveTransposeNewTouchSplitSkipFretting (side);          // who will want to transpose normally
     return;
   }
+**********************************************************************************************/
+
+
+
+/**********************************************************************************************
+void setWickiHaydenDefaults () {
+  Global.rowOffset = 5;                               // tune in 4ths
+  Split[LEFT].bendRangeOption = bendRange24;          // don't send RPNs
+  Split[RIGHT].bendRangeOption = bendRange24;
+  Split[LEFT].playedTouchMode = playedSame;           // turn on same-note lighting for familiarity
+  Split[RIGHT].playedTouchMode = playedSame;
+  microLinn->EDO = 12;
+  microLinn->octaveStretch = 0;   
+  microLinn->colOffset[LEFT] = 2;
+  microLinn->colOffset[RIGHT] = 2;
+  microLinnCalcTuningOfEachCell();
+}
 **********************************************************************************************/

@@ -488,7 +488,7 @@ enum DisplayMode {
   displayCustomLedsEditor,
   displayForkMenu,
   displayMicroLinnConfig,
-  displayAnchorPadChooser,
+  displayAnchorCellChooser,
   displayBrightness
 };
 DisplayMode displayMode = displayNormal;
@@ -869,7 +869,7 @@ struct Configuration config;
 
 /***************************** MICROLINN / COLUMN OFFSETS FORK ************************************/
 
-const byte CUSTOM_LEDS_PATTERN2_K [LED_LAYER_SIZE] = {       // two rainbow zones for 41edo skipFretting
+const byte CUSTOM_LEDS_PATTERN_R [LED_LAYER_SIZE] = {     // RAINBOWS: two rainbow zones for Kite guitar
    0, 41, 25, 17,  9,  0, 41, 25, 17,  9,  0,  0,  0,  0,  0, 33, 49, 65, 41, 25, 17,  9, 65, 49,  0,  0,
    0, 49, 65, 41, 25, 17,  9, 65, 49, 33,  0,  0,  0,  0,  0, 41, 25, 17,  9,  0, 41, 25, 17,  9,  0,  0,
    0,  0, 33, 49, 65, 41, 25, 17,  9, 65, 49,  0,  0,  0,  0, 49, 65, 41, 25, 17,  9, 65, 49, 33,  0,  0,
@@ -880,7 +880,7 @@ const byte CUSTOM_LEDS_PATTERN2_K [LED_LAYER_SIZE] = {       // two rainbow zone
    0,  0,  0, 49, 65, 41, 25, 17,  9, 65, 49, 33,  0,  0,  0,  0,  0, 41, 25, 17,  9,  0, 41, 25, 17,  9
 };
 
-const byte CUSTOM_LEDS_PATTERN3 [LED_LAYER_SIZE] = {            // two green kites for 41edo Kite guitar
+const byte CUSTOM_LEDS_PATTERN_D [LED_LAYER_SIZE] = {           // DOTS: two green kites for Kite guitar
    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
    0,  0,  0,  0,  0,  0,  0,  0,  0, 25,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 25,  0,  0,  0,  0,
@@ -892,49 +892,63 @@ const byte CUSTOM_LEDS_PATTERN3 [LED_LAYER_SIZE] = {            // two green kit
 };
 
 const byte MAX_ROW_OFFSET = 31;        // increased from 16 to 31 (53edo's 5th)
-const byte MAX_COL_OFFSET = 31;        // in case the linnstrument is rotated 90 degrees
+const byte MAX_COL_OFFSET = 31;        // in case the linnstrument is played rotated 90 degrees
 
-const byte microLinnMsg = 7;           // "HELLO NEW YORK!" will be truncated to make room for the user's settings
-const byte microLinnMsgLength = 23;    // 31 chars (including the null) minus sizeOf(MicroLinn)
+const byte MICROLINN_MSG = 1;          // "LINNSTRUMENT" will be truncated to make room for the user's settings
+const byte MICROLINN_MSG_LEN = 23;     // 31 chars including the null, minus sizeOf(MicroLinn)
 
 struct MicroLinn {                     // overlaps the audience messages array
   char nullTerminator;                 // truncates the audience message
   byte EDO;                            // limited to 5-72
-  byte octaveStretch;                  // limited to ± 60 cents, stored as 4...124, for non-octave tunings such as bohlen-pierce
+  signed char octaveStretch;           // limited to ± 100 cents, for non-octave tunings such as bohlen-pierce
   byte anchorCell;                     // same for both splits, numbered 8-207, anchorCell = 8 * anchorCol + anchorRow
   byte anchorNote;                     // same for both splits, any midi note 0-127
-  signed char anchorCents;             // same for both splits, limited to ± 60 cents, stored as 4...124
-  byte skipFretting[2];                // can be set independently on either side
+  signed char anchorCents;             // same for both splits, limited to ± 100 cents
+  byte colOffset[2];                   // can be set independently on either side
 };  
-MicroLinn* microLinn = (MicroLinn*)(Device.audienceMessages + 31 * microLinnMsg + microLinnMsgLength);
-// anchorCell format:               left edge    right edge          anchorRow         anchorRowUser              
-//                        top row:  15 23 31...  135 or 207              7                  1
-//                        2nd row:  14 22 30...                          6                  2
-//                        ...                                           ...                ...
-//                        low row:   8 16 24...  128 or 200              0                  8
-
-boolean isSkipFretting (byte side) {       
-  return microLinn->skipFretting[side] > 1;
-}
+MicroLinn* microLinn = (MicroLinn*)(Device.audienceMessages + 31 * MICROLINN_MSG + MICROLINN_MSG_LEN);
+// anchorCell format:               left edge    right edge          
+//                        top row:  15 23 31...  135 or 207 
+//                        2nd row:  14 22 30... 
+//                        ...   
+//                        low row:   8 16 24...  128 or 200 
 
 byte microLinnConfigColNum = 0;                 // active col number for configuring the EDO and anchor data, 0 means nothing active
-byte microLinnAnchorRow;                        // numbered 0-7 bottom to top as usual
-byte microLinnAnchorRowUser;                    // what the user sees, numbered 1-8 top to bottom, more intuitive for the general public
-byte microLinnAnchorCol;                        // numbered 1-25 as usual
-//float microLinnAnchorPitch;                     // midi note, but with 2 decimal places for anchorCents
-//byte microLinnEDOtone;                          // 9/8 in edosteps, used in transposing
 boolean microLinnConfigNowScrolling = false;
+char microLinnAnchorString[6] = "R C  ";        // row and column of the anchor cell, e.g. "R3C12", top row is row #1
 
-void updateMicroLinnVars () {                                                      // called when user releases a touch in displayMicroLinnConfig
-  microLinnAnchorRow = 8 - microLinnAnchorRowUser;                                 // also when user long-presses the skip-fretting cell
-  microLinn->anchorCell = 8 * microLinnAnchorCol + microLinnAnchorRow;
+void updateMicroLinnAnchorString () {
+  byte row = microLinn->anchorCell % 8;
+  byte col = microLinn->anchorCell >> 3;
+  char col1;
+  char col2;
+  if (col < 10) {
+    col1 = '0' + col;
+    col2 = ' ';
+  } else {
+    col1 = '0' + floor (col / 10);
+    col2 = '0' + col % 10;
+  }
+  if (LINNMODEL == 128 && col >= 10) {
+    microLinnAnchorString[0] = '8' - row;       // "3 12 ", drop R and C to fit 3 digits in
+    microLinnAnchorString[1] = ' ';
+    microLinnAnchorString[2] = col1;
+    microLinnAnchorString[3] = col2;
+    microLinnAnchorString[4] = ' ';
+  } else {
+    microLinnAnchorString[0] = 'R';             // "R3C12"
+    microLinnAnchorString[1] = '8' - row;
+    microLinnAnchorString[2] = 'C';
+    microLinnAnchorString[3] = col1;
+    microLinnAnchorString[4] = col2;
+  }
 }
 
-byte microLinnMidiNote[NUMSPLITS][MAXCOLS-1][MAXROWS];         // the midi note that is output for each cell
-short microLinnFineTuning[NUMSPLITS][MAXCOLS-1][MAXROWS];      // the deviation from 12edo for each cell, as a pitch bend number from -8192 to 8191
-//short microLinnTuningBend[NUMSPLITS][16][10];                  // 16 midi channels, 10 touches, tuning bends come from microLinnFineTuning
-//short microLinnSlideBend[NUMSPLITS][16][10];                   // 16 midi channels, 10 touches, slide bends come from sliding along the Linnstrument
-//short microLinnLandingBend[NUMSPLITS][16][10];                 // 16 midi channels, 10 touches, landing bends come from the initial touch being off-center
+byte microLinnMidiNote[NUMSPLITS][MAXCOLS][MAXROWS];         // the midi note that is output for each cell, col 0 is unused
+short microLinnFineTuning[NUMSPLITS][MAXCOLS][MAXROWS];      // the deviation from 12edo for each cell, as a pitch bend number from -8192 to 8191
+//short microLinnTuningBend[NUMSPLITS][16][10];                // 16 midi channels, 10 touches, tuning bends come from microLinnFineTuning
+//short microLinnSlideBend[NUMSPLITS][16][10];                 // 16 midi channels, 10 touches, slide bends come from sliding along the Linnstrument
+//short microLinnLandingBend[NUMSPLITS][16][10];               // 16 midi channels, 10 touches, landing bends come from the initial touch being off-center
 
 short microLinnSumOfRowOffsets (byte row1, byte row2) {
   switch (Global.rowOffset) {
@@ -946,25 +960,32 @@ short microLinnSumOfRowOffsets (byte row1, byte row2) {
   }
 }
 
-void microLinnCalcTuningOfEachCell () {                                              // maps e.g. cell[LEFT][9][4] to note #60 - 5.0¢
-  float anchorPitch = microLinn->anchorNote;                                         // called on change to EDO, anchor, transpose, skipFretting, lefty
-  anchorPitch += (microLinn->anchorCents - 64) / 100;
-  float edostepSize = (1200 + microLinn->octaveStretch - 64) / 100 * microLinn->EDO; // size of 1 edostep/arrow in semitones, e.g. 1\41 is 0.29 semitones
-  byte EDOtone = 2 * round (microLinn->EDO * log (3/2) / log (2)) - microLinn->EDO;  // whole tone = 9/8 in edosteps, calc as two 5ths minus an octave
-  short transpose; short rowDistance; short cellDistance;
-  float note; float fineTuningBend;                                                  // declared outside of the loop for efficiency -- does it help?
+void microLinnCalcTuningOfEachCell () {                                              // maps e.g. cell[LEFT][9][4] to note #60 - 5¢, 
+  static byte anchorRow = microLinn->anchorCell % 8;                                 // called on any change on the microLinnConfig screen,
+  static byte anchorCol = microLinn->anchorCell >> 3;                                // also on changes to transpose or lefthandedness
+  // anchorPitch = a midi note, but with 2 decimal places for anchorCents
+  static float anchorPitch = microLinn->anchorNote + microLinn->anchorCents / 100;
+  // edostepSize = size of 1 edostep/arrow in semitones, e.g. 1\41 is 0.29 semitones
+  static float edostepSize = (1200 + microLinn->octaveStretch) / (100 * microLinn->EDO);     
+  // EDOtone = whole tone = 9/8 in edosteps, must calc as two 5ths minus an 8ve
+  static byte EDOtone = 2 * round (microLinn->EDO * log (3/2) / log (2)) - microLinn->EDO;  
+  static short rowDistance; 
+  static short cellDistance;
+  static float note; 
+  static float fineTuningBend;
+
   for (byte side = 0; side < 2; side++) {
-    transpose = Split[side].transposeOctave * microLinn->EDO                         // # of edosteps to transpose by
-              + Split[side].transposePitch * EDOtone                                 // semitones are interpreted as whole tones
-              + Split[side].transposeLights;                                         // light-semitones are interpreted as edosteps
-    boolean isLefty = isLeftHandedSplit(side);
+    static signed char colOffset = microLinn->colOffset[side];
+    static short transpose = Split[side].transposeOctave * microLinn->EDO            // transpose = # of edosteps to transpose by
+                           + Split[side].transposePitch * EDOtone                    // semitones are interpreted as whole tones
+                           + Split[side].transposeLights;                            // light-semitones are interpreted as edosteps
+    static boolean isLefty = isLeftHandedSplit(side);
     for (byte row = 0; row < 8; row++) {
-      rowDistance = microLinnSumOfRowOffsets (microLinnAnchorRow, row);
-      rowDistance += transpose;
-      for (byte col = 1; col <= NUMCOLS; col++) {
-        cellDistance = col - microLinnAnchorCol;                                     // cellDistance = distance from the anchor cell in edosteps
+      rowDistance = microLinnSumOfRowOffsets (anchorRow, row) + transpose;
+      for (byte col = 1; col < NUMCOLS; col++) {
+        cellDistance = col - anchorCol;                                              // cellDistance = distance from the anchor cell in edosteps
         if (isLefty) {cellDistance *= -1;}
-        cellDistance *= microLinn->skipFretting[side];
+        cellDistance *= colOffset;
         cellDistance += rowDistance;
         note = anchorPitch + cellDistance * edostepSize;                             // convert from edosteps to fractional 12edo midi note
         note = min (max (note, 0), 127); 
@@ -982,54 +1003,51 @@ void initializeMicroLinn () {                 // called in setup()
    || microLinn->EDO == 0) {                  // or if user has never set the EDO, then this fork must be running for the very first time
     microLinn->nullTerminator = '\0';
     microLinn->EDO = 12;                      
-    microLinn->octaveStretch = 64;            // 64 is really zero
+    microLinn->octaveStretch = 0; 
     microLinn->anchorCell = 92;               // 4th row from top, 11th column
     microLinn->anchorNote = 60;               // middle-C
-    microLinn->anchorCents = 64;              // 64 is really zero
-    microLinn->skipFretting[LEFT] = 1;
-    microLinn->skipFretting[RIGHT] = 1;
+    microLinn->anchorCents = 0;  
+    microLinn->colOffset[LEFT] = 1;
+    microLinn->colOffset[RIGHT] = 1;
   }
-  microLinnAnchorRow = microLinn->anchorCell % 8;
-  microLinnAnchorRowUser = 8 - microLinnAnchorRow;
-  microLinnAnchorCol = microLinn->anchorCell >> 3;
+  updateMicroLinnAnchorString ();
   microLinnCalcTuningOfEachCell ();
 }
 
-void setWickiHaydenDefaults () {
-  Global.rowOffset = 5;                               // tune in 4ths
-  Split[LEFT].bendRangeOption = bendRange24;          // don't send RPNs
-  Split[RIGHT].bendRangeOption = bendRange24;
-  Split[LEFT].playedTouchMode = playedSame;           // turn on same-note lighting for familiarity
-  Split[RIGHT].playedTouchMode = playedSame;
-  microLinn->skipFretting[LEFT] = 2;
-  microLinn->skipFretting[RIGHT] = 2;
-  microLinn->EDO = 12;
-  microLinn->octaveStretch = 64;                      // 64 is really zero
-}
+// keep our own copy so that we can restore it after the rainbow preset overwrites it
+signed char microLinnColorPlayed[2] = {COLOR_RED, COLOR_MAGENTA};
 
-// to do: set to custom light pattern #2 or #3
-void setKiteGuitarDefaults () {
+void setKiteGuitarDefaults (boolean rainbows) {       // if not rainbows, then dots
+  microLinn->EDO = 41;
+  microLinn->octaveStretch = 0; 
+  microLinn->anchorCell = 53;                         // 3rd row from top, 6th column
+  microLinn->anchorNote = 62;                         // D3, Kite guitar standard tuning
+  microLinn->anchorCents = 0;
+  microLinn->colOffset[LEFT] = 2;
+  microLinn->colOffset[RIGHT] = 2;
+  updateMicroLinnAnchorString();
+  microLinnCalcTuningOfEachCell();
   Global.rowOffset = ROWOFFSET_OCTAVECUSTOM;
   Global.customRowOffset = 13;                        // kite guitar uses +13 row offset
-  Split[LEFT].bendRangeOption = bendRange24;          // don't send RPNs
-  Split[RIGHT].bendRangeOption = bendRange24;
   Split[LEFT].playedTouchMode = playedSame;           // turn on same-note lighting for familiarity
   Split[RIGHT].playedTouchMode = playedSame;
-  microLinn->skipFretting[LEFT] = 2;
-  microLinn->skipFretting[RIGHT] = 2;
-  microLinn->EDO = 41;
-  microLinn->octaveStretch = 64;                      // 64 is really zero
-  microLinnAnchorRowUser = 3;
-  microLinnAnchorCol = 6;
-  microLinn->anchorNote = 62;                         // D3, Kite guitar standard tuning
-  microLinn->anchorCents = 64;                        // 64 is really zero
-  updateMicroLinnVars();
-  microLinnCalcTuningOfEachCell();
+  // set custom light pattern #3 to either rainbows or dots
+  if (rainbows) {
+    Split[LEFT].colorPlayed = 0; 
+    Split[RIGHT].colorPlayed = 0;
+    memcpy(&Device.customLeds[2][0], &CUSTOM_LEDS_PATTERN_R[0], LED_LAYER_SIZE);
+  } else {
+    Split[LEFT].colorPlayed = microLinnColorPlayed[LEFT]; 
+    Split[RIGHT].colorPlayed = microLinnColorPlayed[RIGHT]; 
+    memcpy(&Device.customLeds[2][0], &CUSTOM_LEDS_PATTERN_D[0], LED_LAYER_SIZE);
+  }
+  Global.activeNotes = 11;
+  loadCustomLedLayer(2);
 }
 
 const byte NUM_FORKS = 3;
 const byte MAX_LONGPRESS_MESSAGES = 3;     // after the 3rd long-press of OS version since power-up,
-byte numTimesForkMenu = 0;                 // stop showing "LONG-PRESS FOR FORK NAMES"
+byte numTimesForkMenu = 0;                 // stop showing the "LONG-PRESS FOR FORK NAMES" message
 byte forkMenuColNum = 0;                   // active column number in fork menu, 0 means nothing active
 boolean forkMenuNowScrolling = false;
 

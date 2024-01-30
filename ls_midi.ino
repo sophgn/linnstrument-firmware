@@ -676,6 +676,7 @@ void receivedNrpn(int parameter, int value, int channel) {
     case 32:
       if (inRange(value, 0, 11)) {
         Split[split].colorPlayed = value;
+        microLinnColorPlayed[split] = Split[split].colorPlayed;      // see ls_microLinn.ino
       }
       break;
     // Split Color LowRow
@@ -1722,7 +1723,7 @@ short getNoteNumColumn(byte split, byte notenum, byte row) {
 
   short col;
 
-  if (isSkipFretting(split)) {                        // part of the microLinn fork
+  if (microLinn->colOffset[split] > 1) {                        // part of the microLinn fork
     // we add 2 instead of 1 for skip fretting, since we add 1 everywhere for some reason
     // pitch transposition is only reflected on this side, not in getNoteNumber
     col = notenum - (row_offset_note + Split[split].transposeOctave) + 2         
