@@ -1718,7 +1718,7 @@ void handlePerSplitSettingRelease() {
         case 5:
           if (ensureCellBeforeHoldWait(Split[Global.currentPerSplit].colorPlayed, cellOn)) {
             Split[Global.currentPerSplit].colorPlayed = colorCycle(Split[Global.currentPerSplit].colorPlayed, true);
-            microLinnColorPlayed[Global.currentPerSplit] = Split[Global.currentPerSplit].colorPlayed;      // see ls_microLinn.ino
+            microLinnStoreColorPlayed();
           }
           break;
       }
@@ -2116,16 +2116,17 @@ void handleSplitHandednessNewTouch() {
 }
 
 void handleSplitHandednessRelease() {
-  microLinnCalcTuningOfEachCell();
+  microLinnCalcTuning(true);
   handleNumericDataReleaseCol(false);
 }
 
 void handleRowOffsetNewTouch() {
-  handleNumericDataNewTouchCol(Global.customRowOffset, -17, MAX_ROW_OFFSET, true);       // see microLinn.ino
+  handleNumericDataNewTouchCol(Global.customRowOffset, -17, MAX_ROW_OFFSET, true);    // see microLinn.ino
 }
 
 void handleRowOffsetRelease() {
   handleNumericDataReleaseCol(false);
+  microLinnCalcTuning(true);
 }
 
 void ensureGuitarTuningPreviewNoteRelease() {
@@ -2154,10 +2155,11 @@ void handleGuitarTuningNewTouch() {
 }
 
 void handleGuitarTuningRelease() {
-  handleNumericDataReleaseCol(false); // false because guitar tuning editor does not do splits, fixes issue #5
+  handleNumericDataReleaseCol(false);              // false because guitar tuning editor does not do splits
   if (cellsTouched == 0) {
     ensureGuitarTuningPreviewNoteRelease();
   }
+  microLinnCalcTuning(true);
 }
 
 void handleMinUSBMIDIIntervalNewTouch() {
@@ -2340,10 +2342,12 @@ void handleOctaveTransposeNewTouchSplit(byte side) {
       Split[side].transposeLights = sensorCol - 8;
     }
   }
+
+  microLinnHandleOctaveTransposeNewTouchSplit (side); 
 }
 
 void handleOctaveTransposeRelease() {
-  microLinnCalcTuningOfEachCell();
+  microLinnCalcTuning(true); 
   handleShowSplit();  // see if one of the "Show Split" cells have been hit
 }
 
@@ -2543,7 +2547,7 @@ void handleGlobalSettingNewTouch() {
       }
       else {
         if (sensorRow == 1) {
-          //setDisplayMode(displayOsVersion);      // now handled on release instead, to accomodate the fork menu
+          //setDisplayMode(displayOsVersion);      // now handled on release instead, see ls_forkMenu.ino
         }
         // reset feature
         else if ((sensorRow == 2 && cell(sensorCol, 0).touched != untouchedCell) ||
@@ -2642,6 +2646,7 @@ void handleGlobalSettingNewTouch() {
             }
             break;
         }
+        microLinnCalcTuning(false);
         break;
 
       // select more row offsets
@@ -2668,6 +2673,7 @@ void handleGlobalSettingNewTouch() {
             // handled at release
             break;
         }
+        microLinnCalcTuning(false); 
         break;
 
       case 7:
@@ -3111,13 +3117,10 @@ void handleGlobalSettingHold() {
 
       // fill in all 30 spaces of the message
       int strl = strlen(Device.audienceMessages[audienceMessageToEdit]);
-      byte maxLen = 30;
-      if (audienceMessageToEdit == MICROLINN_MSG) {         // truncate message, store microLinn data there
-        maxLen = MICROLINN_MSG_LEN;
-      }
+      byte maxLen = forkMenuProtectForkData (audienceMessageToEdit);      // see ls_forkMenu.ino
       if (strl < maxLen) {
         for (byte ch = strl; ch < maxLen; ++ch) {
-          Device.audienceMessages[audienceMessageToEdit][ch] = ' ';       // extend to full length will trailing spaces
+          Device.audienceMessages[audienceMessageToEdit][ch] = ' ';       // extend to full length with trailing spaces
         }
       }
       Device.audienceMessages[audienceMessageToEdit][maxLen] = '\0';      // null-terminated
@@ -3135,7 +3138,7 @@ void handleGlobalSettingRelease() {
   if (sensorCol == 1 && sensorRow == 3 &&
       ensureCellBeforeHoldWait(getSplitHandednessColor(), Device.otherHanded ? cellOn : cellOff)) {
     Device.otherHanded = !Device.otherHanded;
-    microLinnCalcTuningOfEachCell();
+    microLinnCalcTuning(false);
   }
   else if (sensorCol == 6 && sensorRow == 2 &&
       ensureCellBeforeHoldWait(globalColor, Global.rowOffset == ROWOFFSET_OCTAVECUSTOM ? cellOn : cellOff)) {
@@ -3145,6 +3148,7 @@ void handleGlobalSettingRelease() {
       else {
         Global.rowOffset = ROWOFFSET_OCTAVECUSTOM;
       }
+      microLinnCalcTuning(false); 
   }
   else if (sensorCol == 6 && sensorRow == 3 &&
       ensureCellBeforeHoldWait(getGuitarTuningColor(), Global.rowOffset == ROWOFFSET_GUITAR ? cellOn : cellOff)) {
@@ -3154,6 +3158,7 @@ void handleGlobalSettingRelease() {
       else {
         Global.rowOffset = ROWOFFSET_GUITAR;
       }
+      microLinnCalcTuning(false); 
   }
   else if (sensorRow == 7) {
     // only show the messages if the tempo was changed more than 1s ago to prevent accidental touches
@@ -3395,7 +3400,7 @@ void handleForkMenuRelease() {
 }
 
 boolean isMicroLinnConfigButton () {
-  return sensorRow == 0 && sensorCol >= 3 && sensorCol <= 14 
+  return sensorRow == 0 && sensorCol >= 3 && sensorCol <= 15 
       && sensorCol != 5 && sensorCol != 9 && sensorCol != 12;
 }
 
@@ -3457,32 +3462,34 @@ void handleMicroLinnConfigRelease() {
     switch (microLinnConfigColNum) {
       case 13:
       case 14:
-        setKiteGuitarDefaults(microLinnConfigColNum == 13);        // 13 = rainbows, 14 = dots
+        microLinnSetKiteGuitarDefaults(microLinnConfigColNum == 13);     // 13 = rainbows, 14 = dots
+        resetNumericDataChange();
+        setDisplayMode(displayNormal); 
+        updateDisplay();
+        break;
+      case 15:
+        microLinnResetTo12equal();
         resetNumericDataChange();
         setDisplayMode(displayNormal); 
         updateDisplay();
         break;
     }
-  }
-
-  if (sensorRow > 0) {
-    handleNumericDataReleaseCol(false); 
-    if (sensorCell->slideTransfer == false) {             // to stop the flickering, doesn't work
-      microLinnCalcTuningOfEachCell();
-    }
+  } else if (sensorRow > 0) {
+    handleNumericDataReleaseCol(false);
+    microLinnCalcTuning(true);
   }
 }
 
 void handleAnchorCellChooserNewTouch() {
   microLinn->anchorCell = 8 * sensorCol + sensorRow;
-  updateMicroLinnAnchorString ();
+  microLinnUpdateAnchorString ();
   setDisplayMode(displayMicroLinnConfig); 
   updateDisplay(); 
 }
 
 void handleBrightnessNewTouch() {
   if (sensorRow >=3 && sensorRow <= 5 && sensorCol >= 3 && sensorCol <= 16) {
-    brightness = min (max (sensorCol - 5, 0), 7);
+    brightness = min (max (sensorCol - 4, 1), 8);
     updateDisplay(); 
   }
 }

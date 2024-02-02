@@ -767,7 +767,7 @@ boolean handleXYZupdate() {
 
       case displayMicroLinnConfig:
         handleMicroLinnConfigHold();
-        break;
+        break;                              // should this line be "return false;"?
 
       default:
         // other displays don't need hold features

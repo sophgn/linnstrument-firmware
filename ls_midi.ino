@@ -676,7 +676,7 @@ void receivedNrpn(int parameter, int value, int channel) {
     case 32:
       if (inRange(value, 0, 11)) {
         Split[split].colorPlayed = value;
-        microLinnColorPlayed[split] = Split[split].colorPlayed;      // see ls_microLinn.ino
+        microLinnStoreColorPlayed();                  // see ls_microLinn.ino
       }
       break;
     // Split Color LowRow

@@ -1,7 +1,15 @@
+
+
+
 /**************************************** SKIP FRETTING and MICROLINN ****************************************/
 
 // note to self:  "if (sensorCell->velocity)" means if another touch is already down on the same row
 // according to the comment by handleFaderRelease in ls_faders.ino
+
+// a few ideas I had, probably not needed
+//short microLinnTuningBend[NUMSPLITS][16][10];                // 16 midi channels, 10 touches, tuning bends come from microLinnFineTuning
+//short microLinnSlideBend[NUMSPLITS][16][10];                 // 16 midi channels, 10 touches, slide bends come from sliding along the Linnstrument
+//short microLinnLandingBend[NUMSPLITS][16][10];               // 16 midi channels, 10 touches, landing bends come from the initial touch being off-center
 
 
 /********************* OLD WAY  ****************
@@ -166,6 +174,6 @@ void setWickiHaydenDefaults () {
   microLinn->octaveStretch = 0;   
   microLinn->colOffset[LEFT] = 2;
   microLinn->colOffset[RIGHT] = 2;
-  microLinnCalcTuningOfEachCell();
+  microLinnCalcTuning(false);
 }
 **********************************************************************************************/

@@ -869,7 +869,8 @@ struct Configuration config;
 
 /***************************** MICROLINN / COLUMN OFFSETS FORK ************************************/
 
-const byte CUSTOM_LEDS_PATTERN_R [LED_LAYER_SIZE] = {     // RAINBOWS: two rainbow zones for Kite guitar
+/**
+const byte CUSTOM_LEDS_PATTERN_RAINBOWS [LED_LAYER_SIZE] = {        // two rainbow zones for Kite guitar
    0, 41, 25, 17,  9,  0, 41, 25, 17,  9,  0,  0,  0,  0,  0, 33, 49, 65, 41, 25, 17,  9, 65, 49,  0,  0,
    0, 49, 65, 41, 25, 17,  9, 65, 49, 33,  0,  0,  0,  0,  0, 41, 25, 17,  9,  0, 41, 25, 17,  9,  0,  0,
    0,  0, 33, 49, 65, 41, 25, 17,  9, 65, 49,  0,  0,  0,  0, 49, 65, 41, 25, 17,  9, 65, 49, 33,  0,  0,
@@ -880,7 +881,18 @@ const byte CUSTOM_LEDS_PATTERN_R [LED_LAYER_SIZE] = {     // RAINBOWS: two rainb
    0,  0,  0, 49, 65, 41, 25, 17,  9, 65, 49, 33,  0,  0,  0,  0,  0, 41, 25, 17,  9,  0, 41, 25, 17,  9
 };
 
-const byte CUSTOM_LEDS_PATTERN_D [LED_LAYER_SIZE] = {           // DOTS: two green kites for Kite guitar
+const byte CUSTOM_LEDS_PATTERN_RAINBOWS_LEFTY [LED_LAYER_SIZE] = {
+  0,  0,  0, 49, 65,  9, 17, 25, 41, 65, 49, 33,  0,  0,  0,  0,  0,  9, 17, 25, 41,  0,  9, 17, 25, 41,
+  0,  0,  0,  9, 17, 25, 41,  0,  9, 17, 25, 41,  0,  0,  0,  0,  0, 33, 49, 65,  9, 17, 25, 41, 65, 49,
+  0,  0,  0, 33, 49, 65,  9, 17, 25, 41, 65, 49,  0,  0,  0,  0, 49, 65,  9, 17, 25, 41, 65, 49, 33,  0,
+  0,  0, 49, 65,  9, 17, 25, 41, 65, 49, 33,  0,  0,  0,  0,  0,  9, 17, 25, 41,  0,  9, 17, 25, 41,  0,
+  0,  0,  9, 17, 25, 41,  0,  9, 17, 25, 41,  0,  0,  0,  0,  0, 33, 49, 65,  9, 17, 25, 41, 65, 49,  0,
+  0,  0, 33, 49, 65,  9, 17, 25, 41, 65, 49,  0,  0,  0,  0, 49, 65,  9, 17, 25, 41, 65, 49, 33,  0,  0,
+  0, 49, 65,  9, 17, 25, 41, 65, 49, 33,  0,  0,  0,  0,  0,  9, 17, 25, 41,  0,  9, 17, 25, 41,  0,  0,
+  0,  9, 17, 25, 41,  0,  9, 17, 25, 41,  0,  0,  0,  0,  0, 33, 49, 65,  9, 17, 25, 41, 65, 49,  0,  0
+};
+
+const byte CUSTOM_LEDS_PATTERN_DOTS [LED_LAYER_SIZE] = {              // two green kites for Kite guitar
    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
    0,  0,  0,  0,  0,  0,  0,  0,  0, 25,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 25,  0,  0,  0,  0,
@@ -891,21 +903,57 @@ const byte CUSTOM_LEDS_PATTERN_D [LED_LAYER_SIZE] = {           // DOTS: two gre
    0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0
 };
 
+const byte CUSTOM_LEDS_PATTERN_DOTS_LEFTY [LED_LAYER_SIZE] = {  
+   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+   0,  0,  0,  0,  0, 25,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 25,  0,  0,  0,  0,  0,  0,  0,  0,
+   0,  0,  0,  0,  0,  0,  0,  0,  0, 25,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 25,  0,  0,  0,  0,
+   0, 25,  0,  0,  0, 25,  0,  0,  0,  0,  0,  0,  0, 25,  0,  0,  0, 25,  0,  0,  0,  0,  0,  0,  0, 25,
+   0,  0,  0,  0,  0,  0,  0,  0,  0, 25,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 25,  0,  0,  0,  0,
+   0,  0,  0,  0,  0, 25,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 25,  0,  0,  0,  0,  0,  0,  0,  0,
+   0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0
+};
+*/
+
+// a super long row of the rainbow pattern, starts at the tonic, 65 covers a row of 25 starting at 40
+const byte MICROLINN_RAINBOWS41[65] = {
+                   0, 41, 25, 17,  9,  0,  0,  0,  0,  0, 
+  33, 49, 65, 41, 25, 17,  9, 65, 49,  0,  0,  0,  0, 
+  49, 65, 41, 25, 17,  9, 65, 49, 73,  0,  0,  0,  0,  0, 
+  41, 25, 17,  9,  0, 41, 25, 17,  9,  0,  0,  0,  0,  0, 
+  33, 49, 65, 41, 25, 17,  9, 65, 49,  0,  0,  0,  0, 49
+};
+
+const byte MICROLINN_RAINBOWS41_LEFTY[65] = {            // starts at the tonic, goes backwards
+                   0,  9, 17, 25, 41,  0,  0,  0,  0,  0, 
+  73, 49, 65,  9, 17, 25, 41, 65, 49,  0,  0,  0,  0, 
+  49, 65,  9, 17, 25, 41, 65, 49, 33,  0,  0,  0,  0,  0, 
+   9, 17, 25, 41,  0,  9, 17, 25, 41,  0,  0,  0,  0,  0, 
+  33, 49, 65,  9, 17, 25, 41, 65, 49,  0,  0,  0,  0, 49
+};
+
 const byte MAX_ROW_OFFSET = 31;        // increased from 16 to 31 (53edo's 5th)
-const byte MAX_COL_OFFSET = 31;        // in case the linnstrument is played rotated 90 degrees
+const byte MAX_COL_OFFSET = 31;        // 31 is needed in case the linnstrument is played rotated 90 degrees
 
 const byte MICROLINN_MSG = 1;          // "LINNSTRUMENT" will be truncated to make room for the user's settings
-const byte MICROLINN_MSG_LEN = 23;     // 31 chars including the null, minus sizeOf(MicroLinn)
+const byte MICROLINN_MSG_LEN = 21;     // 31 chars including the null, minus sizeOf(MicroLinn)
+
+struct __attribute__ ((packed)) TwoNybbles {   // packed byte, both edosteps and light-edosteps
+  signed char EDOsteps:4;                      // ":4" means 4 bits long, actual amount ranges from -7 to 7
+  signed char EDOlights:4;
+};
 
 struct MicroLinn {                     // overlaps the audience messages array
-  char nullTerminator;                 // truncates the audience message
+  char nullTerminator;                 // essential, truncates the audience message
   byte EDO;                            // limited to 5-72
   signed char octaveStretch;           // limited to ± 100 cents, for non-octave tunings such as bohlen-pierce
-  byte anchorCell;                     // same for both splits, numbered 8-207, anchorCell = 8 * anchorCol + anchorRow
-  byte anchorNote;                     // same for both splits, any midi note 0-127
-  signed char anchorCents;             // same for both splits, limited to ± 100 cents
-  byte colOffset[2];                   // can be set independently on either side
+  byte anchorCell;                     // numbered 8-207, anchorCell = 8 * anchorCol + anchorRow
+  byte anchorNote;                     // any midi note 0-127
+  signed char anchorCents;             // limited to ± 100 cents
+  byte colOffset[NUMSPLITS];           // 2 column offsets
+  struct TwoNybbles transpose[NUMSPLITS];     // 2 packed bytes, accessed not via displayMicroLinnConfig but via displayOctaveTranspose
 };  
+
 MicroLinn* microLinn = (MicroLinn*)(Device.audienceMessages + 31 * MICROLINN_MSG + MICROLINN_MSG_LEN);
 // anchorCell format:               left edge    right edge          
 //                        top row:  15 23 31...  135 or 207 
@@ -913,11 +961,11 @@ MicroLinn* microLinn = (MicroLinn*)(Device.audienceMessages + 31 * MICROLINN_MSG
 //                        ...   
 //                        low row:   8 16 24...  128 or 200 
 
-byte microLinnConfigColNum = 0;                 // active col number for configuring the EDO and anchor data, 0 means nothing active
+byte microLinnConfigColNum = 0;                 // active col number in microLinn config screen, 0 means nothing active
 boolean microLinnConfigNowScrolling = false;
 char microLinnAnchorString[6] = "R C  ";        // row and column of the anchor cell, e.g. "R3C12", top row is row #1
 
-void updateMicroLinnAnchorString () {
+void microLinnUpdateAnchorString() {
   byte row = microLinn->anchorCell % 8;
   byte col = microLinn->anchorCell >> 3;
   char col1;
@@ -946,47 +994,50 @@ void updateMicroLinnAnchorString () {
 
 byte microLinnMidiNote[NUMSPLITS][MAXCOLS][MAXROWS];         // the midi note that is output for each cell, col 0 is unused
 short microLinnFineTuning[NUMSPLITS][MAXCOLS][MAXROWS];      // the deviation from 12edo for each cell, as a pitch bend number from -8192 to 8191
-//short microLinnTuningBend[NUMSPLITS][16][10];                // 16 midi channels, 10 touches, tuning bends come from microLinnFineTuning
-//short microLinnSlideBend[NUMSPLITS][16][10];                 // 16 midi channels, 10 touches, slide bends come from sliding along the Linnstrument
-//short microLinnLandingBend[NUMSPLITS][16][10];               // 16 midi channels, 10 touches, landing bends come from the initial touch being off-center
+byte microLinnRowStarts[NUMSPLITS][MAXROWS];                 // for transposing the custom light patterns
 
-short microLinnSumOfRowOffsets (byte row1, byte row2) {
+short microLinnSumOfRowOffsets (byte row1, byte row2) {      // edosteps from row1 to row2
   switch (Global.rowOffset) {
-    case ROWOFFSET_OCTAVECUSTOM: return Global.customRowOffset  * (row1 - row2);
-    case ROWOFFSET_GUITAR:       return Global.guitarTuning[row1] - Global.guitarTuning[row2];
-    case ROWOFFSET_NOOVERLAP:    return (NUMCOLS - 1) * (row1 - row2);
+    case ROWOFFSET_OCTAVECUSTOM: return Global.customRowOffset  * (row2 - row1);
+    case ROWOFFSET_GUITAR:       return Global.guitarTuning[row2] - Global.guitarTuning[row1];
+    case ROWOFFSET_NOOVERLAP:    return (NUMCOLS - 1) * (row2 - row1);
     case ROWOFFSET_ZERO:         return 0;
-    default:                     return Global.rowOffset * (row1 - row2); 
+    default:                     return Global.rowOffset * (row2 - row1); 
   }
 }
 
-void microLinnCalcTuningOfEachCell () {                                              // maps e.g. cell[LEFT][9][4] to note #60 - 5¢, 
-  static byte anchorRow = microLinn->anchorCell % 8;                                 // called on any change on the microLinnConfig screen,
-  static byte anchorCol = microLinn->anchorCell >> 3;                                // also on changes to transpose or lefthandedness
+void microLinnCalcTuning(boolean ignoreSlides) {                                     // maps all cells, e.g. cell[LEFT][9][4] to note #60 - 5¢, 
+  if (ignoreSlides && sensorCell->velocity == 0) {                                   // don't calc on releases caused by slides, causes flickering
+    return;                                                                          // called on any change on displayMicroLinnConfig,
+  }                                                                                  // also on changes to transpose or lefthanded or row offsets
+  static byte anchorRow = microLinn->anchorCell & 0x07; 
+  static byte anchorCol = microLinn->anchorCell >> 3;
   // anchorPitch = a midi note, but with 2 decimal places for anchorCents
   static float anchorPitch = microLinn->anchorNote + microLinn->anchorCents / 100;
   // edostepSize = size of 1 edostep/arrow in semitones, e.g. 1\41 is 0.29 semitones
-  static float edostepSize = (1200 + microLinn->octaveStretch) / (100 * microLinn->EDO);     
+  static float edostepSize = (12 + microLinn->octaveStretch / 100) / microLinn->EDO;     
   // EDOtone = whole tone = 9/8 in edosteps, must calc as two 5ths minus an 8ve
-  static byte EDOtone = 2 * round (microLinn->EDO * log (3/2) / log (2)) - microLinn->EDO;  
+  static byte EDOtone = 2 * round (microLinn->EDO * log (3/2) / log (2)) - microLinn->EDO;
   static short rowDistance; 
   static short cellDistance;
   static float note; 
   static float fineTuningBend;
 
-  for (byte side = 0; side < 2; side++) {
+  for (byte side = 0; side < NUMSPLITS; ++side) {
     static signed char colOffset = microLinn->colOffset[side];
     static short transpose = Split[side].transposeOctave * microLinn->EDO            // transpose = # of edosteps to transpose by
                            + Split[side].transposePitch * EDOtone                    // semitones are interpreted as whole tones
-                           + Split[side].transposeLights;                            // light-semitones are interpreted as edosteps
-    static boolean isLefty = isLeftHandedSplit(side);
-    for (byte row = 0; row < 8; row++) {
-      rowDistance = microLinnSumOfRowOffsets (anchorRow, row) + transpose;
-      for (byte col = 1; col < NUMCOLS; col++) {
-        cellDistance = col - anchorCol;                                              // cellDistance = distance from the anchor cell in edosteps
-        if (isLefty) {cellDistance *= -1;}
-        cellDistance *= colOffset;
-        cellDistance += rowDistance;
+                           - Split[side].transposeLights * EDOtone
+                           + microLinn->transpose[side].EDOsteps
+                           - microLinn->transpose[side].EDOlights;
+    static signed char lefty = isLeftHandedSplit(side) ? -1 : 1;
+    for (byte row = 0; row < NUMROWS; ++row) {
+      rowDistance = microLinnSumOfRowOffsets (row, anchorRow) + transpose;
+      for (byte col = 1; col < NUMCOLS; ++col) {
+        cellDistance = rowDistance + (col - anchorCol) * colOffset * lefty;          // cellDistance = distance from the anchor cell in edosteps
+        if (col == 1) {
+          microLinnRowStarts[side][row] = cellDistance; 
+        }
         note = anchorPitch + cellDistance * edostepSize;                             // convert from edosteps to fractional 12edo midi note
         note = min (max (note, 0), 127); 
         microLinnMidiNote[side][col][row] = round (note);
@@ -998,7 +1049,20 @@ void microLinnCalcTuningOfEachCell () {                                         
   }
 }
 
-void initializeMicroLinn () {                 // called in setup()
+signed char microLinnColorPlayed[2];                        // keep our own copy, for restoring it after the rainbow preset overwrites it
+
+void microLinnStoreColorPlayed() {
+  microLinnColorPlayed[LEFT] = Split[LEFT].colorPlayed; 
+  microLinnColorPlayed[RIGHT] = Split[RIGHT].colorPlayed; 
+}
+
+// Each fork's data struct should have one byte that will never equal zero, to make a fool-proof test whether the struct needs initializing
+// For microLinn, one such byte is the EDO. The user is not allowed to set it to zero, for obvious reasons
+// In the official un-forked code, the unused part of the audience message char array is always padded with trailing nulls
+// So it's impossible to have a null followed by a non-null
+// So if the nullTerminator is zero and the EDO is non-zero, we know the string has already been truncated and initialized
+// And if not, then we know we need to initialize the string to default values
+void initializeMicroLinn() {                  // called in setup()
   if (microLinn->nullTerminator != '\0'       // if user had lengthened the audience message and we haven't truncated it yet,
    || microLinn->EDO == 0) {                  // or if user has never set the EDO, then this fork must be running for the very first time
     microLinn->nullTerminator = '\0';
@@ -1009,15 +1073,93 @@ void initializeMicroLinn () {                 // called in setup()
     microLinn->anchorCents = 0;  
     microLinn->colOffset[LEFT] = 1;
     microLinn->colOffset[RIGHT] = 1;
+    microLinn->transpose[LEFT].EDOsteps = 0;
+    microLinn->transpose[LEFT].EDOlights = 0;
+    microLinn->transpose[RIGHT].EDOsteps = 0;
+    microLinn->transpose[RIGHT].EDOlights = 0;
   }
-  updateMicroLinnAnchorString ();
-  microLinnCalcTuningOfEachCell ();
+  microLinnUpdateAnchorString ();
+  microLinnCalcTuning (false);
+  microLinnStoreColorPlayed();
 }
 
-// keep our own copy so that we can restore it after the rainbow preset overwrites it
-signed char microLinnColorPlayed[2] = {COLOR_RED, COLOR_MAGENTA};
+byte microLinnMod (short num, byte base) {           // -13 % 10 = -3, but  mod (-13, 10) = 7
+  num -= base * floor (num / base);
+  return num;
+}
 
-void setKiteGuitarDefaults (boolean rainbows) {       // if not rainbows, then dots
+void microLinnPaintRainbows41() {
+  byte startCol[NUMSPLITS] = {1, 1};
+  byte numDots[NUMSPLITS] = {NUMCOLS - 1, NUMCOLS - 1};    // including blank dots
+  short rainbowStart;
+  if (Global.splitActive) {
+    numDots[LEFT] = Global.splitPoint - 1;             // splitPoint = leftmost column number of right split (0 = leftmost column of playable area)
+    startCol[RIGHT] = Global.splitPoint;
+    numDots[RIGHT] = NUMCOLS - Global.splitPoint;
+  } else if (Global.currentPerSplit == LEFT) {
+    numDots[RIGHT] = 0;
+  } else {
+    numDots[LEFT] = 0;
+  }
+  memset(&Device.customLeds[2][0], 0, LED_LAYER_SIZE);
+  for (byte side = 0; side < NUMSPLITS; ++side) {
+    for (byte row = 0; row < NUMROWS; ++row) {
+      rainbowStart = microLinnRowStarts[side][row] + 2 * (startCol[side] - 1);   // rainbowStart is a pointer into RAINBOWS41
+      if (rainbowStart % 2 != 0) {
+        rainbowStart += 41;                                                      // force it to be even
+      }
+      rainbowStart = microLinnMod (rainbowStart / 2, 41);                        // convert from edosteps to columns
+      if (isLeftHandedSplit(side)) {
+        memcpy(&Device.customLeds[2][row * MAXCOLS + startCol[side]],            // [2] means 3rd custom light pattern
+               &MICROLINN_RAINBOWS41_LEFTY[rainbowStart], numDots[side]);
+      } else {
+        memcpy(&Device.customLeds[2][row * MAXCOLS + startCol[side]],
+               &MICROLINN_RAINBOWS41[rainbowStart], numDots[side]);
+      }
+    }
+  }
+}
+
+void microLinnPaintDots41() {         // unlike microLinnPaintRainbows, this ignores the anchor cell
+  byte row = 4;                       // start with the leftmost dot, a single dot
+  byte col = 1;
+  byte EDOtone = 2 * round (microLinn->EDO * log (3/2) / log (2)) - microLinn->EDO;
+  short edosteps = EDOtone * Split[Global.currentPerSplit].transposeLights
+                 + microLinn->transpose[Global.currentPerSplit].EDOlights;
+  if (edosteps % 2 != 0) {
+    row = 3;
+    edosteps += microLinnSumOfRowOffsets (3, 4);              // offset is always odd so edosteps is now even
+  }
+  col = microLinnMod (col + edosteps / 2, 12);                // 2 edosteps per column, kites repeat every 12 columns
+
+  memset(&Device.customLeds[2][0], 0, LED_LAYER_SIZE);
+
+  while (col < NUMCOLS) {                             // paint all single dots green
+    Device.customLeds[2][col + MAXCOLS * row] = 25; 
+    col += 12;
+  }
+
+  boolean isFullyLefty = Device.otherHanded && Device.splitHandedness == reversedBoth;
+
+  col += isFullyLefty ? -4 : 4;                       // paint all double dots
+  col = microLinnMod (col, 12); 
+  while (col < NUMCOLS) {
+    Device.customLeds[2][col + MAXCOLS * (row + 1)] = 25; 
+    Device.customLeds[2][col + MAXCOLS * (row - 1)] = 25; 
+    col += 12;
+  }
+
+  col += isFullyLefty ? -4 : 4;                       // paint all triple dots
+  col = microLinnMod (col, 12); 
+  while (col < NUMCOLS) {
+    Device.customLeds[2][col + MAXCOLS * row] = 25; 
+    Device.customLeds[2][col + MAXCOLS * (row + 2)] = 25; 
+    Device.customLeds[2][col + MAXCOLS * (row - 2)] = 25; 
+    col += 12;
+  }
+}
+
+void microLinnSetKiteGuitarDefaults(boolean rainbows) {        // if not rainbows, then dots
   microLinn->EDO = 41;
   microLinn->octaveStretch = 0; 
   microLinn->anchorCell = 53;                         // 3rd row from top, 6th column
@@ -1025,25 +1167,116 @@ void setKiteGuitarDefaults (boolean rainbows) {       // if not rainbows, then d
   microLinn->anchorCents = 0;
   microLinn->colOffset[LEFT] = 2;
   microLinn->colOffset[RIGHT] = 2;
-  updateMicroLinnAnchorString();
-  microLinnCalcTuningOfEachCell();
+  microLinnUpdateAnchorString();
   Global.rowOffset = ROWOFFSET_OCTAVECUSTOM;
-  Global.customRowOffset = 13;                        // kite guitar uses +13 row offset
+  Global.customRowOffset = 13;                        // 41-equal downmajor 3rds
+  microLinnCalcTuning(false);
   Split[LEFT].playedTouchMode = playedSame;           // turn on same-note lighting for familiarity
   Split[RIGHT].playedTouchMode = playedSame;
-  // set custom light pattern #3 to either rainbows or dots
+
   if (rainbows) {
     Split[LEFT].colorPlayed = 0; 
     Split[RIGHT].colorPlayed = 0;
-    memcpy(&Device.customLeds[2][0], &CUSTOM_LEDS_PATTERN_R[0], LED_LAYER_SIZE);
+    microLinnPaintRainbows41();                       // set custom light pattern #3
+    /**
+    if (isFullLefty) {
+      memcpy(&Device.customLeds[2][0], &CUSTOM_LEDS_PATTERN_RAINBOWS_LEFTY[0], LED_LAYER_SIZE);
+    } else {
+      memcpy(&Device.customLeds[2][0], &CUSTOM_LEDS_PATTERN_RAINBOWS[0], LED_LAYER_SIZE);
+    }
+    */
   } else {
     Split[LEFT].colorPlayed = microLinnColorPlayed[LEFT]; 
     Split[RIGHT].colorPlayed = microLinnColorPlayed[RIGHT]; 
-    memcpy(&Device.customLeds[2][0], &CUSTOM_LEDS_PATTERN_D[0], LED_LAYER_SIZE);
+    microLinnPaintDots41();
+    /*
+    if (isFullyLefty) {
+      memcpy(&Device.customLeds[2][0], &CUSTOM_LEDS_PATTERN_DOTS_LEFTY[0], LED_LAYER_SIZE);
+    } else {
+      memcpy(&Device.customLeds[2][0], &CUSTOM_LEDS_PATTERN_DOTS[0], LED_LAYER_SIZE);
+    }
+    */
   }
   Global.activeNotes = 11;
   loadCustomLedLayer(2);
 }
+
+void microLinnResetTo12equal() {
+  microLinn->EDO = 12;
+  microLinn->octaveStretch = 0; 
+  microLinn->anchorCell = 92;               // 4th row from top, 11th column
+  microLinn->anchorNote = 60;               // middle-C
+  microLinn->anchorCents = 0;
+  microLinn->colOffset[LEFT] = 1;
+  microLinn->colOffset[RIGHT] = 1;
+  microLinnUpdateAnchorString();
+  Global.rowOffset = 5;
+  microLinnCalcTuning(false);
+  Split[LEFT].playedTouchMode = playedCell;
+  Split[RIGHT].playedTouchMode = playedCell;
+  Split[LEFT].colorPlayed = microLinnColorPlayed[LEFT]; 
+  Split[RIGHT].colorPlayed = microLinnColorPlayed[RIGHT]; 
+  Global.activeNotes = 0;
+  loadCustomLedLayer(getActiveCustomLedPattern());     // unloads the custom light pattern
+}
+
+void  microLinnPaintEdostepTranspose(bool doublePerSplit, byte side) {
+
+  if (microLinn->EDO == 12) {
+    return;
+  }
+
+  // Paint the edostep transpose values
+  if (!doublePerSplit || microLinn->transpose[LEFT].EDOsteps == microLinn->transpose[RIGHT].EDOsteps) {
+    paintTranspose(Split[Global.currentPerSplit].colorMain, SPLIT_ROW, microLinn->transpose[side].EDOsteps);
+  }
+  else if (doublePerSplit) {
+    if (abs(microLinn->transpose[LEFT].EDOsteps) > abs(microLinn->transpose[RIGHT].EDOsteps)) {
+      paintTranspose(Split[LEFT].colorMain, SPLIT_ROW, microLinn->transpose[LEFT].EDOsteps);
+      paintTranspose(Split[RIGHT].colorMain, SPLIT_ROW, microLinn->transpose[RIGHT].EDOsteps);
+    }
+    else {
+      paintTranspose(Split[RIGHT].colorMain, SPLIT_ROW, microLinn->transpose[RIGHT].EDOsteps);
+      paintTranspose(Split[LEFT].colorMain, SPLIT_ROW, microLinn->transpose[LEFT].EDOsteps);
+    }
+  }
+
+  // Paint the edostep-light transpose values
+  if (!doublePerSplit || microLinn->transpose[LEFT].EDOlights == microLinn->transpose[RIGHT].EDOlights) {
+    paintTranspose(Split[Global.currentPerSplit].colorMain, GLOBAL_SETTINGS_ROW, microLinn->transpose[side].EDOlights);
+  }
+  else if (doublePerSplit) {
+    if (abs(microLinn->transpose[LEFT].EDOlights) > abs(microLinn->transpose[RIGHT].EDOlights)) {
+      paintTranspose(Split[LEFT].colorMain, GLOBAL_SETTINGS_ROW, microLinn->transpose[LEFT].EDOlights);
+      paintTranspose(Split[RIGHT].colorMain, GLOBAL_SETTINGS_ROW, microLinn->transpose[RIGHT].EDOlights);
+    }
+    else {
+      paintTranspose(Split[RIGHT].colorMain, GLOBAL_SETTINGS_ROW, microLinn->transpose[RIGHT].EDOlights);
+      paintTranspose(Split[LEFT].colorMain, GLOBAL_SETTINGS_ROW, microLinn->transpose[LEFT].EDOlights);
+    }
+  }
+}
+
+void microLinnHandleOctaveTransposeNewTouchSplit(byte side) {
+
+  if (microLinn->EDO == 12) {
+    return;
+  }
+
+  if (sensorRow == SPLIT_ROW) {
+    if (sensorCol > 0 && sensorCol < 16) {
+      microLinn->transpose[side].EDOsteps = sensorCol - 8;
+    }
+  }
+  else if (sensorRow == GLOBAL_SETTINGS_ROW) {
+    if (sensorCol > 0 && sensorCol < 16) {
+      microLinn->transpose[side].EDOlights = sensorCol - 8;
+    }
+  }
+}
+
+
+/**************************************** FORK MENU ****************************************/
 
 const byte NUM_FORKS = 3;
 const byte MAX_LONGPRESS_MESSAGES = 3;     // after the 3rd long-press of OS version since power-up,
@@ -1051,6 +1284,16 @@ byte numTimesForkMenu = 0;                 // stop showing the "LONG-PRESS FOR F
 byte forkMenuColNum = 0;                   // active column number in fork menu, 0 means nothing active
 boolean forkMenuNowScrolling = false;
 
+byte forkMenuProtectForkData(byte audienceMessageToEdit) {      // keep the user from editing fork data stored at the end of the message
+  switch (audienceMessageToEdit) {
+    case MICROLINN_MSG: 
+      return MICROLINN_MSG_LEN;
+    default: 
+      return 30;
+  }
+}
+
+/**************************************** BRIGHTNESS FORK ****************************************/
 byte brightness = 7;
 
 

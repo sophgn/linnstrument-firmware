@@ -336,7 +336,7 @@ void refreshLedColumn(unsigned long now) {
       }
     } 
     /*********** new code ******************
-    byte bright = brightness;           // brightness ranges from 0 to 7
+    byte bright = brightness - 1;           // brightness ranges from 1 to 8
     if (Device.operatingLowPower) {
       bright >> 1;
     }
