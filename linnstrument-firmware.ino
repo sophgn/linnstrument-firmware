@@ -926,14 +926,14 @@ void microLinnUpdateAnchorString() {
     col1 = '0' + floor (microLinn->anchorCell.col / 10);
     col2 = '0' + microLinn->anchorCell.col % 10;
   }
-  if (LINNMODEL == 128 && col >= 10) {             // "3 12 ", drop R and C to fit 3 digits in
+  if (LINNMODEL == 128 && microLinn->anchorCell.col >= 10) {      // "3 12 ", drop R and C to fit 3 digits in
     microLinnAnchorString[0] = '8' - microLinn->anchorCell.row;
     microLinnAnchorString[1] = ' ';
     microLinnAnchorString[2] = col1;
     microLinnAnchorString[3] = col2;
     microLinnAnchorString[4] = ' ';
   } else {
-    microLinnAnchorString[0] = 'R';               // "R3C12"
+    microLinnAnchorString[0] = 'R';                               // "R3C12"
     microLinnAnchorString[1] = '8' - microLinn->anchorCell.row;
     microLinnAnchorString[2] = 'C';
     microLinnAnchorString[3] = col1;
