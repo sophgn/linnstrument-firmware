@@ -584,7 +584,7 @@ static Character small_P = { 4,
   "0   "
   "    " };
 
-static Character small_Q = { 4,
+static Character small_Q = { 5,
   "     "
   "     "
   " 00  "

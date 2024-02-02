@@ -2155,7 +2155,7 @@ void handleGuitarTuningNewTouch() {
 }
 
 void handleGuitarTuningRelease() {
-  handleNumericDataReleaseCol(false);              // false because guitar tuning editor does not do splits
+  handleNumericDataReleaseCol(false);              // false because guitar tuning editor does not do splits, fixes microLinn issue #5
   if (cellsTouched == 0) {
     ensureGuitarTuningPreviewNoteRelease();
   }
@@ -3481,8 +3481,10 @@ void handleMicroLinnConfigRelease() {
 }
 
 void handleAnchorCellChooserNewTouch() {
-  microLinn->anchorCell = 8 * sensorCol + sensorRow;
+  microLinn->anchorCell.row = sensorRow;
+  microLinn->anchorCell.col = sensorCol;
   microLinnUpdateAnchorString ();
+  microLinnCalcTuning(false);
   setDisplayMode(displayMicroLinnConfig); 
   updateDisplay(); 
 }
