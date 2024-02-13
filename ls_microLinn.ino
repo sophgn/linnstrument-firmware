@@ -23,6 +23,43 @@
 
 /********************* OBSOLETE CODE  ****************
 
+
+// not called, leave the 3 light patterns alone and just use microLinnPaintNormalDisplayCell()
+void microLinnPaintFullRainbow() {                   // fill 2nd custom light pattern using anchor cell, transpose, etc.
+  for (byte side = 0; side < NUMSPLITS; ++side) {
+    byte lowCol, highCol;
+    getSplitBoundaries(side, lowCol, highCol);
+    for (byte col = lowCol; col <= highCol; ++col) {
+      for (byte row = 0; row < NUMROWS; ++row) {
+        byte edostep = microLinnEdostep[side][col][row];
+        Device.customLeds[1][row * MAXCOLS + col] = microLinnRainbows[microLinn->EDO][edostep];
+      }
+    }
+  }
+}
+
+
+
+    /**** OLD WAY to initialize major and minor scales **************
+    short comma = 2 * M2 - round (i * yo3rd);           // gu comma, to find the yo and gu scales
+
+    microLinnScales[i][0] |= 4;                         // set scale #2 to yo scale
+    microLinnScales[i][M2] |= 4;                        // w2
+    microLinnScales[i][2*M2 - comma] |= 4;              // y3
+    microLinnScales[i][2*M2 + m2] |= 4;                 // w4
+    microLinnScales[i][3*M2 + m2] |= 4;                 // w5
+    microLinnScales[i][4*M2 + m2 - comma] |= 4;         // y6
+    microLinnScales[i][i - m2 - comma] |= 4;            // y7
+
+    microLinnScales[i][0] |= 8;                         // set scale #3 to gu scale
+    microLinnScales[i][M2] |= 8;                        // w2
+    microLinnScales[i][M2 + m2 + comma] |= 8;           // g3
+    microLinnScales[i][2*M2 + m2] |= 8;                 // w4
+    microLinnScales[i][3*M2 + m2] |= 8;                 // w5
+    microLinnScales[i][3*M2 + 2*m2 + comma] |= 8;       // g6
+    microLinnScales[i][i - M2 + comma] |= 8;            // g7
+
+
 const byte CUSTOM_LEDS_PATTERN_RAINBOWS [LED_LAYER_SIZE] = {        // two rainbow zones for Kite guitar
    0, 41, 25, 17,  9,  0, 41, 25, 17,  9,  0,  0,  0,  0,  0, 33, 49, 65, 41, 25, 17,  9, 65, 49,  0,  0,
    0, 49, 65, 41, 25, 17,  9, 65, 49, 33,  0,  0,  0,  0,  0, 41, 25, 17,  9,  0, 41, 25, 17,  9,  0,  0,

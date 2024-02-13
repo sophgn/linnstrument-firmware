@@ -712,8 +712,8 @@ void handleNonPlayingTouch() {
     case displayMicroLinnConfig:
       handleMicroLinnConfigNewTouch();
       break;
-    case displayAnchorCellChooser:
-      handleAnchorCellChooserNewTouch();
+    case displayMicroLinnAnchorChooser:
+      handleMicroLinnAnchorChooserNewTouch();
       break;
     case displayBrightness:
       handleBrightnessNewTouch();
@@ -1955,6 +1955,9 @@ inline void updateSensorCell() {
 // getNoteNumber:
 // computes MIDI note number from current row, column, row offset, octave button and transposition amount
 byte getNoteNumber(byte split, byte col, byte row) {
+  if (microLinn->EDO != 12) {
+    //return microLinnGetNoteNumber(split, col, row);
+  }
   byte notenum = 0;
 
   // return the computed note based on the selected rowOffset
@@ -1965,11 +1968,20 @@ byte getNoteNumber(byte split, byte col, byte row) {
 
   signed char transposeLights = Split[split].transposeLights;
 
-  if (microLinn->colOffset[split] > 1) {             // part of the microLinn fork
+  if (microLinn->colOffset[split] > 1) {
     // subtract 1 needed everywhere, so do it again when doubling - this lets us start at note 0 instead of 1
     noteCol = noteCol*2 - 1;
     transposeLights = transposeLights*2;
   }
+
+  /****** inspired by yinwang0's fork
+  // github.com/rogerlinndesign/linnstrument-firmware/compare/master...yinwang0:linnstrument-firmware:xy-tuning
+    short offset = Global.rowOffset == ROWOFFSET_OCTAVECUSTOM ? Global.customRowOffset : Global.rowOffset;
+
+    // choose lowest to minimize disabled notes
+    short range = abs (Global.colOffset * (NUMCOLS - 1)) + abs (offset * (NUMROWS - 1));
+    short lowest = 64 - range / 2;
+  ****************/
 
   notenum = determineRowOffsetNote(split, row) + noteCol - 1;
 
@@ -2009,7 +2021,7 @@ short determineRowOffsetNote(byte split, byte row) {
       }
     }
 
-    else if (offset >= 12) {                          // part of the microLinn fork
+    else if (offset >= 12) {
       if (microLinn->colOffset[split] > 1) {          // handle skip fretting with high row offset (kite guitar is 13, only fills 194 cells)
         lowest = 0;                                   // start at note 0 (why -1 gets us 0?) so that we show as many as possible and all disabled notes are in one place
       } else {

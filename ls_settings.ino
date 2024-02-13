@@ -1279,6 +1279,7 @@ void handlePerSplitSettingNewTouch() {
           midiSendMpePitchBendRange(Global.currentPerSplit);
           break;
       }
+      microLinnCalcTuning(false);
       break;
 
     // Pitch/X settings
@@ -1900,6 +1901,7 @@ void handleBendRangeNewTouch() {
 void handleBendRangeRelease() {
   handleNumericDataReleaseCol(true);
   midiSendMpePitchBendRange(Global.currentPerSplit);
+  microLinnCalcTuning(true);
 }
 
 void handleLimitsForYNewTouch() {
@@ -2116,8 +2118,8 @@ void handleSplitHandednessNewTouch() {
 }
 
 void handleSplitHandednessRelease() {
-  microLinnCalcTuning(true);
   handleNumericDataReleaseCol(false);
+  microLinnCalcTuning(true);
 }
 
 void handleRowOffsetNewTouch() {
@@ -2605,6 +2607,7 @@ void handleGlobalSettingNewTouch() {
             case LIGHTS_ACTIVE:
               Global.activeNotes = sensorCol-2 + (sensorRow*3);
               loadCustomLedLayer(getActiveCustomLedPattern());
+              microLinnSetPlayedColor();
               break;
           }
         }
@@ -2860,11 +2863,18 @@ void handleGlobalSettingNewTouch() {
 #ifndef DEBUG_ENABLED
       case 17:                                // avoid conflict, column 17 also sets the debug level
         if (sensorRow == 1) {
+          microLinnConfigColNum = 0;
+          microLinnConfigNowScrolling = false;
+          resetNumericDataChange();
+          setDisplayMode(displayMicroLinnConfig);
+          updateDisplay();
+          /*
           forkMenuColNum = 0;  
           numTimesForkMenu += 1;
           resetNumericDataChange();
           setDisplayMode(displayForkMenu);
           paintForkMenu();                    // use paintForkMenu, updateDisplay() doesn't work here
+          */
         }
         break;
 #endif
@@ -3094,6 +3104,13 @@ void handleGlobalSettingHold() {
             resetNumericDataChange();
             setDisplayMode(displayForkMenu);
             paintForkMenu();                                       // use paintForkMenu, updateDisplay() doesn't work here
+            /*
+            microLinnConfigColNum = 0;
+            microLinnConfigNowScrolling = false;
+            resetNumericDataChange();
+            setDisplayMode(displayMicroLinnConfig);
+            updateDisplay();
+            */
             break;
           case 2:                                                  // handle switch to/from User Firmware Mode
             if (cell(16, 0).touched == untouchedCell) {            // ensure that this is not a reset operation instead
@@ -3400,8 +3417,8 @@ void handleForkMenuRelease() {
 }
 
 boolean isMicroLinnConfigButton () {
-  return sensorRow == 0 && sensorCol >= 3 && sensorCol <= 15 
-      && sensorCol != 5 && sensorCol != 9 && sensorCol != 12;
+  return sensorRow == 0 && sensorCol >= 2 && sensorCol <= 15 
+      && sensorCol != 4 && sensorCol != 8 && sensorCol != 11 && sensorCol != 13;
 }
 
 void handleMicroLinnConfigNewTouch() {
@@ -3422,28 +3439,32 @@ void handleMicroLinnConfigNewTouch() {
   
   if (sensorRow > 0) {                                             // rows 1-7 are handled right away
     switch (microLinnConfigColNum) {
-      case 3: 
-        handleNumericDataNewTouchCol(microLinn->EDO, 5, 72, true); 
+      case 2: 
+        microLinnOldEDO = microLinn->EDO;
+        handleNumericDataNewTouchCol(microLinn->EDO, 5, MICROLINN_MAX_EDO, true);
         break;
-      case 4: 
+      case 3: 
         handleNumericDataNewTouchCol(microLinn->octaveStretch, -100, 100, true); 
         break;
-      case 6: 
+      case 5: 
         resetNumericDataChange();
-        setDisplayMode(displayAnchorCellChooser);
+        setDisplayMode(displayMicroLinnAnchorChooser);
         updateDisplay();
         break;
-      case 7: 
+      case 6: 
         handleNumericDataNewTouchCol(microLinn->anchorNote, 0, 127, true); 
         break;
-      case 8: 
+      case 7: 
         handleNumericDataNewTouchCol(microLinn->anchorCents, -100, 100, true); 
         break;
-      case 10: 
+      case 9: 
         handleNumericDataNewTouchCol(microLinn->colOffset[LEFT], 1, MAX_COL_OFFSET, true); 
         break;
-      case 11: 
+      case 10: 
         handleNumericDataNewTouchCol(microLinn->colOffset[RIGHT], 1, MAX_COL_OFFSET, true); 
+        break;
+      case 12: 
+        microLinnHandleNoteLightsNewTouch(); 
         break;
     }
   }
@@ -3460,16 +3481,15 @@ void handleMicroLinnConfigHold() {
 void handleMicroLinnConfigRelease() {
   if (isMicroLinnConfigButton() && !isCellPastSensorHoldWait()) {    // short-press bottom row
     switch (microLinnConfigColNum) {
-      case 13:
       case 14:
-        microLinnSetKiteGuitarDefaults(microLinnConfigColNum == 13);     // 13 = rainbows, 14 = dots
         resetNumericDataChange();
+        microLinnSetKiteGuitarDefaults();
         setDisplayMode(displayNormal); 
         updateDisplay();
         break;
       case 15:
-        microLinnResetTo12equal();
         resetNumericDataChange();
+        microLinnResetTo12equal();
         setDisplayMode(displayNormal); 
         updateDisplay();
         break;
@@ -3480,13 +3500,68 @@ void handleMicroLinnConfigRelease() {
   }
 }
 
-void handleAnchorCellChooserNewTouch() {
+void handleMicroLinnAnchorChooserNewTouch() {
   microLinn->anchorCell.row = sensorRow;
   microLinn->anchorCell.col = sensorCol;
   microLinnUpdateAnchorString ();
   microLinnCalcTuning(false);
   setDisplayMode(displayMicroLinnConfig); 
   updateDisplay(); 
+}
+
+void microLinnHandleNoteLightsNewTouch() {
+  byte edo = microLinn->EDO;
+  if (sensorCol == 1) {
+    microLinnCurrScale[edo] = 8 - sensorRow;
+    updateDisplay(); 
+    return;
+  }
+
+  if (sensorCol == 2 && sensorRow == 7) {        // dots
+    microLinnCurrScale[edo] = 0;
+    updateDisplay(); 
+    return;
+  }
+  
+  byte stepspan = 7 - sensorRow;
+  short edostep = MICROLINN_SCALEROWS[edo][stepspan] - MICROLINN_SCALEROWS[edo][0] + sensorCol - 12;
+  if ((edostep >  MICROLINN_SCALEROWS[edo][stepspan-1] || stepspan == 0) &&
+       edostep <= MICROLINN_SCALEROWS[edo][stepspan]) {
+    edostep = microLinnMod (edostep, edo);
+    if (microLinnCurrScale[edo] < 7) {
+      microLinnScales[edo][edostep] ^= (1 << microLinnCurrScale[edo]);          // xor to toggle the bit
+    } else {
+      switch (microLinnRainbows[edo][edostep]) {               // cycle through the colors
+        case 8:  microLinnRainbows[edo][edostep] = 1;  break;  // white to red
+        case 1:  microLinnRainbows[edo][edostep] = 10; break;  // red to yellow (actually lime)
+        case 10: microLinnRainbows[edo][edostep] = 3;  break;  // yellow to green
+        case 3:  microLinnRainbows[edo][edostep] = 5;  break;  // green
+        case 5:  microLinnRainbows[edo][edostep] = 6;  break;  // blue
+        case 6:  microLinnRainbows[edo][edostep] = 11; break;  // magenta
+        case 11: microLinnRainbows[edo][edostep] = 4;  break;  // pink
+        case 4:  microLinnRainbows[edo][edostep] = 9;  break;  // cyan
+        case 9:  microLinnRainbows[edo][edostep] = 8;  break;  // orange to white
+        default: microLinnRainbows[edo][edostep] = 8;  break;  // anything else to white (delete this line when table is done)
+      }
+    }
+    updateDisplay(); 
+  }
+}
+
+void microLinnHandleOctaveTransposeNewTouchSplit(byte side) {
+  // handle touches to the 2 new rows on the transpose display
+  if (microLinn->EDO == 12) return;
+
+  if (sensorRow == SPLIT_ROW) {
+    if (sensorCol > 0 && sensorCol < 16) {
+      microLinn->transpose[side].EDOsteps = sensorCol - 8;
+    }
+  }
+  else if (sensorRow == GLOBAL_SETTINGS_ROW) {
+    if (sensorCol > 0 && sensorCol < 16) {
+      microLinn->transpose[side].EDOlights = sensorCol - 8;
+    }
+  }
 }
 
 void handleBrightnessNewTouch() {

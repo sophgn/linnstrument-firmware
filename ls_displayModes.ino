@@ -62,7 +62,7 @@ displaySequencerColors        : sequencer low row colors
 displayCustomLedsEditor       : editor for custom LEDs
 displayForkMenu               : menu to access config screens of various forks
 displayMicroLinnConfig        : select EDO, anchor data and column offsets
-displayAnchorCellChooser      : choose from the performance display, part of the microLinn fork
+displayMicroLinnAnchorChooser : choose the anchor cell from the performance display
 displayBrightness             : brightness knob
 
 These routines handle the painting of these display modes on LinnStument's 208 LEDs.
@@ -240,7 +240,7 @@ void updateDisplay() {
     case displayMicroLinnConfig:
       paintMicroLinnConfig();
       break;
-    case displayAnchorCellChooser:                 // part of the microLinn fork
+    case displayMicroLinnAnchorChooser:
       if (!customLedPatternActive) {
         paintNormalDisplay();
       } else {
@@ -527,6 +527,11 @@ void paintStrumDisplayCell(byte split, byte col, byte row) {
 
 void paintNormalDisplayCell(byte split, byte col, byte row) {
   if (userFirmwareActive) return;
+
+  if (microLinn->EDO != 12) {
+    microLinnPaintNormalDisplayCell(split, col, row);
+    return;
+  }
 
   // by default clear the cell color
   byte colour = COLOR_OFF;
@@ -2035,6 +2040,86 @@ void paintForkMenu() {
   paintForkMenuButtons();
 }
 
+void microLinnPaintNormalDisplayCell(byte split, byte col, byte row) {
+  // by default clear the cell color
+  byte colour = COLOR_OFF;
+  CellDisplay cellDisplay = cellOff;
+
+  // unless the note is out of MIDI note range, show it
+  byte midiNote = microLinnMidiNote[split][col][row];
+  byte edostep = microLinnEdostep[split][col][row];
+  if (midiNote <= 127 && !customLedPatternActive) {
+    if (microLinnScales[microLinn->EDO][edostep] & (1 << microLinnCurrScale[microLinn->EDO])) {
+      colour = microLinnRainbows[microLinn->EDO][edostep];
+      cellDisplay = cellOn;
+    }
+    // show pulsating anchor cell if in octave centered on middle-C
+    if (blinkMiddleRootNote && edostep == 0 && midiNote >= 55 && midiNote < 67) {       // G to F#
+      colour = Split[split].colorAccent;
+      cellDisplay = cellFastPulse;
+    }
+  }
+
+  // if the low row is anything but normal, set it to the appropriate color
+  if (row == 0 && Split[split].lowRowMode != lowRowNormal) {
+    if ((Split[split].lowRowMode == lowRowCCX && Split[sensorSplit].lowRowCCXBehavior == lowRowCCFader) ||
+        (Split[split].lowRowMode == lowRowCCXYZ && Split[sensorSplit].lowRowCCXYZBehavior == lowRowCCFader)) {
+      colour = COLOR_BLACK;
+      cellDisplay = cellOff;
+    }
+    else {
+      colour = Split[split].colorLowRow;
+      cellDisplay = cellOn;
+    }
+    // actually set the cell's color
+    setLed(col, row, colour, cellDisplay, LED_LAYER_LOWROW);
+  }
+  else {
+    // actually set the cell's color
+    if (row == 0) {
+      clearLed(col, row, LED_LAYER_LOWROW);
+    }
+    setLed(col, row, colour, cellDisplay, LED_LAYER_MAIN);
+  }
+}
+
+void  microLinnPaintEdostepTranspose(bool doublePerSplit, byte side) {
+  // paint the 2 new rows on the transpose display
+  if (microLinn->EDO == 12) {
+    return;
+  }
+
+  // Paint the edostep transpose values
+  if (!doublePerSplit || microLinn->transpose[LEFT].EDOsteps == microLinn->transpose[RIGHT].EDOsteps) {
+    paintTranspose(Split[Global.currentPerSplit].colorMain, SPLIT_ROW, microLinn->transpose[side].EDOsteps);
+  }
+  else if (doublePerSplit) {
+    if (abs(microLinn->transpose[LEFT].EDOsteps) > abs(microLinn->transpose[RIGHT].EDOsteps)) {
+      paintTranspose(Split[LEFT].colorMain, SPLIT_ROW, microLinn->transpose[LEFT].EDOsteps);
+      paintTranspose(Split[RIGHT].colorMain, SPLIT_ROW, microLinn->transpose[RIGHT].EDOsteps);
+    }
+    else {
+      paintTranspose(Split[RIGHT].colorMain, SPLIT_ROW, microLinn->transpose[RIGHT].EDOsteps);
+      paintTranspose(Split[LEFT].colorMain, SPLIT_ROW, microLinn->transpose[LEFT].EDOsteps);
+    }
+  }
+
+  // Paint the edostep-light transpose values
+  if (!doublePerSplit || microLinn->transpose[LEFT].EDOlights == microLinn->transpose[RIGHT].EDOlights) {
+    paintTranspose(Split[Global.currentPerSplit].colorMain, GLOBAL_SETTINGS_ROW, microLinn->transpose[side].EDOlights);
+  }
+  else if (doublePerSplit) {
+    if (abs(microLinn->transpose[LEFT].EDOlights) > abs(microLinn->transpose[RIGHT].EDOlights)) {
+      paintTranspose(Split[LEFT].colorMain, GLOBAL_SETTINGS_ROW, microLinn->transpose[LEFT].EDOlights);
+      paintTranspose(Split[RIGHT].colorMain, GLOBAL_SETTINGS_ROW, microLinn->transpose[RIGHT].EDOlights);
+    }
+    else {
+      paintTranspose(Split[RIGHT].colorMain, GLOBAL_SETTINGS_ROW, microLinn->transpose[RIGHT].EDOlights);
+      paintTranspose(Split[LEFT].colorMain, GLOBAL_SETTINGS_ROW, microLinn->transpose[LEFT].EDOlights);
+    }
+  }
+}
+
 void microLinnLightOctaveSwitch() {
 
   if (microLinn->EDO == 12) {
@@ -2060,13 +2145,50 @@ void microLinnLightOctaveSwitch() {
   }
 }
 
+void microLinnPaintNoteLights() {
+  clearDisplay();
+  paintMicroLinnConfigButtons();
+  byte edo = microLinn->EDO;
+  byte currScale = microLinnCurrScale[edo];
+  for (byte scaleNum = 1; scaleNum <= 7; ++scaleNum) {                        // paint the scale select buttons on the left
+    setLed(1, 8 - scaleNum, scaleNum == currScale ? Split[LEFT].colorAccent : Split[LEFT].colorMain, cellOn);
+  }
+
+  byte stepspan = 0;                                                          // the degree (2nd, 3rd, etc.) minus 1
+  byte col = 12;
+  for (byte edostep = 0; edostep < edo; ++edostep) {
+    if (edostep > MICROLINN_SCALEROWS[edo][stepspan]) {
+      stepspan += 1;
+      if (edostep > MICROLINN_SCALEROWS[edo][stepspan]) {                     // needed for 5n edos where m2 = 0 steps
+        stepspan += 1;                                                        // but don't do a while loop, 13edo hangs
+      }                                                                       // might not need this once SCALEROWS is right
+      col -= MICROLINN_SCALEROWS[edo][stepspan] - MICROLINN_SCALEROWS[edo][stepspan - 1];
+    }
+    if (microLinnScales[edo][edostep] & (1 << currScale)) {
+      setLed(col, 7 - (stepspan % 7), microLinnRainbows[edo][edostep], cellOn);     // paint the note light
+    }
+    col += 1; 
+  }
+
+  for (stepspan = 0; stepspan < 7; ++stepspan) {                                    // pink walls
+    col = MICROLINN_SCALEROWS[edo][0];
+    setLed(col + 14, stepspan + 1, COLOR_PINK, cellOn);
+    col = MICROLINN_SCALEROWS[edo][1] - MICROLINN_SCALEROWS[edo][0];                // 2nd - 1sn = major 2nd
+    col = max (col, MICROLINN_SCALEROWS[edo][3] - MICROLINN_SCALEROWS[edo][2]);     // 4th - 3rd = minor 2nd
+    col -= MICROLINN_SCALEROWS[edo][0];
+    setLed(11 - col, stepspan + 1, COLOR_PINK, cellOn);
+  }
+
+  setLed(2, 7, currScale == 0 ? Split[LEFT].colorAccent : Split[LEFT].colorMain, cellOn);    // for the dots
+}
+
 void paintMicroLinnConfigButtons() {
-  for (byte col = 3; col <= 15; ++col) {                        // draw the buttons
-    if (col == 5 || col == 9) {col += 1;}                       // skip over empty columns
-    if (col == 11) {col += 2;}
+  for (byte col = 2; col <= 15; ++col) {                        // draw the buttons
+    if (col == 4 || col == 8 || col == 13) {col += 1;}          // skip over empty columns
+    if (col == 10) {col += 2;}
     setLed(col, 0, col == microLinnConfigColNum ? Split[LEFT].colorAccent : Split[LEFT].colorMain, cellOn);
   }
-  setLed(11, 0, microLinnConfigColNum == 11 ? Split[RIGHT].colorAccent : Split[RIGHT].colorMain, cellOn);
+  setLed(10, 0, microLinnConfigColNum == 10 ? Split[RIGHT].colorAccent : Split[RIGHT].colorMain, cellOn);
 }
 
 void paintMicroLinnConfig() {
@@ -2076,32 +2198,32 @@ void paintMicroLinnConfig() {
   if (microLinnConfigNowScrolling) {
     // leading spaces ensure the string first appears on the right edge, not on the left edge
     switch (microLinnConfigColNum) {
-      case 3: 
+      case 2: 
         small_scroll_text_row1("      NOTES PER OCTAVE", Split[LEFT].colorMain);
         break;
-      case 4: 
+      case 3: 
         small_scroll_text_row1("      OCTAVE STRETCH IN CENTS", Split[LEFT].colorMain);
         break;
-      case 6: 
+      case 5: 
         small_scroll_text_row1("      CHOOSE ANCHOR CELL", Split[LEFT].colorMain);
         break;
-      case 7: 
+      case 6: 
         small_scroll_text_row1("      ANCHOR NOTE", Split[LEFT].colorMain);
         break;
-      case 8: 
+      case 7: 
         small_scroll_text_row1("      ANCHOR CENTS", Split[LEFT].colorMain);
         break;
-      case 10: 
+      case 9: 
         small_scroll_text_row1("      LEFT COLUMN OFFSET", Split[LEFT].colorMain);
         break;
-      case 11: 
+      case 10: 
         small_scroll_text_row1("      RIGHT COLUMN OFFSET", Split[RIGHT].colorMain);
         break;
-      case 13: 
-        small_scroll_text_row1("      SET TO KITE GUITAR (RAINBOWS)", Split[LEFT].colorMain);
+      case 12: 
+        small_scroll_text_row1("      SET NOTE LIGHTS", Split[LEFT].colorMain);
         break;
       case 14: 
-        small_scroll_text_row1("      SET TO KITE GUITAR (DOTS)", Split[LEFT].colorMain);
+        small_scroll_text_row1("      SET TO KITE GUITAR", Split[LEFT].colorMain);
         break;
       case 15: 
         small_scroll_text_row1("      RESET TO 12-EQUAL", Split[LEFT].colorMain);
@@ -2112,10 +2234,10 @@ void paintMicroLinnConfig() {
 
   signed char offset = 0;
   switch (microLinnConfigColNum) {
-    case 3: 
+    case 2: 
       paintNumericDataDisplayRow(globalColor, microLinn->EDO, 0, 1, false);
       break;
-    case 4: 
+    case 3: 
       if (microLinn->octaveStretch <= -100) {
         offset = -5;
       } else if (microLinn->octaveStretch <= -10) {
@@ -2123,17 +2245,17 @@ void paintMicroLinnConfig() {
       }
       paintNumericDataDisplayRow(globalColor, microLinn->octaveStretch, offset, 1, false);
       break;
-    case 6:  
+    case 5:  
       if (LINNMODEL == 200) {
         smallfont_draw_string(1, 1, microLinnAnchorString, globalColor);
       } else {
         condfont_draw_string(1, 1, microLinnAnchorString, globalColor);
       }
       break;  
-    case 7: 
+    case 6: 
       paintNoteDataDisplay(globalColor, microLinn->anchorNote, LINNMODEL == 200 ? 2 : 1, 1);
       break;
-    case 8: 
+    case 7: 
       if (microLinn->anchorCents <= -100) {
         offset = -5;
       } else if (microLinn->anchorCents <= -10) {
@@ -2141,13 +2263,15 @@ void paintMicroLinnConfig() {
       }
       paintNumericDataDisplayRow(globalColor, microLinn->anchorCents, offset, 1, false);
       break;
-    case 10:
+    case 9:
       paintNumericDataDisplayRow(Split[LEFT].colorMain, microLinn->colOffset[LEFT], 0, 1, false);
       break;
-    case 11: 
+    case 10: 
       paintNumericDataDisplayRow(Split[RIGHT].colorMain, microLinn->colOffset[RIGHT], 0, 1, false);
       break;
-    case 13: 
+    case 12:
+      microLinnPaintNoteLights();
+      break; 
     case 14:
     case 15:
       break;
