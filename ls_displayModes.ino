@@ -63,6 +63,7 @@ displayCustomLedsEditor       : editor for custom LEDs
 displayForkMenu               : menu to access config screens of various forks
 displayMicroLinnConfig        : select EDO, anchor data and column offsets
 displayMicroLinnAnchorChooser : choose the anchor cell from the performance display
+displayMicroLinnDotsEditor    : edit the fret markers for the current edo
 displayBrightness             : brightness knob
 
 These routines handle the painting of these display modes on LinnStument's 208 LEDs.
@@ -246,6 +247,9 @@ void updateDisplay() {
       } else {
         loadCustomLedLayer(getActiveCustomLedPattern());          // bug: doesn't load anything
       }
+      break; 
+    case displayMicroLinnDotsEditor:
+      paintMicroLinnDotsEditor();
       break;
     case displayBrightness:
       paintBrightnessScreen();
@@ -2044,16 +2048,25 @@ void microLinnPaintNormalDisplayCell(byte split, byte col, byte row) {
   // by default clear the cell color
   byte colour = COLOR_OFF;
   CellDisplay cellDisplay = cellOff;
-
-  // unless the note is out of MIDI note range, show it
   byte midiNote = microLinnMidiNote[split][col][row];
   byte edostep = microLinnEdostep[split][col][row];
+  byte edo = microLinn->EDO;
+
+  // unless the note is out of MIDI note range, show it
   if (midiNote <= 127 && !customLedPatternActive) {
-    if (microLinnScales[microLinn->EDO][edostep] & (1 << microLinnCurrScale[microLinn->EDO])) {
-      colour = microLinnRainbows[microLinn->EDO][edostep];
+    // either dots...
+    if (microLinnCurrScale[edo] == 8) {
+      if (microLinnDots[edo][col] & (1 << row)) {
+        colour = Split[LEFT].colorMain;
+        cellDisplay = cellOn;
+      }
+    } 
+    // ...or rainbows
+    else if (microLinnScales[edo][edostep] & (1 << microLinnCurrScale[edo])) {
+      colour = microLinnRainbows[edo][edostep];
       cellDisplay = cellOn;
     }
-    // show pulsating anchor cell if in octave centered on middle-C
+    // show pulsating anchor cell if in the octave centered on middle-C
     if (blinkMiddleRootNote && edostep == 0 && midiNote >= 55 && midiNote < 67) {       // G to F#
       colour = Split[split].colorAccent;
       cellDisplay = cellFastPulse;
@@ -2085,9 +2098,8 @@ void microLinnPaintNormalDisplayCell(byte split, byte col, byte row) {
 
 void  microLinnPaintEdostepTranspose(bool doublePerSplit, byte side) {
   // paint the 2 new rows on the transpose display
-  if (microLinn->EDO == 12) {
-    return;
-  }
+  if (microLinn->EDO == 12) return;
+  if (MICROLINN_MAJ2ND[microLinn->EDO] == 1) return;
 
   // Paint the edostep transpose values
   if (!doublePerSplit || microLinn->transpose[LEFT].EDOsteps == microLinn->transpose[RIGHT].EDOsteps) {
@@ -2122,9 +2134,7 @@ void  microLinnPaintEdostepTranspose(bool doublePerSplit, byte side) {
 
 void microLinnLightOctaveSwitch() {
 
-  if (microLinn->EDO == 12) {
-    return;
-  }
+  if (microLinn->EDO == 12) return;
 
   // light the octave/transpose switch if the pitch is transposed by edosteps
   if ((microLinn->transpose[LEFT].EDOsteps < 0 && microLinn->transpose[RIGHT].EDOsteps < 0) ||
@@ -2143,43 +2153,6 @@ void microLinnLightOctaveSwitch() {
   else {
     clearLed(0, OCTAVE_ROW);
   }
-}
-
-void microLinnPaintNoteLights() {
-  clearDisplay();
-  paintMicroLinnConfigButtons();
-  byte edo = microLinn->EDO;
-  byte currScale = microLinnCurrScale[edo];
-  for (byte scaleNum = 1; scaleNum <= 7; ++scaleNum) {                        // paint the scale select buttons on the left
-    setLed(1, 8 - scaleNum, scaleNum == currScale ? Split[LEFT].colorAccent : Split[LEFT].colorMain, cellOn);
-  }
-
-  byte stepspan = 0;                                                          // the degree (2nd, 3rd, etc.) minus 1
-  byte col = 12;
-  for (byte edostep = 0; edostep < edo; ++edostep) {
-    if (edostep > MICROLINN_SCALEROWS[edo][stepspan]) {
-      stepspan += 1;
-      if (edostep > MICROLINN_SCALEROWS[edo][stepspan]) {                     // needed for 5n edos where m2 = 0 steps
-        stepspan += 1;                                                        // but don't do a while loop, 13edo hangs
-      }                                                                       // might not need this once SCALEROWS is right
-      col -= MICROLINN_SCALEROWS[edo][stepspan] - MICROLINN_SCALEROWS[edo][stepspan - 1];
-    }
-    if (microLinnScales[edo][edostep] & (1 << currScale)) {
-      setLed(col, 7 - (stepspan % 7), microLinnRainbows[edo][edostep], cellOn);     // paint the note light
-    }
-    col += 1; 
-  }
-
-  for (stepspan = 0; stepspan < 7; ++stepspan) {                                    // pink walls
-    col = MICROLINN_SCALEROWS[edo][0];
-    setLed(col + 14, stepspan + 1, COLOR_PINK, cellOn);
-    col = MICROLINN_SCALEROWS[edo][1] - MICROLINN_SCALEROWS[edo][0];                // 2nd - 1sn = major 2nd
-    col = max (col, MICROLINN_SCALEROWS[edo][3] - MICROLINN_SCALEROWS[edo][2]);     // 4th - 3rd = minor 2nd
-    col -= MICROLINN_SCALEROWS[edo][0];
-    setLed(11 - col, stepspan + 1, COLOR_PINK, cellOn);
-  }
-
-  setLed(2, 7, currScale == 0 ? Split[LEFT].colorAccent : Split[LEFT].colorMain, cellOn);    // for the dots
 }
 
 void paintMicroLinnConfigButtons() {
@@ -2270,11 +2243,66 @@ void paintMicroLinnConfig() {
       paintNumericDataDisplayRow(Split[RIGHT].colorMain, microLinn->colOffset[RIGHT], 0, 1, false);
       break;
     case 12:
-      microLinnPaintNoteLights();
+      PaintMicroLinnNoteLights();
       break; 
     case 14:
     case 15:
       break;
+  }
+}
+
+void PaintMicroLinnNoteLights() {
+  clearDisplay();
+  paintMicroLinnConfigButtons();
+
+  byte col = 12;       
+  byte stepspan = 0;                                                            // the degree (2nd, 3rd, etc.) minus 1
+  byte edo = microLinn->EDO;
+  byte currScale = microLinnCurrScale[edo];
+
+  if (currScale <= 7) {                                                         // paint the scale 
+    for (byte edostep = 0; edostep < edo; ++edostep) {
+      if (edostep > MICROLINN_SCALEROWS[edo][stepspan]) {
+        stepspan += 1;
+        if (edostep > MICROLINN_SCALEROWS[edo][stepspan]) {                     // needed for 5n edos where m2 = 0 steps
+          stepspan += 1;                                                        // but don't do a while loop, 13edo hangs
+        }                                                                       // delete this code once SCALEROWS is right?
+        col -= MICROLINN_SCALEROWS[edo][stepspan] - MICROLINN_SCALEROWS[edo][stepspan - 1];
+      }
+      if (microLinnScales[edo][edostep] & (1 << currScale)) {
+        setLed(col, 7 - (stepspan % 7), microLinnRainbows[edo][edostep], cellOn);     // paint the note light
+      }
+      col += 1; 
+    }
+  
+    col = MICROLINN_SCALEROWS[edo][0];                                                // pink walls
+    for (stepspan = 0; stepspan < 7; ++stepspan) {
+      setLed(col + 14, stepspan + 1, COLOR_PINK, cellOn);
+    }
+    col = MICROLINN_SCALEROWS[edo][1] - MICROLINN_SCALEROWS[edo][0];                  // 2nd - 1sn = major 2nd
+    col = max (col, MICROLINN_SCALEROWS[edo][3] - MICROLINN_SCALEROWS[edo][2]);       // 4th - 3rd = minor 2nd
+    col -= MICROLINN_SCALEROWS[edo][0];
+    for (stepspan = 0; stepspan < 7; ++stepspan) {
+      setLed(11 - col, stepspan + 1, COLOR_PINK, cellOn);
+    }
+  }
+
+  for (byte scaleNum = 0; scaleNum < 7; ++scaleNum) {                                        // the 7 scale buttons
+    setLed(1, 7 - scaleNum, scaleNum == currScale ? Split[LEFT].colorAccent : Split[LEFT].colorMain, cellOn);
+  }
+  setLed(3, 7, currScale == 7 ? Split[LEFT].colorAccent : Split[LEFT].colorMain, cellOn);    // color editor
+  setLed(3, 5, currScale == 8 ? Split[LEFT].colorAccent : Split[LEFT].colorMain, cellOn);    // dots selector
+  if (currScale == 8) {setLed(12, 4, Split[LEFT].colorMain, cellOn);}                        // dots editor
+}
+
+void paintMicroLinnDotsEditor() {
+  clearDisplay();
+  for (byte col = 1; col < NUMCOLS; ++col) {
+    for (byte row = 0; row < MAXROWS; ++row) {
+      if (microLinnDots[microLinn->EDO][col] & (1 << row)) {
+        setLed(col, row, Split[LEFT].colorMain, cellOn);
+      }
+    }
   }
 }
 

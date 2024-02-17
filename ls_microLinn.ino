@@ -1,6 +1,15 @@
 /**************************************** SKIP FRETTING and MICROLINN ****************************************/
 
 
+void microLinnSetGlobalView() {
+  if (microLinn->EDO == 12) return;
+  lightSettings = LIGHTS_ACTIVE;
+}
+
+void microLinnSetCurrScale() {
+  microLinnCurrScale[microLinn->EDO] = Global.activeNotes;
+}
+
 // to create non-rank-1 scales with N notes, set the edo to 12 but play as if in N-edo, think one midi note per edostep
 // load a scala file into your synth or run alt-tuner to produce that N-note scale
 // each note is slightly sharper or flatter from N-edo, thus the pad's note will be different slid up to vs played directly
@@ -22,6 +31,93 @@
 
 
 /********************* OBSOLETE CODE  ****************
+
+
+byte microLinnKiteGuitarDots[MAXCOLS][MAXROWS];
+
+void microLinnPaintDots41() {         // unlike microLinnRainbows, this ignores the anchor cell
+  byte row = 4;                       // start with the leftmost dot, a single dot
+  byte col = 1;
+  short edosteps = MICROLINN_MAJ2ND[microLinn->EDO] * Split[Global.currentPerSplit].transposeLights
+                 + microLinn->transpose[Global.currentPerSplit].EDOlights;
+  if (edosteps % 2 != 0) {
+    row = 3;
+    edosteps += microLinnSumOfRowOffsets (3, 4);              // offset is always odd so edosteps is now even
+  }
+  col = microLinnMod (col + edosteps / 2, 12);                // 2 edosteps per column, kites repeat every 12 columns
+
+  memset(microLinnKiteGuitarDots, 0, sizeof(microLinnKiteGuitarDots));
+
+  while (col < NUMCOLS) {                                     // paint all single dots green
+    microLinnKiteGuitarDots[col][row] = Split[LEFT].colorMain; 
+    col += 12;
+  }
+
+  boolean isFullyLefty = Device.otherHanded && Device.splitHandedness == reversedBoth;
+
+  col += isFullyLefty ? -4 : 4;                       // paint all double dots
+  col = microLinnMod (col, 12); 
+  while (col < NUMCOLS) {
+    microLinnKiteGuitarDots[col][row + 1] = Split[LEFT].colorMain; 
+    microLinnKiteGuitarDots[col][row - 1] = Split[LEFT].colorMain; 
+    col += 12;
+  }
+
+  col += isFullyLefty ? -4 : 4;                       // paint all triple dots
+  col = microLinnMod (col, 12); 
+  while (col < NUMCOLS) {
+    microLinnKiteGuitarDots[col][row] = Split[LEFT].colorMain; 
+    microLinnKiteGuitarDots[col][row + 2] = Split[LEFT].colorMain; 
+    microLinnKiteGuitarDots[col][row - 2] = Split[LEFT].colorMain; 
+    col += 12;
+  }
+}
+
+
+// 2 super long rows of the rainbow pattern, starts at the tonic, 65 covers a row of 25 starting at 40
+const byte MICROLINN_RAINBOWS41[2][65] = {
+                  65, 41, 25, 81,  9,  0,  0,  0,  0,  0,            // righty version 
+  33, 49, 65, 41, 25, 81,  9, 65,  0,  0,  0,  0,  0,  0,
+  65, 41, 25, 81,  9, 65, 49, 73,  0,  0,  0,  0,  0, 
+  41, 25, 81,  9, 65, 41, 25, 81,  9,  0,  0,  0,  0,  0, 
+  33, 49, 65, 41, 25, 81,  9, 65,  0,  0,  0,  0,  0,  0,
+                  65,  9, 81, 25, 41,  0,  0,  0,  0,  0,            // lefty version, goes backwards
+  73, 49, 65,  9, 81, 25, 41, 65,  0,  0,  0,  0,  0,  0,
+  65,  9, 81, 25, 41, 65, 49, 33,  0,  0,  0,  0,  0, 
+   9, 81, 25, 41, 65,  9, 81, 25, 41,  0,  0,  0,  0,  0, 
+  73, 49, 65,  9, 81, 25, 41, 65,  0,  0,  0,  0,  0,  0
+};
+
+void microLinnPaintRainbows41() {
+  byte startCol[NUMSPLITS] = {1, 1};                                // where each split starts
+  byte splitWidth[NUMSPLITS] = {NUMCOLS - 1, NUMCOLS - 1};          // how many columns each split spans
+  short rainbowStart;
+  if (Global.splitActive) {
+    splitWidth[LEFT] = Global.splitPoint - 1;
+    startCol[RIGHT] = Global.splitPoint;
+    splitWidth[RIGHT] = NUMCOLS - Global.splitPoint;
+  } else if (Global.currentPerSplit == LEFT) {
+    splitWidth[RIGHT] = 0;
+  } else {
+    splitWidth[LEFT] = 0;
+  }
+  for (byte side = 0; side < NUMSPLITS; ++side) {
+    for (byte row = 0; row < NUMROWS; ++row) {
+      rainbowStart = microLinnEdostep[side][startCol[side]][row];        // rainbowStart is a pointer into RAINBOWS41
+      if (isLeftHandedSplit(side)) {
+        rainbowStart *= -1;
+      }
+      if (rainbowStart % 2 != 0) {
+        rainbowStart += 41;                                                      // force it to be even
+      }
+      rainbowStart = microLinnMod(rainbowStart / 2, 41);                         // convert from edosteps to columns
+      memcpy(&Device.customLeds[1][row * MAXCOLS + startCol[side]],              // [1] means 1st custom light pattern
+             &MICROLINN_RAINBOWS41[isLeftHandedSplit(side)][rainbowStart], splitWidth[side]);
+    }
+  }
+}
+
+
 
 
 // not called, leave the 3 light patterns alone and just use microLinnPaintNormalDisplayCell()

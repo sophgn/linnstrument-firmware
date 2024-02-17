@@ -715,6 +715,9 @@ void handleNonPlayingTouch() {
     case displayMicroLinnAnchorChooser:
       handleMicroLinnAnchorChooserNewTouch();
       break;
+    case displayMicroLinnDotsEditor:
+      handleMicroLinnDotsEditorNewTouch();
+      break;
     case displayBrightness:
       handleBrightnessNewTouch();
       break;
@@ -1228,11 +1231,13 @@ void prepareNewNote(signed char notenum) {
   focused.col = sensorCol;
   focused.row = sensorRow;
 
-  // reset the pitch bend and pressure right before sending the note on (microlinnFineTuning goes here?)
+  // reset the pitch bend and pressure right before sending the note on
   if (!userFirmwareActive) {
     if (Split[sensorSplit].sendX && isXExpressiveCell() && !isLowRowBendActive(sensorSplit)) {
       resetLastMidiPitchBend(sensorCell->channel);
+      //int microLinnTuningBend = (microLinn->EDO != 12 ? microLinnFineTuning[sensorSplit][sensorCol][sensorRow] : 0);
       preSendPitchBend(sensorSplit, 0, sensorCell->channel);
+      //preSendPitchBend(sensorSplit, microLinnTuningBend, sensorCell->channel);
     }
     if (Split[sensorSplit].sendZ && isZExpressiveCell()) {
       preResetLastLoudness(sensorSplit, sensorCell->note, sensorCell->channel);
@@ -1267,7 +1272,9 @@ void sendNewNote() {
     // if we've switched from pitch X enabled to pitch X disabled and the last
     // pitch bend value was not neutral, reset it first to prevent skewed pitches
     if (!Split[sensorSplit].sendX && hasPreviousPitchBendValue(sensorCell->channel)) {
+      //int microLinnTuningBend = (microLinn->EDO != 12 ? microLinnFineTuning[sensorSplit][sensorCol][sensorRow] : 0);
       preSendPitchBend(sensorSplit, 0, sensorCell->channel);
+      //preSendPitchBend(sensorSplit, microLinnTuningBend, sensorCell->channel);
     }
 
     // reset pressure to 0 before sending the note, the actually pressure value will
