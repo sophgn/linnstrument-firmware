@@ -336,11 +336,11 @@ void refreshLedColumn(unsigned long now) {
       }
     } 
     /*********** new code ******************
-    byte bright = brightness - 1;           // brightness ranges from 1 to 8
+    byte bright = brightness - 1;           // brightness ranges from 1 to 12
     if (Device.operatingLowPower) {
       bright >> 1;
     }
-    if (displayInterval[actualCol][rowCount] & 0x07 > bright) {
+    if (displayInterval[actualCol][rowCount] > bright) {
       cellDisplay = cellOff;
     }
     /********** end new code **************/
@@ -350,9 +350,9 @@ void refreshLedColumn(unsigned long now) {
     if (cellDisplay) {
       // construct composite colors
 
-     if ((!Device.operatingLowPower && displayInterval[actualCol][rowCount] % 2 != 0) ||    // original code
-         (Device.operatingLowPower && displayInterval[actualCol][rowCount] % 4 != 0)) {     // original code
-      //if (displayInterval[actualCol][rowCount] & 0x0F > bright) {                         // new code
+      if ((!Device.operatingLowPower && displayInterval[actualCol][rowCount] % 2 != 0) ||      // original code
+           (Device.operatingLowPower && displayInterval[actualCol][rowCount] % 4 != 0)) {      // original code
+      //if (displayInterval[actualCol][rowCount] > bright) {                                   // new code
         switch (color)
         {
           case COLOR_WHITE:

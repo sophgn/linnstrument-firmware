@@ -249,7 +249,7 @@ void updateDisplay() {
       }
       break; 
     case displayMicroLinnDotsEditor:
-      paintMicroLinnDotsEditor();
+      paintMicroLinnDotsEditor(true);
       break;
     case displayBrightness:
       paintBrightnessScreen();
@@ -532,7 +532,7 @@ void paintStrumDisplayCell(byte split, byte col, byte row) {
 void paintNormalDisplayCell(byte split, byte col, byte row) {
   if (userFirmwareActive) return;
 
-  if (microLinn->EDO != 12) {
+  if (isMicroLinn()) {
     microLinnPaintNormalDisplayCell(split, col, row);
     return;
   }
@@ -1206,6 +1206,12 @@ void paintCustomSwitchAssignmentConfigDisplay() {
     case ASSIGNED_SEQUENCER_MUTE:
       adaptfont_draw_string(0, 0, "MUTE", globalColor, true);
       break;
+    case ASSIGNED_MICROLINN_EDO_UP:
+      adaptfont_draw_string(0, 0, "EDO+", globalColor, true);
+      break;
+    case ASSIGNED_MICROLINN_EDO_DOWN:
+      adaptfont_draw_string(0, 0, "EDO-", globalColor, true);
+      break;
   }
 }
 
@@ -1275,7 +1281,7 @@ void paintSplitHandedness() {
 
 void paintRowOffset() {
   clearDisplay();
-  if (Global.customRowOffset == -17) {
+  if (Global.customRowOffset == -MICROLINN_MAX_ROW_OFFSET - 1) {
     condfont_draw_string(0, 0, "-GUI", globalColor, false);
   }
   else {
@@ -1583,6 +1589,8 @@ void paintSwitchAssignment(byte mode) {
     case ASSIGNED_SEQUENCER_NEXT:
     case ASSIGNED_STANDALONE_MIDI_CLOCK:
     case ASSIGNED_SEQUENCER_MUTE:
+    case ASSIGNED_MICROLINN_EDO_UP:
+    case ASSIGNED_MICROLINN_EDO_DOWN:
       setLed(9, 3, getSwitchTapTempoColor(), cellOn);
       break;
     case ASSIGNED_AUTO_OCTAVE:
@@ -1698,6 +1706,10 @@ void paintGlobalSettingsDisplay() {
 
     if (Device.otherHanded) {
       setLed(1, 3, getSplitHandednessColor(), cellOn);
+    }
+
+    if (isMicroLinn()) {
+      setLed(1, 0, globalAltColor, cellOn);
     }
 
     switch (lightSettings) {
@@ -2051,18 +2063,20 @@ void microLinnPaintNormalDisplayCell(byte split, byte col, byte row) {
   byte midiNote = microLinnMidiNote[split][col][row];
   byte edostep = microLinnEdostep[split][col][row];
   byte edo = microLinn->EDO;
+  byte currScale = microLinnCurrScale[edo];
 
   // unless the note is out of MIDI note range, show it
   if (midiNote <= 127 && !customLedPatternActive) {
     // either dots...
-    if (microLinnCurrScale[edo] == 8) {
-      if (microLinnDots[edo][col] & (1 << row)) {
+    if (currScale == 8) {
+      byte col2 = (microLinn->colOffset[LEFT] < 0 && microLinn->colOffset[RIGHT] < 0) ? NUMCOLS - col : col;
+      if (microLinnDots[edo][col2] & (1 << row)) {
         colour = Split[LEFT].colorMain;
         cellDisplay = cellOn;
       }
     } 
     // ...or rainbows
-    else if (microLinnScales[edo][edostep] & (1 << microLinnCurrScale[edo])) {
+    else if (currScale == 7 || microLinnScales[edo][edostep] & (1 << currScale)) {
       colour = microLinnRainbows[edo][edostep];
       cellDisplay = cellOn;
     }
@@ -2098,7 +2112,7 @@ void microLinnPaintNormalDisplayCell(byte split, byte col, byte row) {
 
 void  microLinnPaintEdostepTranspose(bool doublePerSplit, byte side) {
   // paint the 2 new rows on the transpose display
-  if (microLinn->EDO == 12) return;
+  if (!isMicroLinn()) return;
   if (MICROLINN_MAJ2ND[microLinn->EDO] == 1) return;
 
   // Paint the edostep transpose values
@@ -2134,7 +2148,7 @@ void  microLinnPaintEdostepTranspose(bool doublePerSplit, byte side) {
 
 void microLinnLightOctaveSwitch() {
 
-  if (microLinn->EDO == 12) return;
+  if (!isMicroLinn()) return;
 
   // light the octave/transpose switch if the pitch is transposed by edosteps
   if ((microLinn->transpose[LEFT].EDOsteps < 0 && microLinn->transpose[RIGHT].EDOsteps < 0) ||
@@ -2156,8 +2170,8 @@ void microLinnLightOctaveSwitch() {
 }
 
 void paintMicroLinnConfigButtons() {
-  for (byte col = 2; col <= 15; ++col) {                        // draw the buttons
-    if (col == 4 || col == 8 || col == 13) {col += 1;}          // skip over empty columns
+  for (byte col = 2; col <= 15; ++col) { 
+    if (col == 4 || col == 8 || col == 13) {col += 1;}                   // skip over empty columns
     if (col == 10) {col += 2;}
     setLed(col, 0, col == microLinnConfigColNum ? Split[LEFT].colorAccent : Split[LEFT].colorMain, cellOn);
   }
@@ -2269,12 +2283,11 @@ void PaintMicroLinnNoteLights() {
         }                                                                       // delete this code once SCALEROWS is right?
         col -= MICROLINN_SCALEROWS[edo][stepspan] - MICROLINN_SCALEROWS[edo][stepspan - 1];
       }
-      if (microLinnScales[edo][edostep] & (1 << currScale)) {
+      if (currScale == 7 || microLinnScales[edo][edostep] & (1 << currScale)) {
         setLed(col, 7 - (stepspan % 7), microLinnRainbows[edo][edostep], cellOn);     // paint the note light
       }
       col += 1; 
     }
-  
     col = MICROLINN_SCALEROWS[edo][0];                                                // pink walls
     for (stepspan = 0; stepspan < 7; ++stepspan) {
       setLed(col + 14, stepspan + 1, COLOR_PINK, cellOn);
@@ -2285,22 +2298,21 @@ void PaintMicroLinnNoteLights() {
     for (stepspan = 0; stepspan < 7; ++stepspan) {
       setLed(11 - col, stepspan + 1, COLOR_PINK, cellOn);
     }
-  }
+  } else {paintMicroLinnDotsEditor(false);}                                           // blue dots 
 
   for (byte scaleNum = 0; scaleNum < 7; ++scaleNum) {                                        // the 7 scale buttons
     setLed(1, 7 - scaleNum, scaleNum == currScale ? Split[LEFT].colorAccent : Split[LEFT].colorMain, cellOn);
   }
   setLed(3, 7, currScale == 7 ? Split[LEFT].colorAccent : Split[LEFT].colorMain, cellOn);    // color editor
   setLed(3, 5, currScale == 8 ? Split[LEFT].colorAccent : Split[LEFT].colorMain, cellOn);    // dots selector
-  if (currScale == 8) {setLed(12, 4, Split[LEFT].colorMain, cellOn);}                        // dots editor
 }
 
-void paintMicroLinnDotsEditor() {
-  clearDisplay();
-  for (byte col = 1; col < NUMCOLS; ++col) {
-    for (byte row = 0; row < MAXROWS; ++row) {
+void paintMicroLinnDotsEditor(boolean showAll) {
+  if (showAll) {clearDisplay();}
+  for (byte col = showAll ? 1 : 4; col < NUMCOLS; ++col) {
+    for (byte row = showAll ? 0 : 1; row < MAXROWS; ++row) {
       if (microLinnDots[microLinn->EDO][col] & (1 << row)) {
-        setLed(col, row, Split[LEFT].colorMain, cellOn);
+        setLed(col, row, globalColor, cellOn);
       }
     }
   }
@@ -2308,8 +2320,8 @@ void paintMicroLinnDotsEditor() {
 
 void paintBrightnessScreen() {
   clearDisplay();
-  setLed(4, 4, Split[LEFT].colorAccent, cellOn);     // zero marker, like on the transpose screen
-  for (byte col = 12; col >= 5; --col ) {
-    setLed(col, 4, col - 5 > brightness ? COLOR_BLACK : Split[LEFT].colorMain, cellOn);
+  setLed(2, 6, Split[LEFT].colorAccent, cellOn);                       // zero marker, like on the transpose screen
+  for (byte col = 14; col > 2; --col ) {
+    setLed(col, 6, col - 2 > brightness ? COLOR_BLACK : Split[LEFT].colorMain, cellOn);       // black erases
   }
 }

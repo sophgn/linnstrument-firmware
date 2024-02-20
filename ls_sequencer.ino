@@ -2335,6 +2335,7 @@ void StepSequencerState::advanceSequencer() {
       }
 
       // check if the sequencer should switch to the next pattern
+      // microLinn/megafork chaining of sequences goes here? (switchPatternOnBeat = on next beat, not end of pattern)
       if (nextPattern != -1 && (position == 0 || switchPatternOnBeat)) {
         position = 0;
         currentPattern = nextPattern;

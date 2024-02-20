@@ -1,16 +1,65 @@
-/**************************************** SKIP FRETTING and MICROLINN ****************************************/
+/**************************************** SKIP FRETTING and MICROLINN ****************************************
+
+1) Download the latest installer (2.3.3 as of Feb '24) from https://www.rogerlinndesign.com/support/support-linnstrument-update-software. 
+2) Download the latest version of linnstrument-firmware-microLinn.bin from __________________.
+3) If on a mac, put both the updater and the .bin file on your *desktop*. If on a PC, _______________.
+4) Run the updater. Don't run anything else while it's running. If it asks for permission to read files from the desktop, say yes.
+5) Confirm the update by short-pressing the OS version (global settings, column 16). It should be 234.08K. If not, try using the 2.3.0 updater instead. 
+
+Once installed, long-press that same OS version pad (or short-press the pad immediately to the right of it, if you have a 200).
+You should see 3 green buttons in the lower left. Long-press each one to see its function.
+Short-press the first green button to see microLinn's 10 green buttons. Long-press each of these 10 to see its function.
+
+When the notes per octave is greater than 12, the OCTAVE/TRANSPOSE display shows 2 extra rows for transposing by edosteps.
+The 2nd and 3rd rows transpose not by semitones but by major 2nds (since most edos have several different semitones).
+
+There are 2 new functions for switches 1 & 2 and footswitches 1 & 2: EDO UP and EDO DOWN
+
+On the global settings screen, long-press col 1 bottom row (VIEW MAIN) to go directly to the main microLinn display.
+Once the notes per octave are set to anything other than 12, VIEW MAIN turns light blue and you can short-press it.
+
+The first 9 scales in cols 2-4 are now microtonal and change for each edo. You can edit them and their colors in microLinn's note lights display. 
+Shortcut: you can long-press the scale's pad on the global display to go directly to that scale.
+MicroLinn's note lights display has 7 scale buttons plus the color editor and the dots selector. The notes in the color editor don't toggle on/off, 
+but tapping a note cycles it thru the rainbow. Long-press the scale buttons or color editor button to reset the scale or colors. 
+
+Tapping the dots selector makes the dots appear mid-screen. Tapping there puts you in a full-screen editor that lets you toggle dots on or off. 
+The dot color is the main color of the lefthand split. Long-press the dots selector button to reset the dots pattern. 
+
+The 3 custom light patterns are totally separate from all this and are still available for use.
+
+The 8 scales are somewhat similar from edo to edo (except the smaller, weirder edos of course)
+The 1st and 2nd scales are 5-over (major or downmajor) and 5-under (minor or upminor)
+The 3rd and 4th scales are 7-over (downminor) and 7-under (upmajor)
+The 5th scale is 11-over or 11-under (mid or neutral), and the 6th scale is blank but for the tonic
+The 7th scale is scales 1-4 combined, and the 8th scale is always the full rainbow
+
+The colors use the rainbow metaphor, red-yellow-green-blue = supermajor to subminor
+white = 12-edo-ish = 3-limit
+yellow / green = downmajor / upminor =  5-over / 5-under
+blue / red = downminor / upmajor = 7-over / 7-under
+purple = neutral = 11-over or 11-under or 13-over or 13-under
+pink is reserved for the exact half-octave of 600c, 12-edo-ish but not quite 3-limit, "off-white"
+cyan / orange = a catch-all pair, e.g. 7/5 and 10/7, cyan is also for outside notes aka interordinals e.g. 24edo
 
 
-void microLinnSetGlobalView() {
-  if (microLinn->EDO == 12) return;
-  lightSettings = LIGHTS_ACTIVE;
-}
 
-void microLinnSetCurrScale() {
-  microLinnCurrScale[microLinn->EDO] = Global.activeNotes;
-}
 
-// to create non-rank-1 scales with N notes, set the edo to 12 but play as if in N-edo, think one midi note per edostep
+
+
+Possible non-microtonal features:
+The column offset can be set for either split, range is -33 to 33
+brightness knob (not done)
+chaining of sequencer patterns (not done, looks easy)
+make channel pressure less jumpy for non-MPE synths (use another's fork, so pretty easy)
+hammer-on/pull-off window (1-5 columns, 0 columns iturns it off) (not even started)
+in SAME mode, twin notes in the other split show up as well, if SAME is also on there
+3 new played modes, SAM8 (includes octaves) BLNK (slow blink) and BLN8 (blink plus octaves)
+
+
+
+
+// to create JI or rank-2 scales with N notes, set the edo to 12 but play as if in N-edo, think one midi note per edostep
 // load a scala file into your synth or run alt-tuner to produce that N-note scale
 // each note is slightly sharper or flatter from N-edo, thus the pad's note will be different slid up to vs played directly
 // however this is only a comma or so difference even on long slides, might be tolerable
@@ -26,8 +75,17 @@ void microLinnSetCurrScale() {
 //short microLinnSlideBend[NUMSPLITS][16][10];                 // 16 midi channels, 10 touches, slide bends come from sliding along the Linnstrument
 //short microLinnLandingBend[NUMSPLITS][16][10];               // 16 midi channels, 10 touches, landing bends come from the initial touch being off-center
 
+*********************************************************/
 
-
+void microLinnChangeEDO(int delta) {        // called via switch1 switch2 or footswitch press
+  microLinnOldEDO = microLinn->EDO;
+  microLinn->EDO += delta;
+  if (microLinn->EDO < 5) {microLinn->EDO = MICROLINN_MAX_EDO;}        // wrap around
+  if (microLinn->EDO > MICROLINN_MAX_EDO) {microLinn->EDO = 5;}
+  Global.activeNotes = microLinnCurrScale[microLinn->EDO];
+  microLinnCalcTuning(false);
+  updateDisplay();
+}
 
 
 /********************* OBSOLETE CODE  ****************
