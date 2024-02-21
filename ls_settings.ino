@@ -2122,12 +2122,11 @@ void handleSplitHandednessRelease() {
 
 void handleRowOffsetNewTouch() {
   handleNumericDataNewTouchCol(Global.customRowOffset, -MICROLINN_MAX_ROW_OFFSET-1, MICROLINN_MAX_ROW_OFFSET, true); 
-  //microLinnStoreRowOffset();
 }
 
 void handleRowOffsetRelease() {
   handleNumericDataReleaseCol(false);
-  microLinnStoreRowOffset();
+  microLinnStoreRowOffsetCents();
 }
 
 void ensureGuitarTuningPreviewNoteRelease() {
@@ -2573,7 +2572,7 @@ void handleGlobalSettingNewTouch() {
       case 1:
         switch (sensorRow) {
           case LIGHTS_MAIN:
-            if (isMicroLinn()) {
+            if (isMicroLinnOn()) {
               enterMicroLinnConfig();
               break;
             }
@@ -2651,7 +2650,7 @@ void handleGlobalSettingNewTouch() {
             }
             break;
         }
-        microLinnStoreRowOffset();
+        microLinnStoreRowOffsetCents();
         break;
 
       // select more row offsets
@@ -2664,7 +2663,7 @@ void handleGlobalSettingNewTouch() {
             else {
               Global.rowOffset = 4;
             }
-            microLinnStoreRowOffset();
+            microLinnStoreRowOffsetCents();
             break;
           case 1:
             if (Global.rowOffset == 6) {
@@ -2673,7 +2672,7 @@ void handleGlobalSettingNewTouch() {
             else {
               Global.rowOffset = 6;
             }
-            microLinnStoreRowOffset();
+            microLinnStoreRowOffsetCents();
             break;
           case 2:
           case 3:
@@ -3406,8 +3405,7 @@ void handleForkMenuRelease() {
 }
 
 void microLinnSetGlobalView() {
-  if (!isMicroLinn()) return;
-  lightSettings = LIGHTS_ACTIVE;
+  if (isMicroLinnOn()) lightSettings = LIGHTS_ACTIVE;
 }
 
 void microLinnAdjustColOffsets() {
@@ -3442,7 +3440,7 @@ void microLinnAdjustHandedness() {
 }
 
 void microLinnHandleGlobalScaleHold() {                       // long-press one of the 9 scale buttons
-  if (!isMicroLinn()) return;
+  if (!isMicroLinnOn()) return;
   if (sensorRow <= 2) {
     //cellTouched(ignoredCell);
     microLinnCurrScale[microLinn->EDO] = Global.activeNotes;  // sensorCol-2 + (sensorRow*3);
@@ -3464,7 +3462,7 @@ void microLinnSetCurrScale() {
 
 void microLinnHandleOctaveTransposeNewTouchSplit(byte side) {
   // handle touches to the 2 new rows on the transpose display
-  if (!isMicroLinn()) return;
+  if (!isMicroLinnOn()) return;
   if (MICROLINN_MAJ2ND[microLinn->EDO] == 1) return;
 
   if (sensorRow == SPLIT_ROW) {
@@ -3510,7 +3508,7 @@ void handleMicroLinnConfigNewTouch() {
   if (sensorRow > 0) {                                             // rows 1-7 are handled right away
     switch (microLinnConfigColNum) {
       case 2: 
-        handleNumericDataNewTouchCol(microLinn->EDO, 5, MICROLINN_MAX_EDO, true);
+        handleNumericDataNewTouchCol(microLinn->EDO, 4, MICROLINN_MAX_EDO, true);
         lightSettings = LIGHTS_ACTIVE;
         Global.activeNotes = microLinnCurrScale[microLinn->EDO];
         break;
@@ -3647,24 +3645,50 @@ void handleMicroLinnNoteLightsNewTouch() {
   }
 }
 
+void microLinnResetScaleNote (byte edo, byte edostep, byte currScale) {
+  bitWrite (microLinnScales[edo][edostep], 
+            currScale, 
+            bitRead(MICROLINN_SCALES[edo][edostep],currScale));
+}
+
 void handleMicroLinnNoteLightsHold() {
+
   if (isCellPastConfirmHoldWait()) {                                           // long-press 800 ms
     byte edo = microLinn->EDO;
     byte currScale = microLinnCurrScale[edo];
+
     if (currScale <= 6 && sensorCol == 1 && sensorRow > 0) {                   // scale selector button
-      for (byte edostep = 0; edostep < edo; ++edostep) {                       // reset the scale
-        bitWrite (microLinnScales [edo][edostep], currScale,
-          bitRead(MICROLINN_SCALES[edo][edostep], currScale));
+      if (cell(3, 3).touched == untouchedCell) {                               // blue mass-reset button
+        for (byte edostep = 0; edostep < edo; ++edostep) {                     // reset the scale
+          microLinnResetScaleNote(edo, edostep, currScale);
+        }
+      } else {
+        for (byte edo = 5; edo <= MICROLINN_MAX_EDO; ++edo) {                  // reset this scale in all the edos
+          for (byte edostep = 0; edostep < edo; ++edostep) { 
+            microLinnResetScaleNote(edo, edostep, currScale);
+          }
+        }
       }
       updateDisplay();
+      return;
     }
-    if (currScale == 7 && sensorCol == 3 && sensorRow == 7) {                  // color editor button
-      memcpy (&microLinnRainbows[edo][0], &MICROLINN_RAINBOWS[edo][0], edo);   // reset the rainbow
+
+    if (currScale == 7 && sensorCol == 3 && sensorRow == 7) {                        // color editor button
+      if (cell(3, 3).touched == untouchedCell) {                                     // blue mass-reset button
+        memcpy (&microLinnRainbows[edo][0], &MICROLINN_RAINBOWS[edo][0], edo);       // reset the rainbow
+      } else {
+        memcpy (microLinnRainbows, MICROLINN_RAINBOWS, sizeof(microLinnRainbows));   // reset all the rainbows
+      }
       updateDisplay();
+      return;
     }
-    if (currScale == 8 && sensorCol == 3 && sensorRow == 5) {                  // dots selector button
-      memcpy (&microLinnDots[edo][0], &MICROLINN_DOTS[edo][0], MAXCOLS);       // reset the dots
-      setDisplayMode(displayNormal);
+
+    if (currScale == 8 && sensorCol == 3 && sensorRow == 5) {                        // dots selector button
+      if (cell(3, 3).touched == untouchedCell) {                                     // blue mass-reset button
+        memcpy (&microLinnDots[edo][0], &MICROLINN_DOTS[edo][0], MAXCOLS);           // reset the dots
+      } else {
+        memcpy (microLinnDots, MICROLINN_DOTS, sizeof(microLinnDots));               // reset all the dots
+      }
       updateDisplay();
     }
   }
@@ -3677,6 +3701,11 @@ void handleMicroLinnNoteLightsRelease() {
         (sensorCol == 3 && sensorRow == 7 && currScale == 7) ||                 // short-press rainbow editor
         (sensorCol == 3 && sensorRow == 5 && currScale == 8)) {                 // short-press dots selector
       setLed(sensorCol, sensorRow, Split[LEFT].colorAccent, cellOn);
+      if (cell(3, 3).touched == touchedCell) {                                  // blue mass-select button
+        memset (microLinnCurrScale, currScale, MICROLINN_MAX_EDO + 1);
+        Global.activeNotes = currScale;
+        updateDisplay(); 
+      }
     }
   }
 }

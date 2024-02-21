@@ -10,23 +10,30 @@ Once installed, long-press that same OS version pad (or short-press the pad imme
 You should see 3 green buttons in the lower left. Long-press each one to see its function.
 Short-press the first green button to see microLinn's 10 green buttons. Long-press each of these 10 to see its function.
 
-When the notes per octave is greater than 12, the OCTAVE/TRANSPOSE display shows 2 extra rows for transposing by edosteps.
-The 2nd and 3rd rows transpose not by semitones but by major 2nds (since most edos have several different semitones).
-
-There are 2 new functions for switches 1 & 2 and footswitches 1 & 2: EDO UP and EDO DOWN
-
 On the global settings screen, long-press col 1 bottom row (VIEW MAIN) to go directly to the main microLinn display.
-Once the notes per octave are set to anything other than 12, VIEW MAIN turns light blue and you can short-press it.
+Once the notes per octave is set to anything other than OFF, VIEW MAIN turns light blue and you can short-press it.
+
+The anchor cell is a specific cell or pad that doesn't change pitch when you change the notes per octave.
+The anchor cell chooser displays the row and column of the current anchor cell, e.g. R3C6 means row 3 (from the top) and column 6. 
+To choose a new anchor cell, tap the blue "R3C6" and then tap any pad.
+
+When the notes per octave is greater than 12, the OCTAVE/TRANSPOSE display shows 2 extra rows for transposing by edosteps.
+The 2nd and 3rd rows now transpose not by semitones but by major 2nds (since most edos have several different semitones).
+
+There are 4 new functions for switches 1 & 2 and footswitches 1 & 2: 
+EDO+ and EDO- move up or down to the next EDO, wraps around (probably best you don't play while changing!)
+SCL+ and SCL- move up or down to the next scale, wraps around (only affects the note lights)
 
 The first 9 scales in cols 2-4 are now microtonal and change for each edo. You can edit them and their colors in microLinn's note lights display. 
-Shortcut: you can long-press the scale's pad on the global display to go directly to that scale.
-MicroLinn's note lights display has 7 scale buttons plus the color editor and the dots selector. The notes in the color editor don't toggle on/off, 
-but tapping a note cycles it thru the rainbow. Long-press the scale buttons or color editor button to reset the scale or colors. 
-
+Shortcut: you can long-press the scale's pad on the global settings display to go directly to that scale.
+MicroLinn's note lights display has 7 scale buttons plus the color editor and the dots selector, plus the blue mass-selector button.
+Tap a note in a scale to toggle it on or off. Tap a note in the color editor to cycle it thru the rainbow. 
 Tapping the dots selector makes the dots appear mid-screen. Tapping there puts you in a full-screen editor that lets you toggle dots on or off. 
-The dot color is the main color of the lefthand split. Long-press the dots selector button to reset the dots pattern. 
 
-The 3 custom light patterns are totally separate from all this and are still available for use.
+Long-press the scale buttons or color editor button or the dots selector button to reset the scale or colors or dots pattern. 
+Hold the blue  mass-selector button in column 3 while selecting a scale and your selection will be applied to all 52 edos at once. 
+Hold it while long-pressing another button to mass-reset that scale/rainbow/dot-pattern for all 52 edos.
+The 3 custom light patterns are totally separate from all this and are still available for use!
 
 The 8 scales are somewhat similar from edo to edo (except the smaller, weirder edos of course)
 The 1st and 2nd scales are 5-over (major or downmajor) and 5-under (minor or upminor)
@@ -40,8 +47,13 @@ yellow / green = downmajor / upminor =  5-over / 5-under
 blue / red = downminor / upmajor = 7-over / 7-under
 purple = neutral = 11-over or 11-under or 13-over or 13-under
 pink is reserved for the exact half-octave of 600c, 12-edo-ish but not quite 3-limit, "off-white"
-cyan / orange = a catch-all pair, e.g. 7/5 and 10/7, cyan is also for outside notes aka interordinals e.g. 24edo
+cyan / orange = a catch-all pair, e.g. 7/5 and 10/7, cyan is also for "outside" notes aka interordinals e.g. 24edo
 
+(new played modes)
+
+Suggestions for exploring:
+The first few edos are pretty strange. Try starting with 15, 16, 17 or 19.
+The rainbow colors can be overwhelming. Try setting the played mode to BLNK or BLNK8.
 
 
 
@@ -77,7 +89,8 @@ in SAME mode, twin notes in the other split show up as well, if SAME is also on 
 
 *********************************************************/
 
-void microLinnChangeEDO(int delta) {        // called via switch1 switch2 or footswitch press
+void microLinnChangeEDO(int delta) {                                   // called via switch1, switch2 or footswitch press
+  if (!isMicroLinnOn()) return;
   microLinnOldEDO = microLinn->EDO;
   microLinn->EDO += delta;
   if (microLinn->EDO < 5) {microLinn->EDO = MICROLINN_MAX_EDO;}        // wrap around
@@ -87,6 +100,13 @@ void microLinnChangeEDO(int delta) {        // called via switch1 switch2 or foo
   updateDisplay();
 }
 
+void microLinnChangeScale(int delta) {                                // called via switch1, switch2 or footswitch press
+  signed char newScale = Global.activeNotes += delta;                 // use a signed char because we can't set a byte to -1
+  if (newScale > 8) {newScale = 0;}                                   // wrap around
+  if (newScale < 0) {newScale = 8;}
+  microLinnCurrScale[microLinn->EDO] = Global.activeNotes = newScale;
+  updateDisplay();
+}
 
 /********************* OBSOLETE CODE  ****************
 

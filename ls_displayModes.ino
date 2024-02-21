@@ -532,7 +532,7 @@ void paintStrumDisplayCell(byte split, byte col, byte row) {
 void paintNormalDisplayCell(byte split, byte col, byte row) {
   if (userFirmwareActive) return;
 
-  if (isMicroLinn()) {
+  if (isMicroLinnOn()) {
     microLinnPaintNormalDisplayCell(split, col, row);
     return;
   }
@@ -1212,6 +1212,12 @@ void paintCustomSwitchAssignmentConfigDisplay() {
     case ASSIGNED_MICROLINN_EDO_DOWN:
       adaptfont_draw_string(0, 0, "EDO-", globalColor, true);
       break;
+    case ASSIGNED_MICROLINN_SCALE_UP:
+      adaptfont_draw_string(0, 0, "SCL+", globalColor, true);
+      break;
+    case ASSIGNED_MICROLINN_SCALE_DOWN:
+      adaptfont_draw_string(0, 0, "SCL-", globalColor, true);
+      break;
   }
 }
 
@@ -1591,6 +1597,8 @@ void paintSwitchAssignment(byte mode) {
     case ASSIGNED_SEQUENCER_MUTE:
     case ASSIGNED_MICROLINN_EDO_UP:
     case ASSIGNED_MICROLINN_EDO_DOWN:
+    case ASSIGNED_MICROLINN_SCALE_UP:
+    case ASSIGNED_MICROLINN_SCALE_DOWN:
       setLed(9, 3, getSwitchTapTempoColor(), cellOn);
       break;
     case ASSIGNED_AUTO_OCTAVE:
@@ -1708,7 +1716,7 @@ void paintGlobalSettingsDisplay() {
       setLed(1, 3, getSplitHandednessColor(), cellOn);
     }
 
-    if (isMicroLinn()) {
+    if (isMicroLinnOn()) {
       setLed(1, 0, globalAltColor, cellOn);
     }
 
@@ -2112,7 +2120,7 @@ void microLinnPaintNormalDisplayCell(byte split, byte col, byte row) {
 
 void  microLinnPaintEdostepTranspose(bool doublePerSplit, byte side) {
   // paint the 2 new rows on the transpose display
-  if (!isMicroLinn()) return;
+  if (!isMicroLinnOn()) return;
   if (MICROLINN_MAJ2ND[microLinn->EDO] == 1) return;
 
   // Paint the edostep transpose values
@@ -2148,7 +2156,7 @@ void  microLinnPaintEdostepTranspose(bool doublePerSplit, byte side) {
 
 void microLinnLightOctaveSwitch() {
 
-  if (!isMicroLinn()) return;
+  if (!isMicroLinnOn()) return;
 
   // light the octave/transpose switch if the pitch is transposed by edosteps
   if ((microLinn->transpose[LEFT].EDOsteps < 0 && microLinn->transpose[RIGHT].EDOsteps < 0) ||
@@ -2186,7 +2194,7 @@ void paintMicroLinnConfig() {
     // leading spaces ensure the string first appears on the right edge, not on the left edge
     switch (microLinnConfigColNum) {
       case 2: 
-        small_scroll_text_row1("      NOTES PER OCTAVE", Split[LEFT].colorMain);
+        small_scroll_text_row1("      NOTES PER OCTAVE (EDO)", Split[LEFT].colorMain);
         break;
       case 3: 
         small_scroll_text_row1("      OCTAVE STRETCH IN CENTS", Split[LEFT].colorMain);
@@ -2222,7 +2230,11 @@ void paintMicroLinnConfig() {
   signed char offset = 0;
   switch (microLinnConfigColNum) {
     case 2: 
-      paintNumericDataDisplayRow(globalColor, microLinn->EDO, 0, 1, false);
+      if (microLinn->EDO < 5) {
+        smallfont_draw_string(4, 1, "OFF", globalColor, false);
+      } else {
+        paintNumericDataDisplayRow(globalColor, microLinn->EDO, 0, 1, false);
+      }
       break;
     case 3: 
       if (microLinn->octaveStretch <= -100) {
@@ -2295,6 +2307,7 @@ void PaintMicroLinnNoteLights() {
     col = MICROLINN_SCALEROWS[edo][1] - MICROLINN_SCALEROWS[edo][0];                  // 2nd - 1sn = major 2nd
     col = max (col, MICROLINN_SCALEROWS[edo][3] - MICROLINN_SCALEROWS[edo][2]);       // 4th - 3rd = minor 2nd
     col -= MICROLINN_SCALEROWS[edo][0];
+    if (edo == 8) {col += 1;}
     for (stepspan = 0; stepspan < 7; ++stepspan) {
       setLed(11 - col, stepspan + 1, COLOR_PINK, cellOn);
     }
@@ -2305,6 +2318,7 @@ void PaintMicroLinnNoteLights() {
   }
   setLed(3, 7, currScale == 7 ? Split[LEFT].colorAccent : Split[LEFT].colorMain, cellOn);    // color editor
   setLed(3, 5, currScale == 8 ? Split[LEFT].colorAccent : Split[LEFT].colorMain, cellOn);    // dots selector
+  setLed(3, 3, globalColor, cellOn);                                                         // mass selector/resetter
 }
 
 void paintMicroLinnDotsEditor(boolean showAll) {

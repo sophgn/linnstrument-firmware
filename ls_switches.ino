@@ -322,6 +322,14 @@ void performSwitchAssignmentOn(byte whichSwitch, byte assignment, byte split) {
     case ASSIGNED_MICROLINN_EDO_DOWN:
       microLinnChangeEDO(-1);
       break;
+
+    case ASSIGNED_MICROLINN_SCALE_UP:
+      microLinnChangeScale(1);
+      break;
+
+    case ASSIGNED_MICROLINN_SCALE_DOWN:
+      microLinnChangeScale(-1);
+      break;
   }
 }
 

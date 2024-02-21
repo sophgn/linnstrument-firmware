@@ -1155,7 +1155,7 @@ void receivedNrpn(int parameter, int value, int channel) {
       break;
     // Global Custom Row Offset Instead Of Octave
     case 253:
-      if (isMicroLinn()) {
+      if (isMicroLinnOn()) {
         if (inRange(value, 0, 2 * MICROLINN_MAX_ROW_OFFSET + 1)) {
           if (value == 2 * MICROLINN_MAX_ROW_OFFSET + 1) {
             Global.customRowOffset = -MICROLINN_MAX_ROW_OFFSET - 1;

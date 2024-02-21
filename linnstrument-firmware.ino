@@ -199,7 +199,9 @@ byte NUMROWS = 8;                    // number of touch sensor rows
 #define ASSIGNED_SEQUENCER_MUTE         17
 #define ASSIGNED_MICROLINN_EDO_UP       18
 #define ASSIGNED_MICROLINN_EDO_DOWN     19
-#define MAX_ASSIGNED                    ASSIGNED_MICROLINN_EDO_DOWN
+#define ASSIGNED_MICROLINN_SCALE_UP     20
+#define ASSIGNED_MICROLINN_SCALE_DOWN   21
+#define MAX_ASSIGNED                    ASSIGNED_MICROLINN_SCALE_DOWN
 #define ASSIGNED_DISABLED               255
 
 #define GLOBAL_SETTINGS_ROW  0
@@ -703,6 +705,7 @@ struct DeviceSettings {
   short lastLoadedPreset;                         // the last settings preset that was loaded
   short lastLoadedProject;                        // the last sequencer project that was loaded
   byte customLeds[LED_PATTERNS][LED_LAYER_SIZE];  // the custom LEDs that persist across power cycle
+  //MicroLinn microLinn;                            // 
 };
 #define Device config.device
 
@@ -893,8 +896,6 @@ struct Configuration config;
 
 // TO DO: type in MICROLINN_SCALEROWS, finish MICROLINN_RAINBOWS and MICROLINN_SCALES
 
-const boolean exclude12edo = false;                   // set to true once done debugging
-
 const byte MICROLINN_MAX_EDO = 56;                    // the biggest edo that the lumatone can cover with a bosanquet mapping 
 const byte MICROLINN_MAX_ROW_OFFSET = 33;             // increased from 16 to 33 (56edo's 5th)
 const byte MICROLINN_MAX_COL_OFFSET = 33;             // 33 is needed in case the linnstrument is played rotated 90 degrees
@@ -1064,7 +1065,7 @@ const byte MICROLINN_SCALES[MICROLINN_MAX_EDO+1][MICROLINN_MAX_EDO] = {
   127,64,67,66,65,67, 0,67,66,65,66,65, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 12
   127, 0,64,64,64,64, 0, 0,64,64,64,64, 0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 13
   127, 0,64,64,64,64,64, 0,64,64,64,64,64, 0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 14
-  127,64,66, 1,66,65,67, 0, 0,67,66,65, 0,66,65, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 15
+  127,64,64, 3,66,65,67, 0, 0,67,66,65, 0,66,65, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 15
   127, 0,64,67,66,65, 0,67, 0,67, 0,66,65,66,65, 0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 16
   127,64, 0,76,68, 0,72,76, 0, 0,76,68, 0,72,68, 0,72, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 17
   127, 0,64,64,64,64,64,64,64, 0,64,64,64,64,64,64,64, 0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 18
@@ -1266,8 +1267,8 @@ struct MicroLinn {                                    // overlaps the audience m
 
 MicroLinn* microLinn = (MicroLinn*)(Device.audienceMessages + 31 * MICROLINN_MSG + MICROLINN_MSG_LEN);
 
-boolean isMicroLinn() {
-  return microLinn->EDO != 12 || !exclude12edo;
+boolean isMicroLinnOn() {
+  return microLinn->EDO >= 5;
 }
 
 short microLinnRowOffsetCents;                        // set only when user sets row offset directly, avoids offset drift when switching edos
@@ -1316,7 +1317,7 @@ void initializeMicroLinn() {                  // called in setup(), runs every t
   if (microLinn->nullTerminator != '\0'       // if user had lengthened the audience message and we haven't truncated it yet,
    || microLinn->EDO == 0) {                  // or if user has never set the EDO, then this fork must be running for the very first time
     microLinn->nullTerminator = '\0';
-    microLinn->EDO = 12;                      
+    microLinn->EDO = 4;                      
     microLinn->octaveStretch = 0; 
     microLinn->anchorCell.row = 4;            // 4th row from the top
     microLinn->anchorCell.col = 11;
@@ -1332,12 +1333,12 @@ void initializeMicroLinn() {                  // called in setup(), runs every t
     memcpy (microLinnDots, MICROLINN_DOTS, sizeof(microLinnDots));
     memcpy (microLinnRainbows, MICROLINN_RAINBOWS, sizeof(microLinnRainbows));
     memcpy (microLinnScales, MICROLINN_SCALES, sizeof(microLinnScales));
-    memset (microLinnCurrScale, 6, sizeof(microLinnCurrScale));     // set current scale to 0 or 8
+    memset (microLinnCurrScale, 0, sizeof(microLinnCurrScale));
     Global.activeNotes = 0;
     // move the above 5 lines up into the if statement once data storage is figured out
   microLinnSetGlobalView();
   microLinnInitializeScales();             // delete this line once those arrays are getting saved
-  microLinnStoreRowOffset();
+  microLinnStoreRowOffsetCents();
   microLinnOldEDO = microLinn->EDO;
   microLinnCalcTuning (true);              // maybe not needed, delete?
   updateDisplay();
@@ -1369,9 +1370,10 @@ void microLinnSetKiteGuitarDefaults() {
   microLinn->colOffset[RIGHT] = 2;
   Global.rowOffset = ROWOFFSET_OCTAVECUSTOM;
   Global.customRowOffset = 13;                        // 41-equal downmajor 3rds
-  microLinnStoreRowOffset();
-  microLinnOldEDO = 41;                               // to avoid microLinnAdjustRowOffset()
+  microLinnStoreRowOffsetCents();
   microLinnUpdateAnchorString();
+  microLinnSetGlobalView();
+  microLinnOldEDO = 41;                               // to avoid microLinnAdjustRowOffset()
   microLinnCalcTuning(false);
   Split[LEFT].playedTouchMode = playedSame;           // turn on same-note lighting for familiarity
   Split[RIGHT].playedTouchMode = playedSame;
@@ -1403,7 +1405,7 @@ void microLinnResetTo12equal() {
   microLinn->colOffset[LEFT] = 1;
   microLinn->colOffset[RIGHT] = 1;
   Global.rowOffset = 5;
-  microLinnStoreRowOffset();
+  microLinnStoreRowOffsetCents();
   microLinnOldEDO = 12;                                 // to avoid microLinnAdjustRowOffset()
   microLinnCalcTuning(true);
   //Split[LEFT].playedTouchMode = playedCell;
@@ -1435,9 +1437,10 @@ short microLinnLCM (short x,  short y) {        // returns the least common mult
   return (z == 0 ? 0 : abs (x * y) / z);        // LCM (x, 0) = x, LCM (0, y) = y, LCM (0, 0) = 0
 }
 
-void microLinnStoreRowOffset() {               // called from handleGlobalSettingNewTouch, handleGlobalSettingHold
+void microLinnStoreRowOffsetCents() {               // called from handleGlobalSettingNewTouch, handleGlobalSettingHold
   microLinnRowOffsetCents = (Global.rowOffset == ROWOFFSET_OCTAVECUSTOM ? Global.customRowOffset : Global.rowOffset);
-  microLinnRowOffsetCents *= 1200.0 / microLinn->EDO;
+  if (microLinn->EDO == 4) {microLinnRowOffsetCents *= 100;}          // because "OFF" is 4edo which is really 12edo
+  else {microLinnRowOffsetCents *= 1200.0 / microLinn->EDO;}
 }
 
 void microLinnAdjustRowOffset () {         
@@ -1449,12 +1452,14 @@ void microLinnAdjustRowOffset () {
       Global.rowOffset == ROWOFFSET_ZERO) {
     return;
   }
-  short rowOffset = round (microLinn->EDO * microLinnRowOffsetCents / 1200.0);     // avoid drift as user changes edos
+  byte edo = microLinn->EDO;
+  if (edo == 4) {edo = 12;}                                             // because "OFF" is 4edo which is really 12edo
+  short rowOffset = round (edo * microLinnRowOffsetCents / 1200.0);     // avoid drift as user changes edos
   // ensure coprime row/col offsets so that all notes of the edo are present
   // e.g. 12edo +5 +2 --> 24edo +10 +2 --> 24edo +11 +2
   short colOffsetLCM = microLinnLCM (microLinn->colOffset[LEFT], microLinn->colOffset[RIGHT]); 
   if (colOffsetLCM > 1) {
-    short zigzagBy = rowOffset * 1200 > microLinnRowOffsetCents * microLinn->EDO ? -1 : 1;    // really offset/edo > offsetCents/1200
+    short zigzagBy = (rowOffset * 1200 > microLinnRowOffsetCents * edo) ? -1 : 1;    // really offset/edo > offsetCents/1200
     while (microLinnGCD (rowOffset, colOffsetLCM) > 1) {     // exits when rowOffset is a prime number if not sooner
       rowOffset += zigzagBy;
       zigzagBy += zigzagBy > 0 ? 1 : -1;                     // zigzag through the nearest numbers,
@@ -1502,7 +1507,7 @@ void microLinnCalcTuning(boolean include12edo) {
 
   byte edo = microLinn->EDO;
   //if (edo == 12 || (ignoreSlides && sensorCell->velocity)) return;      // don't calc on releases caused by slides, causes flickering
-  if (edo == 12 && exclude12edo && !include12edo) return;   
+  if (edo < 5 && !include12edo) return;   
 
   byte anchorCol = microLinn->anchorCell.col;
   byte anchorRow = microLinn->anchorCell.row; 
@@ -1544,7 +1549,7 @@ void microLinnSendDebugMidi (byte channel, byte CCnum, short data) {     // chan
 
 void microLinnTuneNewSeqEvent() {
 
-  if (!isMicroLinn()) return;
+  if (!isMicroLinnOn()) return;
 
   // to do: write code that tunes each new note to the edo
   // something like this:

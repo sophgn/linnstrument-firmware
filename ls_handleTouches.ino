@@ -1235,7 +1235,7 @@ void prepareNewNote(signed char notenum) {
   if (!userFirmwareActive) {
     if (Split[sensorSplit].sendX && isXExpressiveCell() && !isLowRowBendActive(sensorSplit)) {
       resetLastMidiPitchBend(sensorCell->channel);
-      //int microLinnTuningBend = (isMicroLinn() ? microLinnFineTuning[sensorSplit][sensorCol][sensorRow] : 0);
+      //int microLinnTuningBend = (isMicroLinnOn() ? microLinnFineTuning[sensorSplit][sensorCol][sensorRow] : 0);
       preSendPitchBend(sensorSplit, 0, sensorCell->channel);
       //preSendPitchBend(sensorSplit, microLinnTuningBend, sensorCell->channel);
     }
@@ -1272,7 +1272,7 @@ void sendNewNote() {
     // if we've switched from pitch X enabled to pitch X disabled and the last
     // pitch bend value was not neutral, reset it first to prevent skewed pitches
     if (!Split[sensorSplit].sendX && hasPreviousPitchBendValue(sensorCell->channel)) {
-      //int microLinnTuningBend = (isMicroLinn() ? microLinnFineTuning[sensorSplit][sensorCol][sensorRow] : 0);
+      //int microLinnTuningBend = (isMicroLinnOn() ? microLinnFineTuning[sensorSplit][sensorCol][sensorRow] : 0);
       preSendPitchBend(sensorSplit, 0, sensorCell->channel);
       //preSendPitchBend(sensorSplit, microLinnTuningBend, sensorCell->channel);
     }
@@ -1962,7 +1962,7 @@ inline void updateSensorCell() {
 // getNoteNumber:
 // computes MIDI note number from current row, column, row offset, octave button and transposition amount
 byte getNoteNumber(byte split, byte col, byte row) {
-  if (isMicroLinn()) {
+  if (isMicroLinnOn()) {
     //return microLinnGetNoteNumber(split, col, row);
   }
   byte notenum = 0;
