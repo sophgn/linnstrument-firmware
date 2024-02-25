@@ -1041,6 +1041,9 @@ void paintPlayedTouchModeDisplay(byte side) {
     case playedSame:
       adaptfont_draw_string(0, 0, LINNMODEL == 200 ? "SAME" : "SAM", Split[side].colorMain, true);
       break;
+    case playedBlink:
+      adaptfont_draw_string(0, 0, "BLNK", Split[side].colorMain, true);
+      break;
     case playedCrosses:
       adaptfont_draw_string(0, 0, "CROS", Split[side].colorMain, true);
       break;
@@ -1287,7 +1290,7 @@ void paintSplitHandedness() {
 
 void paintRowOffset() {
   clearDisplay();
-  if (Global.customRowOffset == -MICROLINN_MAX_ROW_OFFSET - 1) {
+  if (Global.customRowOffset == -MICROLINN_MAX_OFFSET - 1) {
     condfont_draw_string(0, 0, "-GUI", globalColor, false);
   }
   else {
@@ -2084,6 +2087,13 @@ void microLinnPaintNormalDisplayCell(byte split, byte col, byte row) {
       }
     } 
     // ...or rainbows
+    else if (displayMode == displayMicroLinnAnchorChooser && 
+             col == microLinn->anchorCell.col && 
+             row == microLinn->anchorCell.row)  {
+      colour = microLinnRainbows[edo][edostep];
+      if (colour == COLOR_OFF) {colour = COLOR_WHITE;}
+      cellDisplay = cellSlowPulse;
+    }
     else if (currScale == 7 || microLinnScales[edo][edostep] & (1 << currScale)) {
       colour = microLinnRainbows[edo][edostep];
       cellDisplay = cellOn;
@@ -2179,11 +2189,9 @@ void microLinnLightOctaveSwitch() {
 
 void paintMicroLinnConfigButtons() {
   for (byte col = 2; col <= 15; ++col) { 
-    if (col == 4 || col == 8 || col == 13) {col += 1;}                   // skip over empty columns
-    if (col == 10) {col += 2;}
+    if (col == 4 || col == 8 || col == 11 || col == 13) {col += 1;}                // skip over empty columns
     setLed(col, 0, col == microLinnConfigColNum ? Split[LEFT].colorAccent : Split[LEFT].colorMain, cellOn);
   }
-  setLed(10, 0, microLinnConfigColNum == 10 ? Split[RIGHT].colorAccent : Split[RIGHT].colorMain, cellOn);
 }
 
 void paintMicroLinnConfig() {
@@ -2194,19 +2202,35 @@ void paintMicroLinnConfig() {
     // leading spaces ensure the string first appears on the right edge, not on the left edge
     switch (microLinnConfigColNum) {
       case 2: 
-        small_scroll_text_row1("      NOTES PER OCTAVE (EDO)", Split[LEFT].colorMain);
+        small_scroll_text_row1("      EDO (NOTES PER OCTAVE)", Split[LEFT].colorMain);
         break;
       case 3: 
-        small_scroll_text_row1("      OCTAVE STRETCH IN CENTS", Split[LEFT].colorMain);
+        if (isMicroLinnOn()) {
+          small_scroll_text_row1("      OCTAVE STRETCH IN CENTS", Split[LEFT].colorMain);
+        } else {
+          small_scroll_text_row1("      FIRST SELECT AN EDO", Split[LEFT].colorMain);
+        }
         break;
       case 5: 
-        small_scroll_text_row1("      CHOOSE ANCHOR CELL", Split[LEFT].colorMain);
+        if (isMicroLinnOn()) {
+          small_scroll_text_row1("      CHOOSE ANCHOR CELL", Split[LEFT].colorMain);
+        } else {
+          small_scroll_text_row1("      FIRST SELECT AN EDO", Split[LEFT].colorMain);
+        }
         break;
       case 6: 
-        small_scroll_text_row1("      ANCHOR NOTE", Split[LEFT].colorMain);
+        if (isMicroLinnOn()) {
+          small_scroll_text_row1("      ANCHOR NOTE", Split[LEFT].colorMain);
+        } else {
+          small_scroll_text_row1("      FIRST SELECT AN EDO", Split[LEFT].colorMain);
+        }
         break;
       case 7: 
-        small_scroll_text_row1("      ANCHOR CENTS", Split[LEFT].colorMain);
+        if (isMicroLinnOn()) {
+          small_scroll_text_row1("      ANCHOR CENTS", Split[LEFT].colorMain);
+        } else {
+          small_scroll_text_row1("      FIRST SELECT AN EDO", Split[LEFT].colorMain);
+        }
         break;
       case 9: 
         small_scroll_text_row1("      LEFT COLUMN OFFSET", Split[LEFT].colorMain);
@@ -2215,7 +2239,11 @@ void paintMicroLinnConfig() {
         small_scroll_text_row1("      RIGHT COLUMN OFFSET", Split[RIGHT].colorMain);
         break;
       case 12: 
-        small_scroll_text_row1("      SET NOTE LIGHTS", Split[LEFT].colorMain);
+        if (isMicroLinnOn()) {
+          small_scroll_text_row1("      SET NOTE LIGHTS", Split[LEFT].colorMain);
+        } else {
+          small_scroll_text_row1("      FIRST SELECT AN EDO", Split[LEFT].colorMain);
+        }
         break;
       case 14: 
         small_scroll_text_row1("      SET TO KITE GUITAR", Split[LEFT].colorMain);
@@ -2237,6 +2265,7 @@ void paintMicroLinnConfig() {
       }
       break;
     case 3: 
+      if (!isMicroLinnOn()) break;
       if (microLinn->octaveStretch <= -100) {
         offset = -5;
       } else if (microLinn->octaveStretch <= -10) {
@@ -2245,6 +2274,7 @@ void paintMicroLinnConfig() {
       paintNumericDataDisplayRow(globalColor, microLinn->octaveStretch, offset, 1, false);
       break;
     case 5:  
+      if (!isMicroLinnOn()) break;
       if (LINNMODEL == 200) {
         smallfont_draw_string(1, 1, microLinnAnchorString, globalColor);
       } else {
@@ -2252,9 +2282,11 @@ void paintMicroLinnConfig() {
       }
       break;  
     case 6: 
+      if (!isMicroLinnOn()) break;
       paintNoteDataDisplay(globalColor, microLinn->anchorNote, LINNMODEL == 200 ? 2 : 1, 1);
       break;
     case 7: 
+      if (!isMicroLinnOn()) break;
       if (microLinn->anchorCents <= -100) {
         offset = -5;
       } else if (microLinn->anchorCents <= -10) {
@@ -2269,6 +2301,7 @@ void paintMicroLinnConfig() {
       paintNumericDataDisplayRow(Split[RIGHT].colorMain, microLinn->colOffset[RIGHT], 0, 1, false);
       break;
     case 12:
+      if (!isMicroLinnOn()) break;
       PaintMicroLinnNoteLights();
       break; 
     case 14:
@@ -2318,7 +2351,7 @@ void PaintMicroLinnNoteLights() {
   }
   setLed(3, 7, currScale == 7 ? Split[LEFT].colorAccent : Split[LEFT].colorMain, cellOn);    // color editor
   setLed(3, 5, currScale == 8 ? Split[LEFT].colorAccent : Split[LEFT].colorMain, cellOn);    // dots selector
-  setLed(3, 3, globalColor, cellOn);                                                         // mass selector/resetter
+  setLed(3, 3, Split[LEFT].colorMain, cellOn);                                               // mass selector/resetter
 }
 
 void paintMicroLinnDotsEditor(boolean showAll) {

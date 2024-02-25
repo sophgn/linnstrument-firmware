@@ -676,7 +676,6 @@ void receivedNrpn(int parameter, int value, int channel) {
     case 32:
       if (inRange(value, 0, 11)) {
         Split[split].colorPlayed = value;
-        microLinnStoreColorPlayed();                  // see ls_microLinn.ino
       }
       break;
     // Split Color LowRow
@@ -1156,11 +1155,11 @@ void receivedNrpn(int parameter, int value, int channel) {
     // Global Custom Row Offset Instead Of Octave
     case 253:
       if (isMicroLinnOn()) {
-        if (inRange(value, 0, 2 * MICROLINN_MAX_ROW_OFFSET + 1)) {
-          if (value == 2 * MICROLINN_MAX_ROW_OFFSET + 1) {
-            Global.customRowOffset = -MICROLINN_MAX_ROW_OFFSET - 1;
+        if (inRange(value, 0, 2 * MICROLINN_MAX_OFFSET + 1)) {
+          if (value == 2 * MICROLINN_MAX_OFFSET + 1) {
+            Global.customRowOffset = -MICROLINN_MAX_OFFSET - 1;
           } else {
-            Global.customRowOffset = value - MICROLINN_MAX_ROW_OFFSET;
+            Global.customRowOffset = value - MICROLINN_MAX_OFFSET;
           }
         }
       } else if (inRange(value, 0, 33)) {
@@ -1685,7 +1684,13 @@ void highlightPossibleNoteCells(byte split, byte notenum) {
   for (; row < NUMROWS; ++row) {                         // for all rows, starting from the bottom
     short col = getNoteNumColumn(split, notenum, row);   // see what column the note would be in
     if (col > 0) {                                       // for most rows it'd be negative (not in this row), if not, light up the note
-      setLed(col, row, Split[split].colorPlayed, cellOn, LED_LAYER_PLAYED);
+      if (Split[sensorSplit].playedTouchMode == playedBlink) {
+        byte color = getLedColor(col, row, LED_LAYER_MAIN);
+        if (color == COLOR_OFF) {color = Split[split].colorPlayed;}
+        setLed(col, row, color, cellSlowPulse, LED_LAYER_PLAYED);
+      } else {
+        setLed(col, row, Split[split].colorPlayed, cellOn, LED_LAYER_PLAYED);
+      }
     }
   }
 }
@@ -1732,23 +1737,27 @@ short getNoteNumColumn(byte split, byte notenum, byte row) {
   short col;
 
   if (microLinn->colOffset[split] != 1) {
+    col = notenum - microLinnMidiNote[split][1][row];
+    if (col % microLinn->colOffset[split] != 0) return -1;         // if this row skips this note
+    col = col / microLinn->colOffset[split] + 1;
+    /************************* OLD WAY
     // we add 2 instead of 1 for skip fretting, since we add 1 everywhere for some reason
     // pitch transposition is only reflected on this side, not in getNoteNumber
     col = notenum - (row_offset_note + Split[split].transposeOctave) + 1 + microLinn->colOffset[split]
-            + Split[split].transposeLights*microLinn->colOffset[split] - Split[split].transposePitch;;             
+            + Split[split].transposeLights * microLinn->colOffset[split] - Split[split].transposePitch;;             
     if (col % 2 == 0) { // even notenum in even row, or odd notenum in odd row
       col = col / 2;
     } else {
       return -1; /// this note is skipped in this row
-    }
+    } *************************/
     
   } else {
     col = notenum - (row_offset_note + Split[split].transposeOctave) + 1           // calculate the column that this MIDI note can be played on
             + Split[split].transposeLights - Split[split].transposePitch;;             // adapt for transposition settings
-  }
 
-  if (isLeftHandedSplit(split)) {
-    col = NUMCOLS - col;
+    if (isLeftHandedSplit(split)) {
+      col = NUMCOLS - col;
+    }
   }
 
   byte lowColSplit, highColSplit;

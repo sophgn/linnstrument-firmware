@@ -1255,7 +1255,8 @@ void prepareNewNote(signed char notenum) {
     if (Split[sensorSplit].playedTouchMode == playedCell) {
       setLed(sensorCol, sensorRow, Split[sensorSplit].colorPlayed, cellOn, LED_LAYER_PLAYED);
     }
-    else if (Split[sensorSplit].playedTouchMode == playedSame) {
+    else if (Split[sensorSplit].playedTouchMode == playedSame ||
+             Split[sensorSplit].playedTouchMode == playedBlink) {
       highlightPossibleNoteCells(sensorSplit, sensorCell->note);
     }
     else {
@@ -1799,7 +1800,8 @@ void handleTouchRelease() {
         setLed(sensorCol, sensorRow, COLOR_OFF, cellOff, LED_LAYER_PLAYED);
       }
       // if no notes are active anymore, reset the highlighted cells
-      else if (Split[sensorSplit].playedTouchMode == playedSame) {
+      else if (Split[sensorSplit].playedTouchMode == playedSame ||
+               Split[sensorSplit].playedTouchMode == playedBlink) {
         // calculate the difference between the octave offset when the note was turned on and the octave offset
         // that is currently in use on the split, since the octave can change on the fly, while playing,
         // hence changing the position of notes on the surface

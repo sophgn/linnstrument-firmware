@@ -33,7 +33,11 @@ Tapping the dots selector makes the dots appear mid-screen. Tapping there puts y
 Long-press the scale buttons or color editor button or the dots selector button to reset the scale or colors or dots pattern. 
 Hold the blue  mass-selector button in column 3 while selecting a scale and your selection will be applied to all 52 edos at once. 
 Hold it while long-pressing another button to mass-reset that scale/rainbow/dot-pattern for all 52 edos.
+
 The 3 custom light patterns are totally separate from all this and are still available for use!
+This web browser lets you easily edit them: https://forrcaho.github.io/linnstrument_colorizer/
+
+When microLinn is on, the global setting of lefthandedness is ignored. Lefthandedness results from negative column offsets
 
 The 8 scales are somewhat similar from edo to edo (except the smaller, weirder edos of course)
 The 1st and 2nd scales are 5-over (major or downmajor) and 5-under (minor or upminor)
@@ -64,10 +68,13 @@ The column offset can be set for either split, range is -33 to 33
 brightness knob (not done)
 chaining of sequencer patterns (not done, looks easy)
 make channel pressure less jumpy for non-MPE synths (use another's fork, so pretty easy)
-hammer-on/pull-off window (1-5 columns, 0 columns iturns it off) (not even started)
+hammer-on/pull-off window (1-5 columns, 0 columns turns it off) (not even started)
 in SAME mode, twin notes in the other split show up as well, if SAME is also on there
 3 new played modes, SAM8 (includes octaves) BLNK (slow blink) and BLN8 (blink plus octaves)
 
+
+
+// to find all changes to the code, search for "microlinn" or "playedBlink" or "chainSeq"
 
 
 
@@ -80,6 +87,12 @@ in SAME mode, twin notes in the other split show up as well, if SAME is also on 
 
 // note to self:  "if (sensorCell->velocity)" means if another touch is already down on the same row
 // according to the comment by handleFaderRelease in ls_faders.ino
+
+// note to self: in ls_settings.ino, "Device.version = 16;"
+
+// Geert's coding suggestions for forks: https://www.kvraudio.com/forum/viewtopic.php?t=433791 
+// Geert's 2014 video: https://www.youtube.com/watch?v=iENVztlxWuk
+// Geert's 2017 video: https://www.synthtopia.com/content/2017/06/28/from-arduino-to-linnstrument/
 
 
 // a few ideas I had, probably not needed
@@ -96,7 +109,7 @@ void microLinnChangeEDO(int delta) {                                   // called
   if (microLinn->EDO < 5) {microLinn->EDO = MICROLINN_MAX_EDO;}        // wrap around
   if (microLinn->EDO > MICROLINN_MAX_EDO) {microLinn->EDO = 5;}
   Global.activeNotes = microLinnCurrScale[microLinn->EDO];
-  microLinnCalcTuning(false);
+  microLinnCalcTuning();
   updateDisplay();
 }
 
@@ -454,6 +467,6 @@ void setWickiHaydenDefaults () {
   microLinn->octaveStretch = 0;   
   microLinn->colOffset[LEFT] = 2;
   microLinn->colOffset[RIGHT] = 2;
-  microLinnCalcTuning(false);
+  microLinnCalcTuning();
 }
 **********************************************************************************************/
