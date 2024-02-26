@@ -3595,10 +3595,10 @@ void handleMicroLinnNoteLightsNewTouch() {
     return;
   }
   
-  byte stepspan = 7 - sensorRow;
+  byte stepspan = 7 - sensorRow;                                       // the degree (2nd, 3rd, etc.) minus 1
   short edostep = MICROLINN_SCALEROWS[edo][stepspan] - MICROLINN_SCALEROWS[edo][0] + sensorCol - 12;
   if (edostep <= MICROLINN_SCALEROWS[edo][stepspan] &&                 // did we touch a note?
-     (edostep >  MICROLINN_SCALEROWS[edo][stepspan-1] ||               // bug: with 5n edos, user must touch 8ve not tonic
+     (edostep >  MICROLINN_SCALEROWS[edo][stepspan-1] ||
      (stepspan == 0 && edostep > MICROLINN_SCALEROWS[edo][6] - edo))) {
     edostep = microLinnMod (edostep, edo);
     if (microLinnCurrScale[edo] == 7) {                                // rainbow editor

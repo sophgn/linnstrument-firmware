@@ -74,7 +74,7 @@ in SAME mode, twin notes in the other split show up as well, if SAME is also on 
 
 
 
-// to find all changes to the code, search for "microlinn" or "playedBlink" or "chainSeq"
+// to find all changes to the code, search for "microlinn" or "brightness" or "playedBlink" or "patternChain"
 
 
 
@@ -113,10 +113,10 @@ void microLinnChangeEDO(int delta) {                                   // called
   updateDisplay();
 }
 
-void microLinnChangeScale(int delta) {                                // called via switch1, switch2 or footswitch press
+void microLinnChangeScale(int delta) {                                // called via switch1, switch2 or footswitch press, works with 12edo too
   signed char newScale = Global.activeNotes += delta;                 // use a signed char because we can't set a byte to -1
-  if (newScale > 8) {newScale = 0;}                                   // wrap around
-  if (newScale < 0) {newScale = 8;}
+  if (newScale > 8) newScale = 0;                                     // wrap around
+  if (newScale < 0) newScale = 8;
   microLinnCurrScale[microLinn->EDO] = Global.activeNotes = newScale;
   updateDisplay();
 }

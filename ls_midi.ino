@@ -1686,7 +1686,7 @@ void highlightPossibleNoteCells(byte split, byte notenum) {
     if (col > 0) {                                       // for most rows it'd be negative (not in this row), if not, light up the note
       if (Split[sensorSplit].playedTouchMode == playedBlink) {
         byte color = getLedColor(col, row, LED_LAYER_MAIN);
-        if (color == COLOR_OFF) {color = Split[split].colorPlayed;}
+        if (color == COLOR_OFF) color = Split[split].colorPlayed;
         setLed(col, row, color, cellSlowPulse, LED_LAYER_PLAYED);
       } else {
         setLed(col, row, Split[split].colorPlayed, cellOn, LED_LAYER_PLAYED);

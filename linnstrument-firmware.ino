@@ -197,11 +197,11 @@ byte NUMROWS = 8;                    // number of touch sensor rows
 #define ASSIGNED_SEQUENCER_NEXT         15
 #define ASSIGNED_STANDALONE_MIDI_CLOCK  16
 #define ASSIGNED_SEQUENCER_MUTE         17
-#define ASSIGNED_MICROLINN_EDO_UP       18
-#define ASSIGNED_MICROLINN_EDO_DOWN     19
-#define ASSIGNED_MICROLINN_SCALE_UP     20
-#define ASSIGNED_MICROLINN_SCALE_DOWN   21
-#define MAX_ASSIGNED                    ASSIGNED_MICROLINN_SCALE_DOWN
+#define ASSIGNED_MICROLINN_SCALE_UP     18
+#define ASSIGNED_MICROLINN_SCALE_DOWN   19
+#define ASSIGNED_MICROLINN_EDO_UP       20
+#define ASSIGNED_MICROLINN_EDO_DOWN     21
+#define MAX_ASSIGNED                    ASSIGNED_MICROLINN_EDO_DOWN
 #define ASSIGNED_DISABLED               255
 
 #define GLOBAL_SETTINGS_ROW  0
@@ -878,16 +878,17 @@ struct Configuration config;
 
 // to do: get guitar dots to transpose
 // to do: make microLinnDots 55 columns wide, when loading from MICROLINN_DOTS complete the dots via symmetry
+// to do: test octave up/down switches while playing, does the calcTuning call make it glitchy?
 
 // decide: 2nd shortcut on global, col 1 row 1 for 2nd config display for brightness etc.?
 // decide: delete code for col 16 and/or 17 shortcut (ifndef)?
 // decide: delete 12edo reset button? or make it wicki-hayden?
 // decide: 6th scale is minimalist: just white tonic and one (or two for odd edos) tritones?
+// decide: increase the number of memories from 6? expand what they remember?
+// decide: hammerons/pulloffs window of 1, 2 or 3 columns?
 
 // to do: write code for accepting microLinn NRPNs (see midi.txt)
 // to do: allow sequencer to merge two 2-bar sequences into one 4-bar sequence
-// decide: increase the number of memories from 6? expand what they remember?
-// decide: hammerons/pulloffs window of 1, 2 or 3 columns?
 
 // TO DO: add 3 new played modes: 
 // SAM8 = same, but includes the octave-mates
@@ -898,9 +899,9 @@ struct Configuration config;
 
 // TO DO: finish MICROLINN_RAINBOWS and MICROLINN_SCALES
 
-const byte MICROLINN_MAX_EDO = 55;                    // the biggest edo that the lumatone can cover with a bosanquet mapping 
+const byte MICROLINN_MAX_EDO = 55;
 const byte MICROLINN_MAX_OFFSET = 32;                 // both row offset and column offset, increased from 16 to 32 (55edo's 5th)
-const byte MICROLINN_MAX_EDOSTEPS = MICROLINN_MAX_OFFSET * (MAXROWS - 1 + MAXCOLS - 1);   // 32 * 31 = 992
+const byte MICROLINN_MAX_EDOSTEPS = MICROLINN_MAX_OFFSET * (MAXROWS - 1 + MAXCOLS - 1);     // 32 * 31 = 992
 
 const byte MICROLINN_MAJ2ND[MICROLINN_MAX_EDO+1] = {  // for edos 6, 8, 10 and 12, semitones actually
   0,  0,  0,  0,  0,   1,  1,  1,  1,  1,    // 0-9 
@@ -914,11 +915,11 @@ const byte MICROLINN_MAJ2ND[MICROLINN_MAX_EDO+1] = {  // for edos 6, 8, 10 and 1
 // MICROLINN_SCALEROWS: for each of the 7 degrees + the octave, the last note in each row of the note lights display
 //
 //  for (byte edo = 5; edo <= MICROLINN_MAX_EDO; ++edo) {
-//    byte M2 = MICROLINN_MAJ2ND[edo];                      // min 2nd for edos 6, 8, 10 & 12
-//    if (edo == 10 || edo == 12) {M2 = 2;}
-//    byte m2 = (edo - 5 * M2) / 2.0;
-//    byte half2nd = floor (min (M2, m2) / 2.0);
-//    if (edo == 14 || edo == 28) {half2nd -= 1;}           // looks better
+//    byte M2 = MICROLINN_MAJ2ND[edo];                      // actually just a single edostep for edos 6, 8, 10 & 12
+//    if (edo == 10 || edo == 12) M2 = 2;
+//    byte m2 = ceil ((edo - 5 * M2) / 2.0);                // 6edo and 8edo need ceil
+//    byte half2nd = floor (min (M2, m2) / 2.0);            // include half the intraordinal notes on this row
+//    if (edo == 14 || edo == 28) half2nd -= 1;             // looks better
 //
 //    MICROLINN_SCALEROWS[edo][0] = half2nd;                // unisons
 //    MICROLINN_SCALEROWS[edo][1] = half2nd + M2;           // 2nds
@@ -930,21 +931,23 @@ const byte MICROLINN_MAJ2ND[MICROLINN_MAX_EDO+1] = {  // for edos 6, 8, 10 and 1
 //    MICROLINN_SCALEROWS[edo][7] = half2nd + edo;          // octaves
 //
 //    if (m2 == 0) {                                        // edos 5, 10, 15, 20, 25 and 30
-//      MICROLINN_SCALEROWS[edo][2] -= 1;                   // one less 3rd, makes the last 3rd a 4th, since it's 480¢
+//      MICROLINN_SCALEROWS[edo][2] -= 1;                   // one less 3rd, makes that last 3rd a 4th, since it's 480¢
+//      MICROLINN_SCALEROWS[edo][6] -= 1;                   // one less 7th, makes that last 7th an 8ve, since it's 1200¢
 //    }
 //  }
+//  MICROLINN_SCALEROWS[6][5] = 5;
+//  MICROLINN_SCALEROWS[8][3] = 3;
 
-// in effect but not yet in fact a constant array
-byte MICROLINN_SCALEROWS[MICROLINN_MAX_EDO+1][8] = { 
+const byte MICROLINN_SCALEROWS[MICROLINN_MAX_EDO+1][8] = { 
   0,  0,  0,  0,  0,  0,  0,  0, 
   0,  0,  0,  0,  0,  0,  0,  0, 
   0,  0,  0,  0,  0,  0,  0,  0, 
   0,  0,  0,  0,  0,  0,  0,  0, 
   0,  0,  0,  0,  0,  0,  0,  0, 
   0,  1,  1,  2,  3,  4,  4,  5,  // 5edo *
-  0,  1,  2,  3,  4,  5,  5,  6,  // 6edo 
+  0,  1,  2,  3,  4,  5,  5,  6,  // 6edo ***
   0,  1,  2,  3,  4,  5,  6,  7,  // 7edo
-  0,  1,  2,  3,  5,  6,  7,  8,  // 8
+  0,  1,  2,  3,  5,  6,  7,  8,  // 8edo ***
   0,  1,  2,  4,  5,  6,  7,  9,  // 9 
   0,  2,  3,  4,  6,  8,  9, 10,  // 10  *
   0,  1,  2,  5,  6,  7,  8, 11,  // 11
@@ -952,46 +955,46 @@ byte MICROLINN_SCALEROWS[MICROLINN_MAX_EDO+1][8] = {
   0,  1,  2,  6,  7,  8,  9, 13,  // 13
   0,  2,  4,  6,  8, 10, 12, 14,  // 14  **
   0,  3,  5,  6,  9, 12, 14, 15,  // 15  *
-  1,  3,  5,  8, 10, 12, 14, 16,  // 16
+  1,  3,  5,  8, 10, 12, 14, 17,  // 16
   0,  3,  6,  7, 10, 13, 16, 17,  // 17
-  1,  3,  5,  9, 11, 13, 15, 18,  // 18
-  1,  4,  7,  9, 12, 15, 18, 19,  // 19
+  1,  3,  5,  9, 11, 13, 15, 19,  // 18
+  1,  4,  7,  9, 12, 15, 18, 20,  // 19
   0,  4,  7,  8, 12, 16, 19, 20,  // 20  *
-  1,  4,  7, 10, 13, 16, 19, 21,  // 21
+  1,  4,  7, 10, 13, 16, 19, 22,  // 21
   0,  4,  8,  9, 13, 17, 21, 22,  // 22
-  1,  4,  7, 11, 14, 17, 20, 23,  // 23
-  1,  5,  9, 11, 15, 19, 23, 24,  // 24
+  1,  4,  7, 11, 14, 17, 20, 24,  // 23
+  1,  5,  9, 11, 15, 19, 23, 25,  // 24
   0,  5,  9, 10, 15, 20, 24, 25,  // 25  *
-  1,  5,  9, 12, 16, 20, 24, 26,  // 26
+  1,  5,  9, 12, 16, 20, 24, 27,  // 26
   0,  5, 10, 11, 16, 21, 26, 27,  // 27
-  1,  5,  9, 13, 17, 21, 25, 28,  // 28  **
-  1,  6, 11, 13, 18, 23, 28, 29,  // 29
+  1,  5,  9, 13, 17, 21, 25, 29,  // 28  **
+  1,  6, 11, 13, 18, 23, 28, 30,  // 29
   0,  6, 11, 12, 18, 24, 29, 30,  // 30  *
-  1,  6, 11, 14, 19, 24, 29, 31,  // 31
+  1,  6, 11, 14, 19, 24, 29, 32,  // 31
   0,  6, 12, 13, 19, 25, 31, 32,  // 32
-  2,  7, 12, 16, 21, 26, 31, 33,  // 33
-  1,  7, 13, 15, 21, 27, 33, 34,  // 34
-  2,  7, 12, 17, 22, 27, 32, 35,  // 35
-  1,  7, 13, 16, 22, 28, 34, 36,  // 36
+  2,  7, 12, 16, 21, 26, 31, 35,  // 33
+  1,  7, 13, 15, 21, 27, 33, 35,  // 34
+  2,  7, 12, 17, 22, 27, 32, 37,  // 35
+  1,  7, 13, 16, 22, 28, 34, 37,  // 36
   0,  7, 14, 15, 22, 29, 36, 37,  // 37
-  2,  8, 14, 18, 24, 30, 36, 38,  // 38
-  1,  8, 15, 17, 24, 31, 38, 39,  // 39
-  2,  8, 14, 19, 25, 31, 37, 40,  // 40
-  1,  8, 15, 18, 25, 32, 39, 41,  // 41
+  2,  8, 14, 18, 24, 30, 36, 40,  // 38
+  1,  8, 15, 17, 24, 31, 38, 40,  // 39
+  2,  8, 14, 19, 25, 31, 37, 42,  // 40
+  1,  8, 15, 18, 25, 32, 39, 42,  // 41
   0,  8, 16, 17, 25, 33, 41, 42,  // 42
-  2,  9, 16, 20, 27, 34, 41, 43,  // 43
-  1,  9, 17, 19, 27, 35, 43, 44,  // 44
-  2,  9, 16, 21, 28, 35, 42, 45,  // 45
-  1,  9, 17, 20, 28, 36, 44, 46,  // 46
-  3, 10, 17, 23, 30, 37, 44, 47,  // 47
-  2, 10, 18, 22, 30, 38, 46, 48,  // 48
-  1, 10, 19, 21, 30, 39, 48, 49,  // 49
-  2, 10, 18, 23, 31, 39, 47, 50,  // 50
-  1, 10, 19, 22, 31, 40, 49, 51,  // 51
-  3, 11, 19, 25, 33, 41, 49, 52,  // 52
-  2, 11, 20, 24, 33, 42, 51, 53,  // 53
-  1, 11, 21, 23, 33, 43, 53, 54,  // 54
-  2, 11, 20, 25, 34, 43, 52, 55   // 55
+  2,  9, 16, 20, 27, 34, 41, 45,  // 43
+  1,  9, 17, 19, 27, 35, 43, 45,  // 44
+  2,  9, 16, 21, 28, 35, 42, 47,  // 45
+  1,  9, 17, 20, 28, 36, 44, 47,  // 46
+  3, 10, 17, 23, 30, 37, 44, 50,  // 47
+  2, 10, 18, 22, 30, 38, 46, 50,  // 48
+  1, 10, 19, 21, 30, 39, 48, 50,  // 49
+  2, 10, 18, 23, 31, 39, 47, 52,  // 50
+  1, 10, 19, 22, 31, 40, 49, 52,  // 51
+  3, 11, 19, 25, 33, 41, 49, 55,  // 52
+  2, 11, 20, 24, 33, 42, 51, 55,  // 53
+  1, 11, 21, 23, 33, 43, 53, 55,  // 54
+  2, 11, 20, 25, 34, 43, 52, 57   // 55
 };
 
 const byte MICROLINN_DOTS[MICROLINN_MAX_EDO+1][MAXCOLS+3] = { 
@@ -1055,18 +1058,12 @@ const byte MICROLINN_DOTS[MICROLINN_MAX_EDO+1][MAXCOLS+3] = {
   0,84, 0, 0, 0, 0,16, 0, 0, 0,16, 0, 0, 0, 0,16, 0, 0, 0,16, 0, 0, 0, 0,40, 0, 0, 0,16   // 55edo (...16,0, 0, 0,40)
 };
 
-//  white = 12-edo-ish = 3-limit
-//  yellow / green = downmajor / upminor =  5-over / 5-under
-//  blue / red = downminor / upmajor = 7-over / 7-under
-//  magenta = neutral = 11-over or 11-under or 13-over or 13-under
-//  pink = the exact half-octave of 600c, 12-edo-ish but not quite 3-limit, "off-white"
-//  cyan / orange = a catch-all pair, e.g. 7/5 and 10/7, cyan is also for outside notes aka interordinals e.g. 24edo
-
-// white  8               cyan    4  
-// blue   5               orange  9
-// green  3               purple  6
-// yellow 10 (lime)       pink   11
-// red    1
+//  white = 12-edo-ish = 3-limit = 8
+//  yellow / green = downmajor / upminor =  5-over / 5-under = 10 / 3
+//  blue / red = downminor / upmajor = 7-over / 7-under = 5 / 1
+//  magenta = neutral = 11-over or 11-under or 13-over or 13-under = 6
+//  pink = the exact half-octave of 600c, 12-edo-ish but not quite 3-limit, "off-white" = 11
+//  cyan / orange = a catch-all pair, e.g. 7/5 and 10/7, cyan is also for outside notes aka interordinals e.g. 24edo = 4 / 9
 
 const byte MICROLINN_RAINBOWS[MICROLINN_MAX_EDO+1][MICROLINN_MAX_EDO] = {
   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -1101,11 +1098,18 @@ const byte MICROLINN_RAINBOWS[MICROLINN_MAX_EDO+1][MICROLINN_MAX_EDO] = {
   8, 6, 8, 3,10, 8, 6, 8, 3,10, 8, 6, 8, 6, 4, 9, 6, 8, 6, 8, 3,10, 8, 6, 8, 3,10, 8, 6, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 29
   8, 6, 5, 3, 6,10, 1, 5, 3, 6,10, 1, 8, 3, 6,11, 6,10, 8, 5, 3, 6,10, 1, 5, 8, 6,10, 1, 6, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 30
   8, 1, 5, 3, 6,10, 1, 5, 3, 6,10, 1, 5, 8, 6,10, 3, 6, 8, 1, 5, 3, 6,10, 1, 5, 3, 6,10, 1, 5, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 31
-  8, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 32
-  8, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 33
-  8, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 34
-  8, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 35
-  8, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 36
+  8, 4, 5, 3, 6,10, 1, 5, 3, 6,10, 1, 4, 8, 3, 6,11, 6,10, 8, 4, 5, 3, 6,10, 1, 5, 3, 6,10, 1, 4, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 32
+  8, 4, 5, 3, 6,10, 1, 4, 5, 3, 6,10, 1, 5, 8, 6,10, 3, 6, 8, 1, 5, 3, 6,10, 1, 4, 5, 3, 6,10, 1, 4, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 33
+  8, 4, 8, 3, 6,10, 8, 4, 8, 3, 6,10, 8, 4, 8, 3, 6,11, 6,10, 8, 4, 8, 3, 6,10, 8, 4, 8, 3, 6,10, 8, 4, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 34
+  8, 1, 5, 3, 6,10, 8, 1, 5, 3, 6,10, 8, 1, 5, 8, 6,10, 3, 6, 8, 1, 5, 8, 3, 6,10, 1, 5, 8, 3, 6,10, 1, 5, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 35
+  8, 1, 5, 3, 6, 6,10, 1, 5, 3, 6, 6,10, 1, 5, 8, 6, 6,11, 6, 6, 8, 1, 5, 3, 6, 6,10, 1, 5, 3, 6, 6,10, 1, 5, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 36
+
+// white  8               cyan    4  
+// blue   5               orange  9
+// green  3               purple  6
+// yellow 10 (lime)       pink   11
+// red    1
+
   8, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 37
   8, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 38
   8, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 39
@@ -1188,7 +1192,7 @@ const byte MICROLINN_SCALES[MICROLINN_MAX_EDO+1][MICROLINN_MAX_EDO] = {
   127,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0  // 55
 };
 
-// TO DO: figure out how to save these 4 arrays to user settings
+// TO DO: save these 4 arrays to user settings
 
 byte microLinnDots[MICROLINN_MAX_EDO+1][MAXCOLS+3];                // one bit per row, ignores column offsets except for lefty/righty
 byte microLinnRainbows[MICROLINN_MAX_EDO+1][MICROLINN_MAX_EDO];    // choose among the 10 colors
@@ -1214,47 +1218,6 @@ const float ru7th = log(27.0/14.0) / log(2.0);
 
 // delete this once these arrays become const arrays
 void microLinnInitializeScales() {
-
-  for (byte edo = 5; edo <= MICROLINN_MAX_EDO; ++edo) {
-    byte M2 = MICROLINN_MAJ2ND[edo];                      // min 2nd for edos 6, 8, 10 & 12
-    if (edo == 10 || edo == 12) {M2 = 2;}
-    byte m2 = (edo - 5 * M2) / 2.0;
-    byte half2nd = floor (min (M2, m2) / 2.0);
-    if (edo == 28) {half2nd -= 1;}
-
-    MICROLINN_SCALEROWS[edo][0] = half2nd;                // unisons
-    MICROLINN_SCALEROWS[edo][1] = half2nd + M2;           // 2nds
-    MICROLINN_SCALEROWS[edo][2] = half2nd + 2*M2;         // 3rds
-    MICROLINN_SCALEROWS[edo][3] = half2nd + 2*M2 + m2;    // 4ths
-    MICROLINN_SCALEROWS[edo][4] = half2nd + 3*M2 + m2;    // 5ths
-    MICROLINN_SCALEROWS[edo][5] = half2nd + 4*M2 + m2;    // 6ths
-    MICROLINN_SCALEROWS[edo][6] = half2nd + 5*M2 + m2;    // 7ths
-    MICROLINN_SCALEROWS[edo][7] = half2nd + edo;          // octaves
-
-    if (m2 == 0) {
-      MICROLINN_SCALEROWS[edo][2] -= 1;                   // ensure a 4th
-      //MICROLINN_SCALEROWS[edo][5] -= 1;
-    }
-  }
-
-  MICROLINN_SCALEROWS[6][0] = 0;                          // fix 6edo
-  MICROLINN_SCALEROWS[6][1] = 1;
-  MICROLINN_SCALEROWS[6][2] = 2;
-  MICROLINN_SCALEROWS[6][3] = 3;
-  MICROLINN_SCALEROWS[6][4] = 4;
-  MICROLINN_SCALEROWS[6][5] = 5;
-  MICROLINN_SCALEROWS[6][6] = 5;
-
-  MICROLINN_SCALEROWS[8][0] = 0;                          // fix 8edo
-  MICROLINN_SCALEROWS[8][1] = 1;
-  MICROLINN_SCALEROWS[8][2] = 2;
-  MICROLINN_SCALEROWS[8][3] = 3;
-  MICROLINN_SCALEROWS[8][4] = 5;
-  MICROLINN_SCALEROWS[8][5] = 6;
-  MICROLINN_SCALEROWS[8][6] = 7;
-
-
-  memcpy (microLinnScales, MICROLINN_SCALES, sizeof(microLinnScales));
 
   for (byte edo = 20; edo <= MICROLINN_MAX_EDO; ++edo) {
     if (edo == 31 || edo == 41) {
@@ -1416,18 +1379,22 @@ void initializeMicroLinn() {                  // called in setup(), runs every t
     memset (microLinnCurrScale, 0, sizeof(microLinnCurrScale));
     Global.activeNotes = 0;
     // move the above 5 lines up into the if statement once data storage is figured out
+    Global.setSwitchAssignment(3, ASSIGNED_MICROLINN_EDO_UP,   false);  // for debugging
+    Global.setSwitchAssignment(2, ASSIGNED_MICROLINN_EDO_DOWN, false);  // for debugging
   microLinnSetGlobalView();
   microLinnInitializeScales();             // delete this line once those arrays are getting saved
   microLinnStoreRowOffsetCents();
+  microLinnStoreColOffsetCents(LEFT);
+  microLinnStoreColOffsetCents(RIGHT);
   microLinnOldEDO = microLinn->EDO;
   microLinnCalcTuning ();
-  updateDisplay();
+  //updateDisplay();
   microLinnUpdateAnchorString ();
 }
 
 int microLinnMod (int num, int base) {                       // -13 % 10 = -3, but microLinnMod (-13, 10) = 7
   num %= base;
-  if (num < 0) {num += base;}
+  if (num < 0) num += base;
   return num;
 }
 
@@ -1443,6 +1410,8 @@ void microLinnSetKiteGuitarDefaults() {
   Global.rowOffset = ROWOFFSET_OCTAVECUSTOM;
   Global.customRowOffset = 13;                        // 41-equal downmajor 3rds
   microLinnStoreRowOffsetCents();
+  microLinnStoreColOffsetCents(LEFT);
+  microLinnStoreColOffsetCents(RIGHT);
   microLinnUpdateAnchorString();
   microLinnSetGlobalView();
   microLinnOldEDO = 41;                               // to avoid microLinnAdjustRowAndColOffsets()
@@ -1464,6 +1433,8 @@ void microLinnResetTo12equal() {
   microLinn->colOffset[RIGHT] = 1;
   Global.rowOffset = 5;
   microLinnStoreRowOffsetCents();
+  microLinnStoreColOffsetCents(LEFT);
+  microLinnStoreColOffsetCents(RIGHT);
   microLinnOldEDO = 12;                                 // to avoid microLinnAdjustRowAndColOffsets()
   microLinnCalcTuning();
   Global.activeNotes = 0;                              // set display to the major scale
@@ -1476,8 +1447,8 @@ byte microLinnGetNoteNumber(byte side, byte col, byte row) {
 
 short microLinnGCD (short x, short y) {         // returns the greatest common divisor of x & y
   x = abs (x); y = abs (y);                     // the GCD is always positive
-  if (x == 0) {return y;}                       // ensures GCD (0, y) = y
-  if (y == 0) {return x;}                       // ensures GCD (x, 0) = x
+  if (x == 0) return y;                         // ensures GCD (0, y) = y
+  if (y == 0) return x;                         // ensures GCD (x, 0) = x
   short z;
   while (x > 0) {
     if (x < y) {z = x; x = y; y = z;}           // swap x and y
@@ -1499,14 +1470,14 @@ signed char microLinnSign (short num) {
 
 void microLinnStoreRowOffsetCents() {               // called from handleGlobalSettingNewTouch, handleGlobalSettingHold
   byte edo = microLinn->EDO;
-  if (edo == 4) {edo = 12;}                         // because "OFF" is 4edo which is really 12edo
+  if (edo == 4) edo = 12;                           // because "OFF" is 4edo which is really 12edo
   microLinnRowOffsetCents = (Global.rowOffset == ROWOFFSET_OCTAVECUSTOM ? Global.customRowOffset : Global.rowOffset);
   microLinnRowOffsetCents *= 1200.0 / edo;          // convert to cents
 }
 
 void microLinnStoreColOffsetCents(byte side) {
   byte edo = microLinn->EDO;
-  if (edo == 4) {edo = 12;}                         // because "OFF" is 4edo which is really 12edo
+  if (edo == 4) edo = 12;                           // because "OFF" is 4edo which is really 12edo
   microLinnColOffsetCents[side] = microLinn->colOffset[side] * 1200.0 / edo;          // convert to cents
 }
 
@@ -1520,7 +1491,7 @@ void microLinnAdjustRowAndColOffsets () {
     return;
   }
   byte edo = microLinn->EDO;
-  if (edo == 4) {edo = 12;}                                             // because "OFF" is 4edo which is really 12edo
+  if (edo == 4) edo = 12;                                               // because "OFF" is 4edo which is really 12edo
 
   short rowOffset = round (edo * microLinnRowOffsetCents / 1200.0);     // avoid drift as user changes edos
   if (rowOffset == 0) {                                                 // could happen when going from a large edo to a small one
@@ -1530,12 +1501,12 @@ void microLinnAdjustRowAndColOffsets () {
   short leftOffset = microLinn->colOffset[LEFT];
   if (leftOffset > 1 || leftOffset < -1) {                              // don't adjust offsets of 1, -1 or 0
     leftOffset = round (edo * microLinnColOffsetCents[LEFT] / 1200.0);
-    if (leftOffset == 0) {leftOffset = microLinnSign(microLinn->colOffset[LEFT]);}
+    if (leftOffset == 0) leftOffset = microLinnSign(microLinn->colOffset[LEFT]);   // don't adjust all the way to zero
   }
   short rightOffset = microLinn->colOffset[RIGHT];
   if (rightOffset > 1 || rightOffset < -1) { 
     rightOffset = round (edo * microLinnColOffsetCents[RIGHT] / 1200.0);
-    if (rightOffset == 0) {rightOffset = microLinnSign(microLinn->colOffset[RIGHT]);}
+    if (rightOffset == 0) rightOffset = microLinnSign(microLinn->colOffset[RIGHT]);
   }
 
   // ensure coprime row/col offsets so that all notes of the edo are present
@@ -1593,7 +1564,7 @@ void microLinnCalcTuning() {
 
   //if (ignoreSlides && sensorCell->velocity) return;       // don't calc on releases caused by slides, causes flickering
   byte edo = microLinn->EDO;
-  if (edo == 4) {edo = 12;}
+  if (edo == 4) edo = 12;
 
   byte anchorCol = microLinn->anchorCell.col;
   byte anchorRow = microLinn->anchorCell.row; 
@@ -1621,6 +1592,7 @@ void microLinnCalcTuning() {
           microLinnFineTuning[side][col][row] = round (fineTuningBend);
         }
       }
+      performContinuousTasks();                                                      // to avoid flickering 
     }
   }
 }

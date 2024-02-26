@@ -219,6 +219,8 @@ struct StepSequencerState {
 };
 StepSequencerState seqState[MAX_SEQUENCERS];
 
+short patternChain[NUMSPLITS][MAX_SEQUENCER_PATTERNS] = {-1, -1, -1, -1, -1, -1, -1, -1};      // which pattern comes next automatically
+
 void initializeSequencer() {
   SEQ_MUTER_COLUMN = NUMCOLS - 1 - 1;  
   SEQ_PATTERN_SELECTOR_RIGHT = SEQ_MUTER_COLUMN - 1;
@@ -1122,6 +1124,7 @@ void handleSequencerPatternTouch() {
     }
   }
   else {
+    setPatternChain(patternSplit);
     state.selectPattern(pattern);
   }
 }
@@ -1977,6 +1980,7 @@ void StepSequencerState::clear() {
     nextPosition = -1;
     currentPattern = 0;
     nextPattern = -1;
+    resetPatternChain();
     switchPatternOnBeat = false;
     editing = false;
     running = false;
@@ -2335,11 +2339,10 @@ void StepSequencerState::advanceSequencer() {
       }
 
       // check if the sequencer should switch to the next pattern
-      // microLinn/megafork chaining of sequences goes here? (switchPatternOnBeat = on next beat, not end of pattern)
       if (nextPattern != -1 && (position == 0 || switchPatternOnBeat)) {
         position = 0;
         currentPattern = nextPattern;
-        nextPattern = -1;
+        nextPattern = patternChain[split][currentPattern];
         switchPatternOnBeat = false;
         positionOffset = 0;
         clearAllFocus();
@@ -3163,12 +3166,15 @@ void StepSequencerState::selectPreviousPattern() {
   if (p < 0) {
     p += MAX_SEQUENCER_PATTERNS;
   }
+  if (patternChain[split][p] != -1) {                                      // jump to the start of the new chain
+    p = patternChain[split][p];
+  }
   selectPattern(p);
 }
 
 void StepSequencerState::selectNextPattern() {
   int p = currentPattern;
-  if (nextPattern != -1) {
+  if (nextPattern != -1 && patternChain[split][p] == -1) {                 // ignore nextPattern it it's part of a chain
     p = nextPattern;
   }
   p = (p+1) % MAX_SEQUENCER_PATTERNS;
@@ -3187,7 +3193,7 @@ void StepSequencerState::selectPattern(byte pattern) {
     // when the sequencer is not running, switch immediately
     if (!isRunning()) {
       currentPattern = pattern;
-      nextPattern = -1;
+      nextPattern = patternChain[split][currentPattern];
       switchPatternOnBeat = false;
       clearAllFocus();
       if (isVisibleSequencerForSplit(split)) {
@@ -3209,4 +3215,35 @@ void StepSequencerState::selectPattern(byte pattern) {
   if (isVisibleSequencer()) {
     paintPatternSelector();
   }
+}
+
+/**************************************** PATTERN CHAIN FORK ****************************************/
+// search this file for "patternChain" to see the other changes to the code
+
+void resetPatternChain() {
+  memset (patternChain, -1, sizeof(patternChain));              // both splits
+}
+
+void setPatternChain(byte split) {
+  short firstPattern = -1;
+  short lastPattern = -1;
+  for (byte p = 0; p < 4; ++p) {
+    if (cell(SEQ_PATTERN_SELECTOR_LEFT + p, SEQ_PATTERN_SELECTOR_TOP - split).touched == touchedCell) {
+      if (firstPattern == -1) firstPattern = p;        
+      lastPattern = p;
+    }
+  }
+  if (firstPattern == lastPattern) return;
+
+  for (byte p = firstPattern; p < lastPattern; ++p) {
+    patternChain[split][p] = p + 1;                            // patternChain says which pattern comes next automatically
+  }
+  patternChain[split][lastPattern] = firstPattern;
+
+  // with only 4 patterns, the only way to have two chains is if 0 & 1 are chained, and 2 & 3 are also chained
+  if (patternChain[split][0] == 1 && patternChain[split][1] == 0 &&
+      patternChain[split][2] == 3 && patternChain[split][3] == 2) return;
+  // if that's not the case, unchain everything else in this split
+  memset(&patternChain[split][0], -1, firstPattern);
+  memset(&patternChain[split][lastPattern + 1], -1, 3 - lastPattern);
 }

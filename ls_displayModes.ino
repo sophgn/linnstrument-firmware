@@ -2189,7 +2189,7 @@ void microLinnLightOctaveSwitch() {
 
 void paintMicroLinnConfigButtons() {
   for (byte col = 2; col <= 15; ++col) { 
-    if (col == 4 || col == 8 || col == 11 || col == 13) {col += 1;}                // skip over empty columns
+    if (col == 4 || col == 8 || col == 11 || col == 13) col += 1;                // skip over empty columns
     setLed(col, 0, col == microLinnConfigColNum ? Split[LEFT].colorAccent : Split[LEFT].colorMain, cellOn);
   }
 }
@@ -2320,31 +2320,32 @@ void PaintMicroLinnNoteLights() {
   byte currScale = microLinnCurrScale[edo];
 
   if (currScale <= 7) {                                                         // paint the scale 
+    setLed(12, 0, microLinnRainbows[edo][0], cellOn);                           // make the bottom row button look like the octave
     for (byte edostep = 0; edostep < edo; ++edostep) {
-      if (edostep > MICROLINN_SCALEROWS[edo][stepspan]) {
+      if (edostep > MICROLINN_SCALEROWS[edo][stepspan]) {                       // reached the end? on to the next row
         stepspan += 1;
-        if (edostep > MICROLINN_SCALEROWS[edo][stepspan]) {                     // needed for 5n edos where m2 = 0 steps
-          stepspan += 1;                                                        // but don't do a while loop, 13edo hangs
-        }                                                                       // delete this code once SCALEROWS is right?
+        if (edo == 5 && stepspan == 2) stepspan = 3;                            // skip over 5edo's empty row of 3rds
         col -= MICROLINN_SCALEROWS[edo][stepspan] - MICROLINN_SCALEROWS[edo][stepspan - 1];
       }
       if (currScale == 7 || microLinnScales[edo][edostep] & (1 << currScale)) {
-        setLed(col, 7 - (stepspan % 7), microLinnRainbows[edo][edostep], cellOn);     // paint the note light
+        setLed(col, 7 - (stepspan % 7), microLinnRainbows[edo][edostep], cellOn);
       }
       col += 1; 
     }
-    col = MICROLINN_SCALEROWS[edo][0];                                                // pink walls
+    col = MICROLINN_SCALEROWS[edo][0];                                                // pink borders
     for (stepspan = 0; stepspan < 7; ++stepspan) {
-      setLed(col + 14, stepspan + 1, COLOR_PINK, cellOn);
+      setLed(col + 14, 7 - stepspan, COLOR_PINK, cellOn);
     }
     col = MICROLINN_SCALEROWS[edo][1] - MICROLINN_SCALEROWS[edo][0];                  // 2nd - 1sn = major 2nd
     col = max (col, MICROLINN_SCALEROWS[edo][3] - MICROLINN_SCALEROWS[edo][2]);       // 4th - 3rd = minor 2nd
     col -= MICROLINN_SCALEROWS[edo][0];
-    if (edo == 8) {col += 1;}
+    if (edo == 8) col += 1;                                                           // 8edo is weird lol
     for (stepspan = 0; stepspan < 7; ++stepspan) {
-      setLed(11 - col, stepspan + 1, COLOR_PINK, cellOn);
+      setLed(11 - col, 7 - stepspan, COLOR_PINK, cellOn);
     }
-  } else {paintMicroLinnDotsEditor(false);}                                           // blue dots 
+  } else {
+    paintMicroLinnDotsEditor(false);                                                  // blue dots 
+  } 
 
   for (byte scaleNum = 0; scaleNum < 7; ++scaleNum) {                                        // the 7 scale buttons
     setLed(1, 7 - scaleNum, scaleNum == currScale ? Split[LEFT].colorAccent : Split[LEFT].colorMain, cellOn);
@@ -2355,7 +2356,7 @@ void PaintMicroLinnNoteLights() {
 }
 
 void paintMicroLinnDotsEditor(boolean showAll) {
-  if (showAll) {clearDisplay();}
+  if (showAll) clearDisplay();
   for (byte col = showAll ? 1 : 4; col < NUMCOLS; ++col) {
     for (byte row = showAll ? 0 : 1; row < MAXROWS; ++row) {
       if (microLinnDots[microLinn->EDO][col] & (1 << row)) {
