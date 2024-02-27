@@ -1977,20 +1977,11 @@ byte getNoteNumber(byte split, byte col, byte row) {
 
   signed char transposeLights = Split[split].transposeLights;
 
-  if (microLinn->colOffset[split] != 1) {
+  if (Device.microLinn.colOffset[split] != 1) {
     // subtract 1 needed everywhere, so do it again when doubling - this lets us start at note 0 instead of 1
-    noteCol = noteCol*microLinn->colOffset[split] - 1;
-    transposeLights = transposeLights*microLinn->colOffset[split];
+    noteCol = noteCol * Device.microLinn.colOffset[split] - 1;
+    transposeLights = transposeLights * Device.microLinn.colOffset[split];
   }
-
-  /****** inspired by yinwang0's fork
-  // github.com/rogerlinndesign/linnstrument-firmware/compare/master...yinwang0:linnstrument-firmware:xy-tuning
-    short offset = Global.rowOffset == ROWOFFSET_OCTAVECUSTOM ? Global.customRowOffset : Global.rowOffset;
-
-    // choose lowest to minimize disabled notes
-    short range = abs (Global.colOffset * (NUMCOLS - 1)) + abs (offset * (NUMROWS - 1));
-    short lowest = 64 - range / 2.0;
-  ****************/
 
   notenum = determineRowOffsetNote(split, row) + noteCol - 1;
 
@@ -2031,7 +2022,7 @@ short determineRowOffsetNote(byte split, byte row) {
     }
 
     else if (offset >= 12) {
-      if (microLinn->colOffset[split] != 1) {         // handle skip fretting with high row offset (kite guitar is 13, only fills 194 cells)
+      if (Device.microLinn.colOffset[split] != 1) {   // handle skip fretting with high row offset (kite guitar is 13, only fills 194 cells)
         lowest = 0;                                   // start at note 0 (why -1 gets us 0?) so that we show as many as possible and all disabled notes are in one place
       } else {
         lowest = 18;                                  // start the octave offset one octave lower to prevent having disabled notes at the top in the default configuration

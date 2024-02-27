@@ -580,6 +580,10 @@ void handleSequencerTouch(boolean newVelocity) {
     else if (newVelocity && isWithinSequencerPatternArea()) {
       handleSequencerPatternTouch();
     }
+    // handle pattern chain clearing
+    else if (newVelocity && isWithinSequencerPatternChainClearArea()) {
+      handleSequencerPatternChainClearTouch();
+    }
     // handle fader editing
     else if (isWithinSequencerFaderArea()) {
       handleSequencerFaderTouch(newVelocity);
@@ -3166,7 +3170,7 @@ void StepSequencerState::selectPreviousPattern() {
   if (p < 0) {
     p += MAX_SEQUENCER_PATTERNS;
   }
-  if (patternChain[split][p] != -1) {                                      // jump to the start of the new chain
+  if (patternChain[split][p] != -1) {                                      // jump to the start of the chain
     p = patternChain[split][p];
   }
   selectPattern(p);
@@ -3217,7 +3221,7 @@ void StepSequencerState::selectPattern(byte pattern) {
   }
 }
 
-/**************************************** PATTERN CHAIN FORK ****************************************/
+/**************************************** PATTERN CHAINING, PART OF THE MICROLINN FORK ****************************************/
 // search this file for "patternChain" to see the other changes to the code
 
 void resetPatternChain() {
@@ -3246,4 +3250,12 @@ void setPatternChain(byte split) {
   // if that's not the case, unchain everything else in this split
   memset(&patternChain[split][0], -1, firstPattern);
   memset(&patternChain[split][lastPattern + 1], -1, 3 - lastPattern);
+}
+
+boolean isWithinSequencerPatternChainClearArea() {           // hidden switches immediately to the left of the pattern selectors
+  return sensorCol == SEQ_PATTERN_SELECTOR_LEFT - 1 && sensorRow >= SEQ_PATTERN_SELECTOR_BOTTOM && sensorRow <= SEQ_PATTERN_SELECTOR_TOP;
+}
+
+void handleSequencerPatternChainClearTouch() {
+  memset(&patternChain[SEQ_PATTERN_SELECTOR_TOP - sensorRow][0], -1, 4);
 }
