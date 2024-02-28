@@ -1456,7 +1456,6 @@ void paintVolumeDisplayRow(byte side) {
 }
 
 void paintOctaveTransposeDisplay(byte side) {
-    
   clearDisplay();
   blinkMiddleRootNote = true;
 

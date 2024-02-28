@@ -1995,7 +1995,7 @@ short determineRowOffsetNote(byte split, byte row) {
   if (Global.rowOffset <= 12) {                       // if rowOffset is 12 or lower
     short offset = Global.rowOffset;
 
-    if (Global.rowOffset == ROWOFFSET_OCTAVECUSTOM) { // Global.rowOffset is not the offset if a custom one is set
+    if (Global.rowOffset == ROWOFFSET_OCTAVECUSTOM) {
       offset = Global.customRowOffset;
     }
 

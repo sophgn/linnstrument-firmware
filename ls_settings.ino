@@ -2312,7 +2312,6 @@ void handleOctaveTransposeNewTouch() {
 }
 
 void handleOctaveTransposeNewTouchSplit(byte side) {
-
   if (sensorRow == OCTAVE_ROW) {
     switch (sensorCol) {
       case 3: Split[side].transposeOctave = -60; break;
@@ -2603,9 +2602,9 @@ void handleGlobalSettingNewTouch() {
                 toggleNoteLights(Global.accentNotes[Global.activeNotes]);
               }
               break;
-            case LIGHTS_ACTIVE:   
+            case LIGHTS_ACTIVE:
               Global.activeNotes = sensorCol-2 + (sensorRow*3);
-              loadCustomLedLayer(getActiveCustomLedPattern()); 
+              loadCustomLedLayer(getActiveCustomLedPattern());
               microLinnSetCurrScale();
               break;
           }
@@ -3094,8 +3093,10 @@ void handleGlobalSettingHold() {
           case 1:
             enterForkMenu();
             break;
-          case 2:                                                  // handle switch to/from User Firmware Mode
-            if (cell(16, 0).touched == untouchedCell) {            // ensure that this is not a reset operation instead
+          // handle switch to/from User Firmware Mode
+          case 2:
+            // ensure that this is not a reset operation instead
+            if (cell(16, 0).touched == untouchedCell) {
               changeUserFirmwareMode(!userFirmwareActive);
             }
             break;
@@ -3197,7 +3198,7 @@ void handleGlobalSettingRelease() {
       }
     }
   }
-  else if (sensorCol == 16) { 
+  else if (sensorCol == 16) {
       if (sensorRow == 1) {                       // OS version is now handled here on release not on touch
         setDisplayMode(displayOsVersion);         // to allow a long-press to display the fork menu
       }
