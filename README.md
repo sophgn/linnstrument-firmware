@@ -16,103 +16,112 @@ WARNING: installing this fork deletes your Linnstrument's settings and calibrati
 4) Run the updater. Don't run anything else while it's running. If it asks for permission to read files from the desktop, say yes.
 5) Confirm the update by short-pressing the OS version (global settings, column 16). It should be 234.08A. If not, try using the 2.3.0 updater instead. 
 
--------- NON-MICROTONAL FEATURES -------- 
+IMPORTANT: Once microLinn is installed, before you can update the OS to a new version, microLinn asks if you want to uninstall microLinn.
+Say no if you're updating to a new version of microLinn. Say yes otherwise (e.g. if you're installing an official version of the firmware). 
+This avoids deleting your Linnstrument's user settings and calibration data.
 
-BLINKING MODE: This is a variation of the SAME mode that shows you other occurences of the currently played note.
+-------- NON-MICROTONAL FEATURES -------- 
 
 CHAINING SEQUENCES: hold down the pad for sequence #1 and tap the pad for sequence #2. Now the two sequences are chained into a single 
 sequence twice as long. You can chain #3 and #4 together as well. Or chain all 4 together. The PREV and NEXT footswitches work as expected.
 To clear the chaining, tap the pad immediately to the left of the 4 selector pads. Or just disconnect the Linnstrument and reconnect it.
-You can select sequences on the fly as the sequencer is playing as usual. You can also chain, re-chain and unchain on the fly. 
+You can select sequences on the fly as the sequencer is playing as usual. You can also chain and unchain on the fly. 
 When chaining on the fly, to start at the beginning of the chain not the end, hold the last sequence and tap the first one.
 
-NEW SWITCH/FOOTSWITCH FUNCTIONS: SCL+ and SCL- cycle you through the 9 scales in Global columns 2-4 (only affects the note lights).
+BLINKING MODE: This is a variation of the SAME mode that shows you other occurences of the currently played note.
+
+NEW SWITCH/FOOTSWITCH FUNCTIONS: SCL+ and SCL- cycle you through the 9 scales in Global Settings columns 2-4 (only affects the note lights).
 
 COLUMN OFFSETS: The column offset can be set for each split independently. This allows Wicki-Hayden layout on the left for easy chord
-playing and normal layout on the right for easy melody playing. Access it throught microLinn, see below.
+playing and normal layout on the right for easy melody playing. Access it throught the microLinn menu, see below.
+
+MULTI-COLORED NOTE LIGHTS: Each of the 12 notes can be any color. Transposable. Access it throught the microLinn menu, see below.
+
+DETUNING: Detune the entire Linnstrument up or down from A-440 to match a similarly detuned recording or instrument. (No guarantee that 
+detuning to A-432 will heal your chakras lol.) Access it throught microLinn's anchor cents, see below.
 
 -------- MICROTONAL FEATURES -------- 
 
-On the global settings screen, long-press col 1 bottom row (VIEW MAIN) to go to the main microLinn display.
+On the global settings screen, long-press col 1 bottom row (VIEW MAIN) to go to the main microLinn menu.
 Once the edo (notes per octave) is set to anything other than OFF, VIEW MAIN turns light blue and you can short-press it.
-The display has 10 buttons. Long-press each one to see its function. Most don't work until you set the edo.
+The menu has 10 buttons. Long-press each one to see its function. Most don't work until you set the edo.
 
-1) edo (notes per octave)
-2) octave stretch in cents
+1) left column offset
+2) right column offset
 
-3) anchor cell
-4) anchor note
-5) anchor cents
+3) edo (notes per octave)
+4) octave stretch in cents
 
-6) left column offset
-7) right column offset
+5) anchor pad
+6) anchor note
+7) anchor cents
 
 8) set note lights
 
-9) set to Kite guitar
-10) reset to 12-equal
+9) set to 31edo Bosanquet
+10) set to Kite guitar
 
-The anchor cell is a specific cell or pad that doesn't change pitch when you change the notes per octave.
-The anchor cell chooser displays the row and column of the current anchor cell, e.g. R3C6 means row 3 (from the top) and column 6. 
-To choose a new anchor cell, tap the blue "R3C6" and then tap any pad.
+The anchor pad is a specific pad or cell that doesn't change pitch when you change the notes per octave.
+The anchor pad chooser displays the row and column of the current anchor pad, e.g. R3C6 means row 3 (from the top) and column 6. 
+To choose a new anchor pad, tap the blue "R3C6" and then tap any pad.
+In 12edo, the anchor pad and note have no effect, but changing the anchor cents detunes the entire Linnstrument.
 
 When the notes per octave is greater than 12, the OCTAVE/TRANSPOSE display shows 2 extra rows for transposing by edosteps.
 The 2nd and 3rd rows now transpose not by semitones but by major 2nds (since most edos have several different semitones).
 
 There are 4 new functions for switches 1 & 2 and footswitches 1 & 2: 
 EDO+ and EDO- move up or down to the next EDO, wraps around (probably best you don't play while changing!)
-SCL+ and SCL- move up or down to the next scale, wraps around (only affects the note lights)
+SCL+ and SCL- move up or down to the next scale, wraps around (only affects the note lights).
 
-The first 9 scales in cols 2-4 are now microtonal and change for each edo. You can edit them and their colors in microLinn's note lights. 
-Shortcut: you can long-press the scale's pad on the global settings display to go directly to that scale.
+The 9 scales in Global Settings cols 2-4 are now microtonal and change for each edo. You can edit them and their colors in microLinn. 
+Shortcut: you can long-press the scale's pad in the Global Settings display to go directly to that scale.
 
-The note lights display has 7 scale buttons plus the color editor, the dots selector and the mass-selector button.
-Tap a note in a scale to toggle it on or off. Tap a note in the color editor to cycle it thru the rainbow. 
-
-Tapping the dots selector makes the dots appear mid-screen. Tapping there puts you in a full-screen editor 
-that lets you toggle dots on or off. 
-
+The note lights display has 7 scale buttons plus the color editor, the dots selector and the rainbow-enabler button.
+Tap a note in a scale to toggle it on or off. Tap a note in the color editor in column 3 row 1 to cycle it thru the rainbow. 
+Tapping the dots selector in column 3 row 3 makes the dots appear mid-screen. Tapping the dots lets you toggle them on or off. 
 Long-press the scale buttons or color editor button or the dots selector button to reset the note lights to the default. 
-Hold the mass-selector button in column 3 row 5 while selecting something and your selection will be applied to all 51 edos at once. 
-Hold it while long-pressing another button to mass-reset that scale/rainbow/dot-pattern for all 51 edos.
+Tap the orange rainbow enabler button in column 3 row 5 to turn off the rainbow and limit the note lights to the usual two colors.
 
 The 3 custom light patterns are totally separate from all this and are still available for use!
 This web browser lets you easily edit them: https://forrcaho.github.io/linnstrument_colorizer/
 
 When microLinn is on, the global setting of lefthandedness is ignored. Set the column offsets to -1 to get lefthandedness.
 
-The 8 scales are somewhat similar from edo to edo (except the smaller, weirder edos of course)
-The 1st and 2nd scales are 5-over (major or downmajor) and 5-under (minor or upminor)
-The 3rd and 4th scales are 7-over (downminor) and 7-under (upmajor)
-The 5th scale is 11-over or 11-under (mid or neutral), and the 6th scale is blank but for the tonic
-The 7th scale is scales 1-4 combined, and the 8th scale is always the full rainbow
+The 8 scales are somewhat similar from edo to edo (except the smaller, weirder edos of course).
+The 1st and 2nd scales are major/downmajor (5-over) and minor/upminor (5-under).
+The 3rd and 4th scales are downminor (7-over) and upmajor (7-under).
+The 5th scale is mid or neutral (11-over or 11-under), and the 6th scale is blank but for the tonic.
+The 7th scale is a partial rainbow, and the 8th scale is the full rainbow.
+Many of the choices for scales and colors are somewhat arbitrary. Feel free to replace them with your own choices!
 
-The colors use the rainbow metaphor, red-yellow-green-blue = supermajor to subminor
+The colors use the rainbow metaphor, red-yellow-green-blue = sharp to flat = supermajor to subminor
 white = 12-edo-ish = 3-limit
 yellow / green = downmajor / upminor =  5-over / 5-under
 blue / red = downminor / upmajor = 7-over / 7-under
 purple = neutral = 11-over or 11-under or 13-over or 13-under
 pink is reserved for the exact half-octave of 600c, 12-edo-ish but not quite 3-limit, "off-white"
-cyan / orange = a catch-all pair, e.g. 7/5 and 10/7, cyan is also for "outside" notes aka interordinals e.g. 24edo
+cyan / orange = a catch-all pair, e.g. 41edo 7/5 and 10/7, cyan is also for "outside" notes aka interordinals e.g. 24edo
+
+The dot patterns tend to follow the conventional m3 P4 P5 M6 P8 guitar fret markers. Some edos add M2 and m7.
+Edos above 31 approximate 12edo, in other words there are dots about every 100 cents.
+41edo is an exception. It has kites like a Kite guitar.
 
 Suggestions for exploring:
 The first few edos are pretty strange. Try starting with 15, 17, 19 or 22.
+Be sure to try the Bosanquet layout for 31edo and the Kite guitar layout for 41edo.
 The rainbow colors can be overwhelming. Try setting the played mode to BLNK or BLNK8.
 
 To create JI or rank-2 scales with N notes, set the edo to 12 but play as if in N-edo, think one midi note per edostep.
 Load a scala file into your synth or run alt-tuner to produce that N-note scale.
-eEch note is slightly sharper or flatter from N-edo, thus the pad's note will be different slid up to vs played directly.
+Each note is slightly sharper or flatter from N-edo, thus the pad's note will be different slid up to vs played directly.
 However this is only a comma or so difference even on long slides, which might be tolerable.
 Perhaps software on the PC could fix this problem by scaling the slides by adjusting the pitch bends?
 
 
+
+============================= technical notes ==================================
+
 To find all changes to the code, search for "microlinn" or "brightness" or "playedBlink" or "patternChain"
-
-
-
-
-
-=============================
 
 "Skip-fretting" is a column offset of 2 - each subsequent pad represents every other MIDI note, so note 0 2 4 6 8 ... instead of 0 1 2 3 4. 
 The name is in reference to the microtonal [kite guitar](https://kiteguitar.com/), which obviously uses frets and not keys, but the Linnstrument's 
@@ -131,7 +140,7 @@ instrument. Luckily, you typically only want the odds or evens at the same time 
 Follow the [standard directions](https://www.rogerlinndesign.com/support/support-linnstrument-update-software), but replace the `.bin` file in the
 updater bundle with the one found in the Releases section of this project.
 
-WARNING: this method does not preserve your Linnstruments' settings and calibration (for now).
+WARNING: this method deletes your Linnstrument's settings and calibration (for now).
 
 If you're not on mac or windows but gnu/linux, you can still do it using `arduino-cli`, or by cloning this project, opening it in Arduino IDE 
 (following the Dev section below), and hitting "Upload" - no coding or command line required. 

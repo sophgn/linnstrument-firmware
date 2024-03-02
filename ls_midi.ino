@@ -1687,6 +1687,7 @@ void highlightPossibleNoteCells(byte split, byte notenum) {
       if (Split[sensorSplit].playedTouchMode == playedBlink) {
         byte color = getLedColor(col, row, LED_LAYER_MAIN);
         if (color == COLOR_OFF) color = Split[split].colorPlayed;
+        if (isMicroLinnOn) color = microLinnGetCellColor(split, col, row);
         setLed(col, row, color, cellSlowPulse, LED_LAYER_PLAYED);
       } else {
         setLed(col, row, Split[split].colorPlayed, cellOn, LED_LAYER_PLAYED);
@@ -1736,15 +1737,15 @@ short getNoteNumColumn(byte split, byte notenum, byte row) {
 
   short col;
 
-  if (Device.microLinn.colOffset[split] != 1) {
+  if (Global.microLinn.colOffset[split] != 1) {
     col = notenum - microLinnMidiNote[split][1][row];
-    if (col % Device.microLinn.colOffset[split] != 0) return -1;         // if this row skips this note
-    col = col / Device.microLinn.colOffset[split] + 1;
+    if (col % Global.microLinn.colOffset[split] != 0) return -1;         // if this row skips this note
+    col = 1.0 * col / Global.microLinn.colOffset[split] + 1;
     /************************* OLD WAY
     // we add 2 instead of 1 for skip fretting, since we add 1 everywhere for some reason
     // pitch transposition is only reflected on this side, not in getNoteNumber
-    col = notenum - (row_offset_note + Split[split].transposeOctave) + 1 + Device.microLinn.colOffset[split]
-            + Split[split].transposeLights * Device.microLinn.colOffset[split] - Split[split].transposePitch;;             
+    col = notenum - (row_offset_note + Split[split].transposeOctave) + 1 + Global.microLinn.colOffset[split]
+            + Split[split].transposeLights * Global.microLinn.colOffset[split] - Split[split].transposePitch;;             
     if (col % 2 == 0) { // even notenum in even row, or odd notenum in odd row
       col = col / 2;
     } else {

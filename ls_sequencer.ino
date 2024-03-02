@@ -3224,10 +3224,6 @@ void StepSequencerState::selectPattern(byte pattern) {
 /**************************************** PATTERN CHAINING, PART OF THE MICROLINN FORK ****************************************/
 // search this file for "patternChain" to see the other changes to the code
 
-void resetPatternChain() {
-  memset (patternChain, -1, sizeof(patternChain));              // both splits
-}
-
 void setPatternChain(byte split) {
   short firstPattern = -1;
   short lastPattern = -1;
@@ -3250,6 +3246,10 @@ void setPatternChain(byte split) {
   // if that's not the case, unchain everything else in this split
   memset(&patternChain[split][0], -1, firstPattern);
   memset(&patternChain[split][lastPattern + 1], -1, 3 - lastPattern);
+}
+
+void resetPatternChain() {
+  memset (patternChain, -1, sizeof(patternChain));              // both splits
 }
 
 boolean isWithinSequencerPatternChainClearArea() {           // hidden switches immediately to the left of the pattern selectors

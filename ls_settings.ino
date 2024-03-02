@@ -2865,6 +2865,11 @@ void handleGlobalSettingNewTouch() {
           enterForkMenu();
         }
         break;
+        if (sensorRow == 2) {
+          setDisplayMode(displayMicroLinnUninstall);
+          updateDisplay();
+        }
+        break;
 #endif
     }
   }

@@ -495,6 +495,7 @@ enum DisplayMode {
   displayMicroLinnConfig,
   displayMicroLinnAnchorChooser,
   displayMicroLinnDotsEditor,
+  displayMicroLinnUninstall,
   displayBrightness
 };
 DisplayMode displayMode = displayNormal;
@@ -682,19 +683,7 @@ enum SplitHandednessType {
 };
 
 const byte MICROLINN_MAX_EDO = 55;
-const byte MICROLINN_MAX_OFFSET = 32;                 // both row offset and column offset, increased from 16 to 32 (55edo's 5th)
-
-struct MicroLinn {                                    // overlaps the audience messages array
-  byte EDO;                                           // limited to 5-55, plus 4 for OFF
-  signed char octaveStretch;                          // limited to ± 120 cents, for non-octave tunings such as bohlen-pierce
-  byte anchorCol;
-  byte anchorRow;
-  byte anchorNote;                                    // any midi note 0-127
-  signed char anchorCents;                            // limited to ± 100 cents
-  signed char colOffset[NUMSPLITS];                   // 2 column offsets, -34 to 33
-  byte transposeEDOsteps[NUMSPLITS];                  // accessed not via displayMicroLinnConfig but via displayOctaveTranspose
-  byte transposeEDOlights[NUMSPLITS];
-};  
+const byte MICROLINN_MAX_OFFSET = 32;        // both row offset and column offset, increased from 16 to 32 (55edo's 5th)
 
 struct DeviceSettings {
   byte version;                                   // the version of the configuration format
@@ -722,11 +711,9 @@ struct DeviceSettings {
   short lastLoadedPreset;                         // the last settings preset that was loaded
   short lastLoadedProject;                        // the last sequencer project that was loaded
   byte customLeds[LED_PATTERNS][LED_LAYER_SIZE];  // the custom LEDs that persist across power cycle
-  MicroLinn microLinn;                            // microtonal data
   byte microLinnDots[MICROLINN_MAX_EDO+1][MAXCOLS+3];                // one bit per row, ignores column offsets except for lefty/righty
   byte microLinnRainbows[MICROLINN_MAX_EDO+1][MICROLINN_MAX_EDO];    // choose among the 10 colors
   byte microLinnScales[MICROLINN_MAX_EDO+1][MICROLINN_MAX_EDO];      // each byte is a bitmask for the 8 scales, except bit 8 is unused
-  byte microLinnCurrScale[MICROLINN_MAX_EDO+1];                      // scales are numbered 0-6, 7 = color editor, 8 = dots
 };
 #define Device config.device
 
@@ -770,6 +757,20 @@ enum SustainBehavior {
   sustainLatch
 };
 
+struct MicroLinn {
+  byte EDO;                                  // limited to 5-55, plus 4 for OFF
+  signed char octaveStretch;                 // limited to ± 120 cents, for non-octave tunings such as bohlen-pierce
+  byte anchorCol;
+  byte anchorRow;
+  byte anchorNote;                           // any midi note 0-127
+  signed char anchorCents;                   // limited to ± 100 cents
+  byte currScale;                            // scales are numbered 0-6, 7 = full rainbow, 8 = dots
+  signed char colOffset[NUMSPLITS];          // 2 column offsets, -34 to 33
+  byte transposeEDOsteps[NUMSPLITS];         // accessed not via displayMicroLinnConfig but via displayOctaveTranspose
+  byte transposeEDOlights[NUMSPLITS];
+  boolean useRainbow;                        // if false, use colorAccent and colorMain instead
+};  
+
 struct GlobalSettings {
   void setSwitchAssignment(byte, byte, boolean);
 
@@ -798,6 +799,7 @@ struct GlobalSettings {
   signed char arpOctave;                     // the number of octaves that the arpeggiator has to operate over: 0, +1, or +2
   SustainBehavior sustainBehavior;           // the way the sustain pedal influences the notes
   boolean splitActive;                       // false = split off, true = split on
+  MicroLinn microLinn;                       // microtonal data
 };
 #define Global config.settings.global
 

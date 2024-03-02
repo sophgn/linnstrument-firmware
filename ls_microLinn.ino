@@ -1,4 +1,3 @@
-
 /**************************************** MICROLINN ****************************************
 
 note to self:  "if (sensorCell->velocity)" means if another touch is already down on the same row
@@ -11,37 +10,40 @@ Geert's 2014 video: https://www.youtube.com/watch?v=iENVztlxWuk
 Geert's 2017 video: https://www.synthtopia.com/content/2017/06/28/from-arduino-to-linnstrument/
 
 
- a few ideas I had, probably not needed
+a few ideas I had, probably not needed
 short microLinnTuningBend[NUMSPLITS][16][10];                // 16 midi channels, 10 touches, tuning bends come from microLinnFineTuning
 short microLinnSlideBend[NUMSPLITS][16][10];                 // 16 midi channels, 10 touches, slide bends come from sliding along the Linnstrument
 short microLinnLandingBend[NUMSPLITS][16][10];               // 16 midi channels, 10 touches, landing bends come from the initial touch being off-center
 
+fix blink mode when col offset > 1
+
+ to do: use virtual note numbers to get the midi to work
+
+ to do: fix the user data overwriting issue by modifying ls_extstorage.ino
+ to do: write the uninstall code - must adjust Split[side].playedTouchMode since no BLNK mode
+        also adjust Global.customSwitchAssignment[switchSelect] since no EDO or SCALE up/down
+
+to do: finish MICROLINN_RAINBOWS, test scales/rainbows, delete initializeScales function
+
+to do: get guitar dots to transpose
+to do: make microLinnDots 55 columns wide, when loading from MICROLINN_DOTS complete the dots via symmetry
+to do: test octave up/down footswitches while playing, does the calcTuning call make it glitchy?
+
+decide: 2nd shortcut on global, col 1 row 1 for 2nd config display for brightness etc.?
+decide: delete code for col 16 and/or 17 shortcut (ifndef)?
+decide: increase the number of memories from 6?
+decide: hammerons/pulloffs window of 1, 2 or 3 columns?
+
+to do: write code for accepting microLinn NRPNs (see midi.txt)
+
+to do: add 3 new played modes: 
+SAM8 = same, but includes the octave-mates
+BLNK = same, but blinks slowly
+BLN8 = same, blinks, octaves too
+all 3 plus SAME should include notes on the other split, but only if the other split also has SAME
+blink modes can blink a lit LED on/off, see getLedColor function
+
 *********************************************************/
-
-
-
-// to do: get guitar dots to transpose
-// to do: make microLinnDots 55 columns wide, when loading from MICROLINN_DOTS complete the dots via symmetry
-// to do: test octave up/down switches while playing, does the calcTuning call make it glitchy?
-
-// decide: 2nd shortcut on global, col 1 row 1 for 2nd config display for brightness etc.?
-// decide: delete code for col 16 and/or 17 shortcut (ifndef)?
-// decide: delete 12edo reset button? or make it wicki-hayden?
-// decide: 6th scale is minimalist: just white tonic and one (or two for odd edos) tritones?
-// decide: increase the number of memories from 6? expand what they remember?
-// decide: hammerons/pulloffs window of 1, 2 or 3 columns?
-
-// to do: write code for accepting microLinn NRPNs (see midi.txt)
-
-// TO DO: add 3 new played modes: 
-// SAM8 = same, but includes the octave-mates
-// BLNK = same, but blinks slowly
-// BLN8 = same, blinks, octaves too
-// all 3 plus SAME should include notes on the other split, but only if the other split also has SAME
-// blink modes can blink a lit LED on/off, see getLedColor function
-
-// TO DO: finish MICROLINN_RAINBOWS and MICROLINN_SCALES
-
 
 
 
@@ -63,9 +65,9 @@ const byte MICROLINN_MAJ2ND[MICROLINN_MAX_EDO+1] = {  // for edos 6, 8, 10 and 1
 //
 //  for (byte edo = 5; edo <= MICROLINN_MAX_EDO; ++edo) {
 //    byte M2 = MICROLINN_MAJ2ND[edo];                      // actually just a single edostep for edos 6, 8, 10 & 12
-//    if (edo == 10 || edo == 12) M2 = 2;
+//    if (edo == 10 || edo == 12) M2 = 2;                   // correct 10edo and 12edo
 //    byte m2 = ceil ((edo - 5 * M2) / 2.0);                // 6edo and 8edo need ceil
-//    byte half2nd = floor (min (M2, m2) / 2.0);            // include half the intraordinal notes on this row
+//    byte half2nd = floor (min (M2, m2) / 2.0);            // include half the in-between-degrees notes on each row
 //    if (edo == 14 || edo == 28) half2nd -= 1;             // looks better
 //
 //    MICROLINN_SCALEROWS[edo][0] = half2nd;                // unisons
@@ -279,7 +281,8 @@ const byte MICROLINN_RAINBOWS[MICROLINN_MAX_EDO+1][MICROLINN_MAX_EDO] = {
 };
 
 const byte MICROLINN_SCALES[MICROLINN_MAX_EDO+1][MICROLINN_MAX_EDO] = {
-// scale 0 = yo, 1 is gu, 2 = zo, 3 = ru, 4 = ila, 5 = blank but for the tonic, 6 = yaza rainbow, 7 = full rainbow, bit 7 is unused
+  // scale 0 = yo, 1 is gu, 2 = zo, 3 = ru, 4 = ila, 5 = blank but for the tonic, 6 = yaza rainbow, 7 = full rainbow, bit 7 is unused
+  //  1y   2g   4z   8r   16l   32   64 ygzr
   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -300,88 +303,94 @@ const byte MICROLINN_SCALES[MICROLINN_MAX_EDO+1][MICROLINN_MAX_EDO] = {
   127,64, 0,76,68, 0,72,76, 0, 0,76,68, 0,72,68, 0,72, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 17
   127, 0,64,64,64,64,64,64,64, 0,64,64,64,64,64,64,64, 0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 18
   127, 0,64,67, 0,66,65, 0,67, 0, 0,67, 0,66,65, 0,66,65, 0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 19
-
-  //  1y   2g   4z   8r   16l   32   64 ygzr
-  127,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 20
-  127,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 21
-  127,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 22
-  127,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 23
-  127,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 24
-  127,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 25
-  127,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 26
-  127,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 27
-  127,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 28
-  127,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 29
-  127,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 30
-  127,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 31
-  127,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 32
-  127,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 33
-  127,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 34
-  127,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 35
-  127,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 36
-  127,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 37
-  127,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 38
-  127,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 39
-  127,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 40
-  127,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 41
-  127,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 42
-  127,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 43
-  127,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 44
-  127,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 45
-  127,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 46
-  127,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 47
-  127,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 48
-  127,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 49
-  127,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 50
-  127,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 51
-  127,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 52
-  127,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 53
-  127,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 54
-  127,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0  // 55
+  127, 0,64,67, 0,66,65, 0,67, 0,64, 0,67, 0,66,65, 0,66,65, 0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 20
+  127, 0,64,67, 0,66, 0,65, 0,67, 0, 0,67, 0,66, 0,65, 0,66,65, 0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 21
+  127,64,64,64,79,68,66,65,72,79, 0,64, 0,79,68,66,65,72,68,66,65,72, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 22
+  127, 0,64, 0,67, 0,66, 0,65, 0,67, 0, 0,67, 0,66, 0,65, 0,66, 0,65, 0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 23
+  127, 0,64, 0,67, 0,66, 0,65, 0,67, 0,64, 0,67, 0,66, 0,65, 0,66, 0,65, 0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 24
+  127, 0,64, 0,67, 0,66, 0,65, 0,67, 0,64,64, 0,67, 0,66, 0,65, 0,66, 0,65, 0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 25
+  127,64,64, 0,95,64,68,66,16,65,72,95, 0,64, 0,95,68,66,16,65,72,68,66,16,65,72, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 26
+  127,64,64, 0,95,64,68,66,16,65,72,95, 0,64,64, 0,95,68,66,16,65,72,68,66,16,65,72, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 27
+  127,64,64, 0,95,64,68,66,16,65,72, 0,95, 0,64, 0,95, 0,68,66,16,65,72,68,66,16,65,72, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 28
+  127,64,64, 0,64,95,68,66,16,65,72, 0,95, 0,64,64, 0,95, 0,68,66,16,65,72,68,66,16,65,72, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 29
+  127, 0,64,64, 0,95,64,68,66,16,65,72,95, 0, 0,64, 0, 0,95,68,66,16,65,72,68,66,16,65,72, 0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 30
+  127, 0,64,64, 0,95,64,68,66,16,65,72, 0,95, 0,64,64, 0,95, 0,68,66,16,65,72,68,66,16,65,72, 0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 31
+  127, 0,64,64, 0,95,64,68,66,16,65,72, 0,95, 0, 0,64, 0, 0,95, 0,68,66,16,65,72,68,66,16,65,72, 0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 32
+  127, 0,64,64, 0,95,64, 0,68,66,16,65,72, 0,95, 0,64,64, 0,95, 0,68,66,16,65,72, 0,68,66,16,65,72, 0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 33
+  127, 0,64,64, 0,95,64, 0,68,66,16,65,72, 0,95, 0, 0,64, 0, 0,95, 0,68,66,16,65,72, 0,68,66,16,65,72, 0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 34
+  127, 0,64,64, 0,95,64, 0,68,66,16,65,72, 0, 0,95, 0,64,64, 0,95, 0, 0,68,66,16,65,72, 0,68,66,16,65,72, 0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 35
+  127, 0,64,64, 0, 0,79,64,68,66, 0, 0,65,72, 0,79, 0, 0,64, 0, 0,79, 0,68,66, 0, 0,65,72,68,66, 0, 0,65,72, 0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 36
+  127, 0, 0,64,64, 0,95,64, 0,68,66,16,65,72, 0,95, 0, 0,64,64, 0, 0,95, 0,68,66,16,65,72, 0,68,66,16,65,72, 0, 0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 37
+  127, 0, 0,64,64, 0,95,64, 0,68,66,16,65,72, 0, 0,95, 0, 0,64, 0, 0,95, 0, 0,68,66,16,65,72, 0,68,66,16,65,72, 0, 0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 38
+  127, 0,64,64, 0, 0,64,79, 0,68,66, 0, 0,65,72, 0,79, 0, 0,64,64, 0, 0,79, 0,68,66, 0, 0,65,72, 0,68,66, 0,65,72, 0, 0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 39
+  127, 0, 0,64,64, 0, 0,79,64,68,66, 0, 0,65,72, 0, 0,79, 0, 0,64, 0, 0,79, 0, 0,68,66, 0, 0,65,72,68,66, 0, 0,65,72, 0, 0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 40
+  127, 0,64, 0,64, 0,64,95,64,68, 0,66,16,65, 0,72, 0,95, 0,64,64,64,64, 0,95, 0,68, 0,66,16,65, 0,72,68,64,66,16,65, 0,72, 0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 41
+  127, 0, 0,64,64, 0, 0,79,64, 0,68,66, 0, 0,65,72, 0,79, 0, 0, 0,64, 0, 0, 0,79, 0, 0,68,66, 0, 0,65,72,68,66, 0, 0,65,72, 0, 0, 0,0,0,0,0,0,0,0,0,0,0,0,0, // 42
+  127, 0, 0,64,64, 0, 0,79, 0,68, 0,66, 0, 0,65, 0,72, 0,79, 0, 0,64,64, 0, 0,79, 0,68, 0,66, 0, 0,65, 0,76, 0,66, 0, 0,65, 0,72, 0, 0,0,0,0,0,0,0,0,0,0,0,0, // 43
+  127, 0, 0,64, 0,64, 0, 0,95, 0,68, 0,66,16,65, 0,72, 0,95, 0, 0,64, 0,64, 0, 0,95, 0,68, 0,66,16,65, 0,72, 0,68, 0,66,16,65, 0,72, 0, 0,0,0,0,0,0,0,0,0,0,0, // 44
+  127, 0, 0,64,64, 0, 0,95, 0, 0,68, 0,66,16,65, 0,72, 0, 0,95, 0, 0,64,64, 0, 0,95, 0, 0,68, 0,66,16,65, 0,72,68, 0,66,16,65, 0,72, 0, 0, 0,0,0,0,0,0,0,0,0,0, // 45
+  127, 0, 0,64,64, 0, 0, 0,79, 0,68, 0,66, 0, 0,65, 0,72, 0,79, 0, 0, 0,64, 0, 0, 0,79, 0,68, 0,66, 0, 0,65, 0,72,68, 0,66, 0,65, 0,72, 0, 0, 0,0,0,0,0,0,0,0,0, // 46
+  127, 0, 0,64,64, 0, 0,79, 0, 0,68, 0,66, 0, 0,65, 0,72, 0, 0,79, 0, 0,64,64, 0, 0,79, 0, 0,68, 0,66, 0, 0,65, 0,76, 0,66, 0, 0,65, 0,72, 0, 0, 0,0,0,0,0,0,0,0, // 47
+  127, 0, 0, 0,64, 0, 0, 0,95, 0,68, 0,66, 0,16, 0,65, 0,72, 0,95, 0, 0, 0,64, 0, 0, 0,95, 0,68, 0,66, 0,16, 0,65, 0,76, 0,66, 0,16, 0,65, 0,72, 0, 0,0,0,0,0,0,0, // 48
+  127, 0, 0, 0,64, 0, 0, 0,79, 0, 0,68, 0,66, 0, 0,65, 0,72, 0,79, 0, 0, 0,64,64, 0, 0, 0,79, 0,68, 0,66, 0, 0,65, 0,72, 0,68, 0,66, 0, 0,65, 0,72, 0, 0,0,0,0,0,0, // 49
+  127, 0, 0, 0,64, 0, 0, 0,79, 0, 0,68, 0,66, 0, 0,65, 0,72, 0, 0,79, 0, 0, 0,64, 0, 0, 0,79, 0, 0,68, 0,66, 0, 0,65, 0,72,68, 0,66, 0, 0,65, 0,72, 0, 0, 0,0,0,0,0, // 50
+  127, 0, 0,64, 0,64, 0,64, 0,95, 0, 0,68, 0,66,16,65, 0,72, 0, 0,95, 0, 0, 0,64,64, 0, 0, 0,95, 0, 0,68, 0,66,16,65, 0,72, 0, 0,68, 0,66,16,65, 0,72, 0, 0, 0,0,0,0, // 51
+  127, 0, 0, 0,64, 0, 0, 0,95, 0, 0,68, 0,66, 0,16, 0,65, 0,72, 0, 0,95, 0, 0, 0,64, 0, 0, 0,95, 0, 0,68, 0,66, 0,16, 0,65, 0,76, 0,66, 0,16, 0,65, 0,72, 0, 0, 0,0,0, // 52
+  127, 0, 0,64, 0,64, 0, 0,64,79,64, 0,68, 0,66, 0, 0,65, 0,72, 0, 0,79, 0, 0,64,64,64,64, 0, 0,79, 0, 0,68, 0,66, 0, 0,65, 0,72, 0,68, 0,66, 0, 0,65, 0,72, 0, 0, 0,0, // 53
+  127, 0, 0, 0,64, 0, 0, 0, 0,95, 0, 0, 0,68, 0,66,16,65, 0,72, 0, 0,95, 0, 0, 0, 0,64, 0, 0, 0, 0,95, 0, 0,68, 0,66,16,65, 0,72, 0, 0, 0,68, 0,66,16,65, 0,72, 0, 0, 0, // 54
+  127, 0, 0,64, 0,64, 0, 0, 0,95, 0,64,68, 0,66, 0,16, 0,65, 0,72, 0, 0,95, 0, 0, 0,64,64, 0, 0, 0,95, 0, 0,68, 0,66, 0,16, 0,65, 0,72,68, 0,66, 0,16, 0,65, 0,72, 0, 0   // 55
 };
-
-
 
 
 // runtime vars
 byte microLinnMidiNote[NUMSPLITS][MAXCOLS][MAXROWS];         // the midi note that is output for each cell, col 0 is unused
 int microLinnFineTuning[NUMSPLITS][MAXCOLS][MAXROWS];        // the deviation from 12edo for each cell, as a pitch bend number from -8192 to 8191
-byte microLinnEdostep[NUMSPLITS][MAXCOLS][MAXROWS];          // each cell's edosteps (mod EDO) relative to the anchor cell
-
-byte microLinnOldEDO;                                        // for adjusting the row offset after an edo change
+short microLinnEdostep[NUMSPLITS][MAXCOLS][MAXROWS];         // each cell's edosteps relative to the anchor cell
+byte microLinnOldEDO;                                        // for adjusting the row and column offsets after an edo change
 short microLinnRowOffsetCents;                               // set only when user sets row/col offset directly,
 short microLinnColOffsetCents[NUMSPLITS];                    // avoids offset drift when switching edos
-byte microLinnConfigColNum = 0;                       // active col number in microLinnConfig display, 0 means nothing active
+char microLinnAnchorString[6] = "R C  ";                     // row and column of the anchor cell, e.g. "R3C12", top row is row #1
+byte microLinnConfigColNum = 0;                              // active col number in microLinnConfig display, 0 means nothing active
 boolean microLinnConfigNowScrolling = false;
-char microLinnAnchorString[6] = "R C  ";              // row and column of the anchor cell, e.g. "R3C12", top row is row #1
+byte microLinnUninstall = 2;                                 // 0 = false, 1 = true, 2 = not yet set
+
+
+/**************************************** FORK MENU ****************************************/
+
+const byte NUM_FORKS = 3;
+const byte MAX_LONGPRESS_MESSAGES = 3;     // after the 3rd long-press of OS version since power-up,
+byte numTimesForkMenu = 0;                 // stop showing the "LONG-PRESS FOR FORK NAMES" message
+byte forkMenuColNum = 0;                   // active column number in fork menu, 0 means nothing active
+boolean forkMenuNowScrolling = false;
+
+/**************************************** BRIGHTNESS FORK ****************************************/
+byte brightness = 12;                      // ranges from 1 to 12
 
 
 
-
-// delete these once MICROLINN_SCALES is filled in
+// delete these once MICROLINN_SCALES is tested
 const float wa2nd = log(9.0/8.0) / log(2.0);            // ratios as a fraction of an octave
 const float yo3rd = log(5.0/4.0) / log(2.0);
 const float gu3rd = log(6.0/5.0) / log(2.0);
 const float zo3rd = log(7.0/6.0) / log(2.0);
 const float ru3rd = log(9.0/7.0) / log(2.0);
+const float lo3rd = log(11.0/9.0) / log(2.0);
 const float wa4th = log(4.0/3.0) / log(2.0);
 const float wa5th = log(3.0/2.0) / log(2.0);
 const float yo6th = log(5.0/3.0) / log(2.0);
 const float gu6th = log(8.0/5.0) / log(2.0);
 const float zo6th = log(14.0/9.0) / log(2.0);
 const float ru6th = log(12.0/7.0) / log(2.0);
+const float lo6th = log(44.0/27.0) / log(2.0);
 const float yo7th = log(15.0/8.0)/ log(2.0);
 const float gu7th = log(9.0/5.0) / log(2.0);
 const float zo7th = log(7.0/4.0) / log(2.0);
 const float ru7th = log(27.0/14.0) / log(2.0);
+const float lo7th = log(11.0/6.0) / log(2.0);
 
-// delete this once these arrays become const arrays
+// delete this once MICROLINN_SCALES is tested
 void microLinnInitializeScales() {
-
-  for (byte edo = 20; edo <= MICROLINN_MAX_EDO; ++edo) {
-    if (edo == 31 || edo == 41) {
-      memset (&Device.microLinnScales[edo][0], 64, edo);         // scale 6 has most notes
-    }
+  for (byte edo = 5; edo <= MICROLINN_MAX_EDO; ++edo) {
     Device.microLinnScales[edo][0] = 127;                        // every scale has the tonic
 
     Device.microLinnScales[edo][round(edo * wa2nd)] |= 1;        // set scale 0 to yo scale
@@ -411,116 +420,97 @@ void microLinnInitializeScales() {
     Device.microLinnScales[edo][round(edo * wa5th)] |= 8; 
     Device.microLinnScales[edo][round(edo * ru6th)] |= 8; 
     Device.microLinnScales[edo][round(edo * ru7th)] |= 8; 
+
+    Device.microLinnScales[edo][round(edo * wa2nd)] |= 16;       // set scale 4 to ilo scale
+    Device.microLinnScales[edo][round(edo * lo3rd)] |= 16; 
+    Device.microLinnScales[edo][round(edo * wa4th)] |= 16; 
+    Device.microLinnScales[edo][round(edo * wa5th)] |= 16; 
+    Device.microLinnScales[edo][round(edo * lo6th)] |= 16; 
+    Device.microLinnScales[edo][round(edo * lo7th)] |= 16; 
   }
-
-  Device.microLinnScales[31][1] -= 64;                    // poke 10 holes in the 31edo rainbow 
-  Device.microLinnScales[31][4] -= 64;
-  Device.microLinnScales[31][9] -= 64;
-  Device.microLinnScales[31][12] -= 64;
-  Device.microLinnScales[31][14] -= 64;
-  Device.microLinnScales[31][17] -= 64;
-  Device.microLinnScales[31][19] -= 64;
-  Device.microLinnScales[31][22] -= 64;
-  Device.microLinnScales[31][27] -= 64;
-  Device.microLinnScales[31][30] -= 64;
-
-  Device.microLinnScales[41][1] -= 64;                    // poke 16 holes in the 41edo rainbow 
-  Device.microLinnScales[41][3] -= 64;
-  Device.microLinnScales[41][5] -= 64;
-  Device.microLinnScales[41][10] -= 64;
-  Device.microLinnScales[41][12] -= 64;
-  Device.microLinnScales[41][14] -= 64;
-  Device.microLinnScales[41][16] -= 64;
-  Device.microLinnScales[41][18] -= 64;
-  Device.microLinnScales[41][23] -= 64;
-  Device.microLinnScales[41][25] -= 64;
-  Device.microLinnScales[41][27] -= 64;
-  Device.microLinnScales[41][29] -= 64;
-  Device.microLinnScales[41][31] -= 64;
-  Device.microLinnScales[41][36] -= 64;
-  Device.microLinnScales[41][38] -= 64;
-  Device.microLinnScales[41][40] -= 64;
 }
 
-
-
-// (could possibly instead put the init function in initializeDeviceSettings in ls_settings.ino)
-void resetMicroLinn() {                     // called in reset(), runs when microLinn firmware is first installed
-  Device.microLinn.EDO = 4;                      
-  Device.microLinn.octaveStretch = 0; 
-  Device.microLinn.anchorRow = 4;                 // 4th row from the top
-  Device.microLinn.anchorCol = 11;
-  Device.microLinn.anchorNote = 60;               // middle-C
-  Device.microLinn.anchorCents = 0;  
-  Device.microLinn.colOffset[LEFT] = 1;
-  Device.microLinn.colOffset[RIGHT] = 1;
-  Device.microLinn.transposeEDOsteps[LEFT] = 0;
-  Device.microLinn.transposeEDOsteps[RIGHT] = 0;
-  Device.microLinn.transposeEDOlights[LEFT] = 0;
-  Device.microLinn.transposeEDOlights[RIGHT] = 0;
+void resetMicroLinn() {                           // called in reset(), runs when microLinn firmware is first installed
+  Global.microLinn.EDO = 4;                       // or when user does a global reset      
+  Global.microLinn.octaveStretch = 0;
+  Global.microLinn.anchorRow = 4;                 // 4th row from the top
+  Global.microLinn.anchorCol = 11;
+  Global.microLinn.anchorNote = 60;               // middle-C
+  Global.microLinn.anchorCents = 0;  
+  Global.microLinn.colOffset[LEFT] = 1;
+  Global.microLinn.colOffset[RIGHT] = 1;
+  Global.microLinn.transposeEDOsteps[LEFT] = 0;
+  Global.microLinn.transposeEDOsteps[RIGHT] = 0;
+  Global.microLinn.transposeEDOlights[LEFT] = 0;
+  Global.microLinn.transposeEDOlights[RIGHT] = 0;
+  Global.microLinn.useRainbow = true;
   memcpy (Device.microLinnDots, MICROLINN_DOTS, sizeof(Device.microLinnDots));
   memcpy (Device.microLinnRainbows, MICROLINN_RAINBOWS, sizeof(Device.microLinnRainbows));
   memcpy (Device.microLinnScales, MICROLINN_SCALES, sizeof(Device.microLinnScales));
-  memset (Device.microLinnCurrScale, 0, sizeof(Device.microLinnCurrScale));
   Global.activeNotes = 0;
-  initializeMicroLinn();
+  Global.microLinn.currScale = 0;
+  initializeMicroLinn();   // is this line needed? try commenting it out
 }
 
-void initializeMicroLinn() {                  // called in setup(), runs every time the Linnstrument powers up
+void initializeMicroLinn() {                      // called in setup(), runs every time the Linnstrument powers up
     Global.setSwitchAssignment(3, ASSIGNED_MICROLINN_EDO_UP,   false);  // for debugging
     Global.setSwitchAssignment(2, ASSIGNED_MICROLINN_EDO_DOWN, false);  // for debugging
   microLinnSetGlobalView();
-  microLinnInitializeScales();                // delete this line once those arrays are getting saved
+  microLinnInitializeScales();                    // delete this line after testing is done
   microLinnStoreRowOffsetCents();
   microLinnStoreColOffsetCents(LEFT);
   microLinnStoreColOffsetCents(RIGHT);
-  microLinnOldEDO = Device.microLinn.EDO;
+  microLinnUpdateAnchorString ();
+  microLinnOldEDO = Global.microLinn.EDO;
   microLinnCalcTuning ();
   updateDisplay();
-  microLinnUpdateAnchorString ();
 }
 
-void microLinnSetKiteGuitarDefaults() {
-  Device.microLinn.EDO = 41;
-  Device.microLinn.octaveStretch = 0;
-  Device.microLinn.anchorRow = 3;                           // 5th row from top, places the two rainbows nicely
-  Device.microLinn.anchorCol = 6;
-  Device.microLinn.anchorNote = 54;                         // ^F#2, Kite guitar standard tuning with D = 0 cents
-  Device.microLinn.anchorCents = 39;                        // ^M3 = 439c
-  Device.microLinn.colOffset[LEFT] = 2;
-  Device.microLinn.colOffset[RIGHT] = 2;
-  Global.rowOffset = ROWOFFSET_OCTAVECUSTOM;
-  Global.customRowOffset = 13;                        // 41-equal downmajor 3rds
+void microLinnSet31edoBosanquetDefaults() {
+  Global.microLinn.EDO = 31;
+  Global.microLinn.octaveStretch = 0;
+  Global.microLinn.anchorRow = 4;                           // 4th row from the top
+  Global.microLinn.anchorCol = 11;
+  Global.microLinn.anchorNote = 60;                         // middle-C
+  Global.microLinn.anchorCents = 0;
+  Global.microLinn.colOffset[LEFT] = 5;                     // 31-equal major 2nd
+  Global.microLinn.colOffset[RIGHT] = 5;
+  Global.rowOffset = 3;                                     // 31-equal m2
   microLinnStoreRowOffsetCents();
   microLinnStoreColOffsetCents(LEFT);
   microLinnStoreColOffsetCents(RIGHT);
   microLinnUpdateAnchorString();
   microLinnSetGlobalView();
-  microLinnOldEDO = 41;                               // to avoid microLinnAdjustRowAndColOffsets()
+  microLinnOldEDO = 31;                                     // to avoid microLinnAdjustRowAndColOffsets()
   microLinnCalcTuning();
-  Device.microLinnCurrScale[41] = 6;
+  Global.activeNotes = 6;
+  Global.microLinn.currScale = 6;
   Split[LEFT].playedTouchMode = playedBlink;
   Split[RIGHT].playedTouchMode = playedBlink;
 }
 
-void microLinnResetTo12equal() {
-  Device.microLinn.EDO = 12;
-  Device.microLinn.octaveStretch = 0; 
-  //Device.microLinn.anchorRow = 4;                 // 4th row from top
-  //Device.microLinn.anchorCol = 11; 
-  //Device.microLinn.anchorNote = 60;               // middle-C
-  //microLinnUpdateAnchorString();
-  Device.microLinn.anchorCents = 0;
-  Device.microLinn.colOffset[LEFT] = 1;
-  Device.microLinn.colOffset[RIGHT] = 1;
-  Global.rowOffset = 5;
+void microLinnSetKiteGuitarDefaults() {
+  Global.microLinn.EDO = 41;
+  Global.microLinn.octaveStretch = 0;
+  Global.microLinn.anchorRow = 3;                           // 5th row from top, places the two rainbows nicely
+  Global.microLinn.anchorCol = 6;
+  Global.microLinn.anchorNote = 54;                         // ^F#2, Kite guitar standard tuning with D = 0 cents
+  Global.microLinn.anchorCents = 39;                        // ^M3 = 439c
+  Global.microLinn.colOffset[LEFT] = 2;
+  Global.microLinn.colOffset[RIGHT] = 2;
+  Global.rowOffset = ROWOFFSET_OCTAVECUSTOM;
+  Global.customRowOffset = 13;                              // 41-equal downmajor 3rds
   microLinnStoreRowOffsetCents();
   microLinnStoreColOffsetCents(LEFT);
   microLinnStoreColOffsetCents(RIGHT);
-  microLinnOldEDO = 12;                                 // to avoid microLinnAdjustRowAndColOffsets()
+  microLinnUpdateAnchorString();
+  microLinnSetGlobalView();
+  microLinnOldEDO = 41;                                     // to avoid microLinnAdjustRowAndColOffsets()
   microLinnCalcTuning();
-  Global.activeNotes = 0;                              // set display to the major scale
-  loadCustomLedLayer(getActiveCustomLedPattern());
+  Global.activeNotes = 6;
+  Global.microLinn.currScale = 6;
+  Split[LEFT].playedTouchMode = playedBlink;
+  Split[RIGHT].playedTouchMode = playedBlink;
 }
 
 int microLinnMod (int num, int base) {                       // -13 % 10 = -3, but microLinnMod (-13, 10) = 7
@@ -553,27 +543,27 @@ signed char microLinnSign (short num) {
 }
 
 boolean isMicroLinnOn() {
-  return Device.microLinn.EDO >= 5;
+  return Global.microLinn.EDO >= 5;
 }
 
 void microLinnUpdateAnchorString() {
   char col1, col2;
-  if (Device.microLinn.anchorCol < 10) {
-    col1 = '0' + Device.microLinn.anchorCol;
+  if (Global.microLinn.anchorCol < 10) {
+    col1 = '0' + Global.microLinn.anchorCol;
     col2 = ' ';
   } else {
-    col1 = '0' + floor (Device.microLinn.anchorCol / 10.0);
-    col2 = '0' + Device.microLinn.anchorCol % 10;
+    col1 = '0' + floor (Global.microLinn.anchorCol / 10.0);
+    col2 = '0' + Global.microLinn.anchorCol % 10;
   }
-  if (LINNMODEL == 128 && Device.microLinn.anchorCol >= 10) {      // "3 12 ", drop R and C to fit 3 digits in
-    microLinnAnchorString[0] = '8' - Device.microLinn.anchorRow; 
+  if (LINNMODEL == 128 && Global.microLinn.anchorCol >= 10) {        // "3 12 ", drop R and C to fit 3 digits in
+    microLinnAnchorString[0] = '8' - Global.microLinn.anchorRow; 
     microLinnAnchorString[1] = ' ';
     microLinnAnchorString[2] = col1;
     microLinnAnchorString[3] = col2;
     microLinnAnchorString[4] = ' ';
   } else {
-    microLinnAnchorString[0] = 'R';                               // "R3C12"
-    microLinnAnchorString[1] = '8' - Device.microLinn.anchorRow;
+    microLinnAnchorString[0] = 'R';                                  // "R3C12"
+    microLinnAnchorString[1] = '8' - Global.microLinn.anchorRow;
     microLinnAnchorString[2] = 'C';
     microLinnAnchorString[3] = col1;
     microLinnAnchorString[4] = col2;
@@ -585,28 +575,28 @@ byte microLinnGetNoteNumber(byte side, byte col, byte row) {
 }
 
 void microLinnStoreRowOffsetCents() {               // called from handleGlobalSettingNewTouch, handleGlobalSettingHold
-  byte edo = Device.microLinn.EDO;
+  byte edo = Global.microLinn.EDO;
   if (edo == 4) edo = 12;                           // because "OFF" is 4edo which is really 12edo
   microLinnRowOffsetCents = (Global.rowOffset == ROWOFFSET_OCTAVECUSTOM ? Global.customRowOffset : Global.rowOffset);
   microLinnRowOffsetCents *= 1200.0 / edo;          // convert to cents
 }
 
 void microLinnStoreColOffsetCents(byte side) {
-  byte edo = Device.microLinn.EDO;
+  byte edo = Global.microLinn.EDO;
   if (edo == 4) edo = 12;                           // because "OFF" is 4edo which is really 12edo
-  microLinnColOffsetCents[side] = Device.microLinn.colOffset[side] * 1200.0 / edo;          // convert to cents
+  microLinnColOffsetCents[side] = Global.microLinn.colOffset[side] * 1200.0 / edo;          // convert to cents
 }
 
 void microLinnAdjustRowAndColOffsets () {         
   // going from say 12edo to 19edo adjusts the row offset from +5 (12edo 4th) to +8 (19edo 4th)
-  if (Device.microLinn.EDO == microLinnOldEDO) return;
+  if (Global.microLinn.EDO == microLinnOldEDO) return;
   // user can keep the row offset constant by using an isomorphic guitar tuning
   if (Global.rowOffset == ROWOFFSET_GUITAR ||
       Global.rowOffset == ROWOFFSET_NOOVERLAP ||
       Global.rowOffset == ROWOFFSET_ZERO) {
     return;
   }
-  byte edo = Device.microLinn.EDO;
+  byte edo = Global.microLinn.EDO;
   if (edo == 4) edo = 12;                                               // because "OFF" is 4edo which is really 12edo
 
   short rowOffset = round (edo * microLinnRowOffsetCents / 1200.0);     // avoid drift as user changes edos
@@ -614,15 +604,15 @@ void microLinnAdjustRowAndColOffsets () {
     rowOffset = microLinnSign(Global.rowOffset == ROWOFFSET_OCTAVECUSTOM ? Global.customRowOffset : Global.rowOffset);
   }
 
-  short leftOffset = Device.microLinn.colOffset[LEFT];
+  short leftOffset = Global.microLinn.colOffset[LEFT];
   if (leftOffset > 1 || leftOffset < -1) {                              // don't adjust offsets of 1, -1 or 0
     leftOffset = round (edo * microLinnColOffsetCents[LEFT] / 1200.0);
-    if (leftOffset == 0) leftOffset = microLinnSign(Device.microLinn.colOffset[LEFT]);   // don't adjust all the way to zero
+    if (leftOffset == 0) leftOffset = microLinnSign(Global.microLinn.colOffset[LEFT]);   // don't adjust all the way to zero
   }
-  short rightOffset = Device.microLinn.colOffset[RIGHT];
+  short rightOffset = Global.microLinn.colOffset[RIGHT];
   if (rightOffset > 1 || rightOffset < -1) { 
     rightOffset = round (edo * microLinnColOffsetCents[RIGHT] / 1200.0);
-    if (rightOffset == 0) rightOffset = microLinnSign(Device.microLinn.colOffset[RIGHT]);
+    if (rightOffset == 0) rightOffset = microLinnSign(Global.microLinn.colOffset[RIGHT]);
   }
 
   // ensure coprime row/col offsets so that all notes of the edo are present
@@ -644,18 +634,18 @@ void microLinnAdjustRowAndColOffsets () {
   } else {
     Global.rowOffset = rowOffset;
   }
-  Device.microLinn.colOffset[LEFT] = leftOffset;
-  Device.microLinn.colOffset[RIGHT] = rightOffset;
-  microLinnOldEDO = Device.microLinn.EDO;
+  Global.microLinn.colOffset[LEFT] = leftOffset;
+  Global.microLinn.colOffset[RIGHT] = rightOffset;
+  microLinnOldEDO = Global.microLinn.EDO;
 }
 
-short microLinnTransposition(byte side) {                                    // # of edosteps to transposeEDOsteps by
+short microLinnTransposition(byte side) {                                          // # of edosteps to transpose by
   short octaves = Split[side].transposeOctave / 12.0;
-  return octaves * Device.microLinn.EDO
-       + Split[side].transposePitch  * MICROLINN_MAJ2ND[Device.microLinn.EDO]      // semitones are interpreted as whole tones
-       - Split[side].transposeLights * MICROLINN_MAJ2ND[Device.microLinn.EDO]
-       + Device.microLinn.transposeEDOsteps[side]
-       - Device.microLinn.transposeEDOlights[side];
+  return octaves * Global.microLinn.EDO
+       + Split[side].transposePitch  * MICROLINN_MAJ2ND[Global.microLinn.EDO]      // semitones are interpreted as whole tones
+       - Split[side].transposeLights * MICROLINN_MAJ2ND[Global.microLinn.EDO]
+       + Global.microLinn.transposeEDOsteps[side]
+       - Global.microLinn.transposeEDOlights[side];
 }
 
 short microLinnSumOfRowOffsets (byte row1, byte row2) {      // edosteps from row1 to row2
@@ -672,31 +662,31 @@ void microLinnCalcTuning() {
   // calcs microLinnEdostep, microLinnMidiNote and microLinnFineTuning
   // called when any column 0 button is released and we return to normal playing mode
   // also called when entering microLinnConfig note lights display or leaving anchor cell display
-  // needed for any change on microLinnConfig, lefthandedness, row offsets, transpose or bendrange
-  // also for octave up/down via switch1/switch2 control buttons or footswitch presses
+  // also called for octave up/down via switch1/switch2 control buttons or footswitch presses
+  // needed for any change on microLinnConfig, row offsets, transpose or bendrange
 
-  clearDisplay();                                            // to avoid flickering while all this runs, not sure it works
+  //clearDisplay();                                            // to avoid flickering while all this runs, not sure it works
   microLinnAdjustRowAndColOffsets();
 
-  //if (ignoreSlides && sensorCell->velocity) return;       // don't calc on releases caused by slides, causes flickering
-  byte edo = Device.microLinn.EDO;
+  //if (ignoreSlides && sensorCell->velocity) return;         // don't calc on releases caused by slides, causes flickering
+  byte edo = Global.microLinn.EDO;
   if (edo == 4) edo = 12;
 
-  byte anchorCol = Device.microLinn.anchorCol;
-  byte anchorRow = Device.microLinn.anchorRow; 
+  byte anchorCol = Global.microLinn.anchorCol;
+  byte anchorRow = Global.microLinn.anchorRow; 
   // anchorPitch = a midi note, but with 2 decimal places for anchorCents
-  float anchorPitch = Device.microLinn.anchorNote + Device.microLinn.anchorCents / 100.0;
+  float anchorPitch = Global.microLinn.anchorNote + Global.microLinn.anchorCents / 100.0;
   // edostepSize = size of 1 edostep/arrow in semitones, e.g. 1\41 is 0.29 semitones
-  float edostepSize = (1200 + Device.microLinn.octaveStretch) / (100.0 * edo);
+  float edostepSize = (1200 + Global.microLinn.octaveStretch) / (100.0 * edo);
 
   for (short side = 0; side < NUMSPLITS; ++side) {
-    short colOffset = Device.microLinn.colOffset[side];
+    short colOffset = Global.microLinn.colOffset[side];
     short transpose = microLinnTransposition(side);
     for (byte row = 0; row < NUMROWS; ++row) {
       short rowDistance = microLinnSumOfRowOffsets (anchorRow, row) + transpose;
       for (byte col = 1; col < NUMCOLS; ++col) {
         short cellDistance = rowDistance + (col - anchorCol) * colOffset;            // cellDistance = distance from the anchor cell in edosteps
-        microLinnEdostep[side][col][row] = microLinnMod(cellDistance, edo);          // octave-reduce
+        microLinnEdostep[side][col][row] = cellDistance;
         float note = anchorPitch + cellDistance * edostepSize;                       // convert from edosteps to fractional 12edo midi note
         if (note > 127 || note < 0) {
           microLinnMidiNote[side][col][row] = 255;
@@ -708,12 +698,12 @@ void microLinnCalcTuning() {
           microLinnFineTuning[side][col][row] = round (fineTuningBend);
         }
       }
-      performContinuousTasks();                                                      // to avoid flickering 
+      performContinuousTasks();                                                      // to avoid flickering, not sure it works
     }
   }
 }
 
-void microLinnSendDebugMidi (byte channel, byte CCnum, short data) {     // channels run 1-16
+void microLinnSendDebugMidi (byte channel, byte CCnum, short data) {                 // channels are numbered 1-16
   if (data < 0) {channel += 1; data = -data;}
   byte databyte = min (data, 127);
   midiSendControlChange(CCnum, databyte, channel);
@@ -729,25 +719,13 @@ void microLinnTuneNewSeqEvent() {
   //   data[3] = microLinnFineTuning[side][sensorRow][sensorCol];  (but convert it to cents)
 
   // in ls_sequencer.ino, find "void StepEvent::setNewEvent" and add microLinnTuneNewSeqEvent() at the end
-  // find "getFaderMin" and "getFaderMax" and let the bend vary by 127 cents each way (pitchOffset is a signed char)
+  // find "getFaderMin" and "getFaderMax" and let the bend vary by 120 cents each way (pitchOffset is a signed char)?
 }
 
 
-/**************************************** FORK MENU ****************************************/
-
-const byte NUM_FORKS = 3;
-const byte MAX_LONGPRESS_MESSAGES = 3;     // after the 3rd long-press of OS version since power-up,
-byte numTimesForkMenu = 0;                 // stop showing the "LONG-PRESS FOR FORK NAMES" message
-byte forkMenuColNum = 0;                   // active column number in fork menu, 0 means nothing active
-boolean forkMenuNowScrolling = false;
-
-/**************************************** BRIGHTNESS FORK ****************************************/
-byte brightness = 12;               // ranges from 1 to 12, each fork must have one byte that is never zero
 
 
-
-
-/************** ls_displayModes.ino ************************/
+/************** functions called in ls_displayModes.ino ************************/
 
 // these functions augment or replace existing functions 
 
@@ -755,31 +733,35 @@ void microLinnPaintNormalDisplayCell(byte split, byte col, byte row) {
   // by default clear the cell color
   byte colour = COLOR_OFF;
   CellDisplay cellDisplay = cellOff;
+  byte edo = Global.microLinn.EDO;
+  byte edostep = microLinnMod(microLinnEdostep[split][col][row], edo);          // octave-reduce
   byte midiNote = microLinnMidiNote[split][col][row];
-  byte edostep = microLinnEdostep[split][col][row];
-  byte edo = Device.microLinn.EDO;
-  byte currScale = Device.microLinnCurrScale[edo];
+  byte currScale = Global.microLinn.currScale;
 
   // unless the note is out of MIDI note range, show it
   if (midiNote <= 127 && !customLedPatternActive) {
     // either dots...
     if (currScale == 8) {
-      byte col2 = (Device.microLinn.colOffset[LEFT] < 0 && Device.microLinn.colOffset[RIGHT] < 0) ? NUMCOLS - col : col;
+      byte col2 = (Global.microLinn.colOffset[LEFT] < 0 && Global.microLinn.colOffset[RIGHT] < 0) ? NUMCOLS - col : col;
       if (Device.microLinnDots[edo][col2] & (1 << row)) {
         colour = Split[LEFT].colorMain;
         cellDisplay = cellOn;
       }
     } 
     // ...or rainbows
-    else if (displayMode == displayMicroLinnAnchorChooser && 
-             col == Device.microLinn.anchorCol && 
-             row == Device.microLinn.anchorRow)  {
+    else if (displayMode == displayMicroLinnAnchorChooser &&                     // is anchor cell?
+             col == Global.microLinn.anchorCol && 
+             row == Global.microLinn.anchorRow)  {
       colour = Device.microLinnRainbows[edo][edostep];
       if (colour == COLOR_OFF) {colour = COLOR_WHITE;}
       cellDisplay = cellSlowPulse;
     }
     else if (currScale == 7 || Device.microLinnScales[edo][edostep] & (1 << currScale)) {
-      colour = Device.microLinnRainbows[edo][edostep];
+      if (Global.microLinn.useRainbow) {
+        colour = Device.microLinnRainbows[edo][edostep];
+      } else {
+        colour = (edostep == 0 ? Split[split].colorAccent : Split[split].colorMain);
+      }
       cellDisplay = cellOn;
     }
     // show pulsating anchor cell if in the octave centered on middle-C
@@ -815,55 +797,53 @@ void microLinnPaintNormalDisplayCell(byte split, byte col, byte row) {
 void  microLinnPaintEdostepTranspose(bool doublePerSplit, byte side) {
   // paint the 2 new rows on the transpose display
   if (!isMicroLinnOn()) return;
-  if (MICROLINN_MAJ2ND[Device.microLinn.EDO] == 1) return;
+  if (MICROLINN_MAJ2ND[Global.microLinn.EDO] == 1) return;
 
   // Paint the edostep transpose values
-  if (!doublePerSplit || Device.microLinn.transposeEDOsteps[LEFT] == Device.microLinn.transposeEDOsteps[RIGHT]) {
-    paintTranspose(Split[Global.currentPerSplit].colorMain, SPLIT_ROW, Device.microLinn.transposeEDOsteps[side]);
+  if (!doublePerSplit || Global.microLinn.transposeEDOsteps[LEFT] == Global.microLinn.transposeEDOsteps[RIGHT]) {
+    paintTranspose(Split[Global.currentPerSplit].colorMain, SPLIT_ROW, Global.microLinn.transposeEDOsteps[side]);
   }
   else if (doublePerSplit) {
-    if (abs(Device.microLinn.transposeEDOsteps[LEFT]) > abs(Device.microLinn.transposeEDOsteps[RIGHT])) {
-      paintTranspose(Split[LEFT].colorMain, SPLIT_ROW, Device.microLinn.transposeEDOsteps[LEFT]);
-      paintTranspose(Split[RIGHT].colorMain, SPLIT_ROW, Device.microLinn.transposeEDOsteps[RIGHT]);
+    if (abs(Global.microLinn.transposeEDOsteps[LEFT]) > abs(Global.microLinn.transposeEDOsteps[RIGHT])) {
+      paintTranspose(Split[LEFT].colorMain, SPLIT_ROW, Global.microLinn.transposeEDOsteps[LEFT]);
+      paintTranspose(Split[RIGHT].colorMain, SPLIT_ROW, Global.microLinn.transposeEDOsteps[RIGHT]);
     }
     else {
-      paintTranspose(Split[RIGHT].colorMain, SPLIT_ROW, Device.microLinn.transposeEDOsteps[RIGHT]);
-      paintTranspose(Split[LEFT].colorMain, SPLIT_ROW, Device.microLinn.transposeEDOsteps[LEFT]);
+      paintTranspose(Split[RIGHT].colorMain, SPLIT_ROW, Global.microLinn.transposeEDOsteps[RIGHT]);
+      paintTranspose(Split[LEFT].colorMain, SPLIT_ROW, Global.microLinn.transposeEDOsteps[LEFT]);
     }
   }
 
   // Paint the edostep-light transpose values
-  if (!doublePerSplit || Device.microLinn.transposeEDOlights[LEFT] == Device.microLinn.transposeEDOlights[RIGHT]) {
-    paintTranspose(Split[Global.currentPerSplit].colorMain, GLOBAL_SETTINGS_ROW, Device.microLinn.transposeEDOlights[side]);
+  if (!doublePerSplit || Global.microLinn.transposeEDOlights[LEFT] == Global.microLinn.transposeEDOlights[RIGHT]) {
+    paintTranspose(Split[Global.currentPerSplit].colorMain, GLOBAL_SETTINGS_ROW, Global.microLinn.transposeEDOlights[side]);
   }
   else if (doublePerSplit) {
-    if (abs(Device.microLinn.transposeEDOlights[LEFT]) > abs(Device.microLinn.transposeEDOlights[RIGHT])) {
-      paintTranspose(Split[LEFT].colorMain, GLOBAL_SETTINGS_ROW, Device.microLinn.transposeEDOlights[LEFT]);
-      paintTranspose(Split[RIGHT].colorMain, GLOBAL_SETTINGS_ROW, Device.microLinn.transposeEDOlights[RIGHT]);
+    if (abs(Global.microLinn.transposeEDOlights[LEFT]) > abs(Global.microLinn.transposeEDOlights[RIGHT])) {
+      paintTranspose(Split[LEFT].colorMain, GLOBAL_SETTINGS_ROW, Global.microLinn.transposeEDOlights[LEFT]);
+      paintTranspose(Split[RIGHT].colorMain, GLOBAL_SETTINGS_ROW, Global.microLinn.transposeEDOlights[RIGHT]);
     }
     else {
-      paintTranspose(Split[RIGHT].colorMain, GLOBAL_SETTINGS_ROW, Device.microLinn.transposeEDOlights[RIGHT]);
-      paintTranspose(Split[LEFT].colorMain, GLOBAL_SETTINGS_ROW, Device.microLinn.transposeEDOlights[LEFT]);
+      paintTranspose(Split[RIGHT].colorMain, GLOBAL_SETTINGS_ROW, Global.microLinn.transposeEDOlights[RIGHT]);
+      paintTranspose(Split[LEFT].colorMain, GLOBAL_SETTINGS_ROW, Global.microLinn.transposeEDOlights[LEFT]);
     }
   }
 }
 
 void microLinnLightOctaveSwitch() {
-
   if (!isMicroLinnOn()) return;
-
   // light the octave/transpose switch if the pitch is transposed by edosteps
-  if ((Device.microLinn.transposeEDOsteps[LEFT] < 0 && Device.microLinn.transposeEDOsteps[RIGHT] < 0) ||
-      (Device.microLinn.transposeEDOsteps[LEFT] < 0 && Device.microLinn.transposeEDOsteps[RIGHT] == 0) ||
-      (Device.microLinn.transposeEDOsteps[LEFT] == 0 && Device.microLinn.transposeEDOsteps[RIGHT] < 0)) {
+  if ((Global.microLinn.transposeEDOsteps[LEFT] < 0 && Global.microLinn.transposeEDOsteps[RIGHT] < 0) ||
+      (Global.microLinn.transposeEDOsteps[LEFT] < 0 && Global.microLinn.transposeEDOsteps[RIGHT] == 0) ||
+      (Global.microLinn.transposeEDOsteps[LEFT] == 0 && Global.microLinn.transposeEDOsteps[RIGHT] < 0)) {
     setLed(0, OCTAVE_ROW, COLOR_RED, cellOn);
   }
-  else if ((Device.microLinn.transposeEDOsteps[LEFT] > 0 && Device.microLinn.transposeEDOsteps[RIGHT] > 0) ||
-           (Device.microLinn.transposeEDOsteps[LEFT] > 0 && Device.microLinn.transposeEDOsteps[RIGHT] == 0) ||
-           (Device.microLinn.transposeEDOsteps[LEFT] == 0 && Device.microLinn.transposeEDOsteps[RIGHT] > 0)) {
+  else if ((Global.microLinn.transposeEDOsteps[LEFT] > 0 && Global.microLinn.transposeEDOsteps[RIGHT] > 0) ||
+           (Global.microLinn.transposeEDOsteps[LEFT] > 0 && Global.microLinn.transposeEDOsteps[RIGHT] == 0) ||
+           (Global.microLinn.transposeEDOsteps[LEFT] == 0 && Global.microLinn.transposeEDOsteps[RIGHT] > 0)) {
     setLed(0, OCTAVE_ROW, COLOR_GREEN, cellOn);
   }
-  else if (Device.microLinn.transposeEDOsteps[LEFT] != 0 && Device.microLinn.transposeEDOsteps[RIGHT] != 0) {
+  else if (Global.microLinn.transposeEDOsteps[LEFT] != 0 && Global.microLinn.transposeEDOsteps[RIGHT] != 0) {
     setLed(0, OCTAVE_ROW, COLOR_YELLOW, cellOn);
   }
   else {
@@ -875,7 +855,7 @@ void microLinnLightOctaveSwitch() {
 
 void paintMicroLinnConfigButtons() {
   for (byte col = 2; col <= 15; ++col) { 
-    if (col == 4 || col == 8 || col == 11 || col == 13) col += 1;                // skip over empty columns
+    if (col == 4 || col == 7 || col == 11 || col == 13) col += 1;               // skip over empty columns
     setLed(col, 0, col == microLinnConfigColNum ? Split[LEFT].colorAccent : Split[LEFT].colorMain, cellOn);
   }
 }
@@ -888,41 +868,41 @@ void paintMicroLinnConfig() {
     // leading spaces ensure the string first appears on the right edge, not on the left edge
     switch (microLinnConfigColNum) {
       case 2: 
-        small_scroll_text_row1("      EDO (NOTES PER OCTAVE)", Split[LEFT].colorMain);
+        small_scroll_text_row1("      LEFT COLUMN OFFSET", Split[LEFT].colorMain);
         break;
       case 3: 
+        small_scroll_text_row1("      RIGHT COLUMN OFFSET", Split[RIGHT].colorMain);
+        break;
+      case 5: 
+        small_scroll_text_row1("      EDO (NOTES PER OCTAVE)", Split[LEFT].colorMain);
+        break;
+      case 6: 
         if (isMicroLinnOn()) {
           small_scroll_text_row1("      OCTAVE STRETCH IN CENTS", Split[LEFT].colorMain);
         } else {
           small_scroll_text_row1("      FIRST SELECT AN EDO", Split[LEFT].colorMain);
         }
         break;
-      case 5: 
+      case 8: 
         if (isMicroLinnOn()) {
-          small_scroll_text_row1("      CHOOSE ANCHOR CELL", Split[LEFT].colorMain);
+          small_scroll_text_row1("      ANCHOR PAD", Split[LEFT].colorMain);
         } else {
           small_scroll_text_row1("      FIRST SELECT AN EDO", Split[LEFT].colorMain);
         }
         break;
-      case 6: 
+      case 9: 
         if (isMicroLinnOn()) {
           small_scroll_text_row1("      ANCHOR NOTE", Split[LEFT].colorMain);
         } else {
           small_scroll_text_row1("      FIRST SELECT AN EDO", Split[LEFT].colorMain);
         }
         break;
-      case 7: 
+      case 10: 
         if (isMicroLinnOn()) {
           small_scroll_text_row1("      ANCHOR CENTS", Split[LEFT].colorMain);
         } else {
           small_scroll_text_row1("      FIRST SELECT AN EDO", Split[LEFT].colorMain);
         }
-        break;
-      case 9: 
-        small_scroll_text_row1("      LEFT COLUMN OFFSET", Split[LEFT].colorMain);
-        break;
-      case 10: 
-        small_scroll_text_row1("      RIGHT COLUMN OFFSET", Split[RIGHT].colorMain);
         break;
       case 12: 
         if (isMicroLinnOn()) {
@@ -932,10 +912,10 @@ void paintMicroLinnConfig() {
         }
         break;
       case 14: 
-        small_scroll_text_row1("      SET TO KITE GUITAR", Split[LEFT].colorMain);
+        small_scroll_text_row1("      SET TO 31EDO BOSANQUET", Split[LEFT].colorMain);
         break;
       case 15: 
-        small_scroll_text_row1("      RESET TO 12-EQUAL", Split[LEFT].colorMain);
+        small_scroll_text_row1("      SET TO 41EDO KITE GUITAR", Split[LEFT].colorMain);
         break;
     }
     paintMicroLinnConfigButtons();
@@ -943,23 +923,29 @@ void paintMicroLinnConfig() {
 
   signed char offset = 0;
   switch (microLinnConfigColNum) {
-    case 2: 
-      if (Device.microLinn.EDO < 5) {
-        smallfont_draw_string(4, 1, "OFF", globalColor, false);
-      } else {
-        paintNumericDataDisplayRow(globalColor, Device.microLinn.EDO, 0, 1, false);
-      }
+    case 2:
+      paintNumericDataDisplayRow(Split[LEFT].colorMain, Global.microLinn.colOffset[LEFT], 0, 1, false);
       break;
     case 3: 
+      paintNumericDataDisplayRow(Split[RIGHT].colorMain, Global.microLinn.colOffset[RIGHT], 0, 1, false);
+      break;
+    case 5: 
+      if (Global.microLinn.EDO < 5) {
+        smallfont_draw_string(4, 1, "OFF", globalColor, false);
+      } else {
+        paintNumericDataDisplayRow(globalColor, Global.microLinn.EDO, 0, 1, false);
+      }
+      break;
+    case 6: 
       if (!isMicroLinnOn()) break;
-      if (Device.microLinn.octaveStretch <= -100) {
+      if (Global.microLinn.octaveStretch <= -100) {
         offset = -5;
-      } else if (Device.microLinn.octaveStretch <= -10) {
+      } else if (Global.microLinn.octaveStretch <= -10) {
         offset = -3;
       }
-      paintNumericDataDisplayRow(globalColor, Device.microLinn.octaveStretch, offset, 1, false);
+      paintNumericDataDisplayRow(globalColor, Global.microLinn.octaveStretch, offset, 1, false);
       break;
-    case 5:  
+    case 8:  
       if (!isMicroLinnOn()) break;
       if (LINNMODEL == 200) {
         smallfont_draw_string(1, 1, microLinnAnchorString, globalColor);
@@ -967,24 +953,18 @@ void paintMicroLinnConfig() {
         condfont_draw_string(1, 1, microLinnAnchorString, globalColor);
       }
       break;  
-    case 6: 
+    case 9: 
       if (!isMicroLinnOn()) break;
-      paintNoteDataDisplay(globalColor, Device.microLinn.anchorNote, LINNMODEL == 200 ? 2 : 1, 1);
-      break;
-    case 7: 
-      if (!isMicroLinnOn()) break;
-      if (Device.microLinn.anchorCents <= -100) {
-        offset = -5;
-      } else if (Device.microLinn.anchorCents <= -10) {
-        offset = -3;
-      }
-      paintNumericDataDisplayRow(globalColor, Device.microLinn.anchorCents, offset, 1, false);
-      break;
-    case 9:
-      paintNumericDataDisplayRow(Split[LEFT].colorMain, Device.microLinn.colOffset[LEFT], 0, 1, false);
+      paintNoteDataDisplay(globalColor, Global.microLinn.anchorNote, LINNMODEL == 200 ? 2 : 1, 1);
       break;
     case 10: 
-      paintNumericDataDisplayRow(Split[RIGHT].colorMain, Device.microLinn.colOffset[RIGHT], 0, 1, false);
+      if (!isMicroLinnOn()) break;
+      if (Global.microLinn.anchorCents <= -100) {
+        offset = -5;
+      } else if (Global.microLinn.anchorCents <= -10) {
+        offset = -3;
+      }
+      paintNumericDataDisplayRow(globalColor, Global.microLinn.anchorCents, offset, 1, false);
       break;
     case 12:
       if (!isMicroLinnOn()) break;
@@ -1002,8 +982,9 @@ void PaintMicroLinnNoteLights() {
 
   byte col = 12;       
   byte stepspan = 0;                                                            // the degree (2nd, 3rd, etc.) minus 1
-  byte edo = Device.microLinn.EDO;
-  byte currScale = Device.microLinnCurrScale[edo];
+  byte edo = Global.microLinn.EDO;
+  byte currScale = Global.microLinn.currScale;
+  byte color;
 
   if (currScale <= 7) {                                                         // paint the scale 
     for (byte edostep = 0; edostep < edo; ++edostep) {
@@ -1013,7 +994,12 @@ void PaintMicroLinnNoteLights() {
         col -= MICROLINN_SCALEROWS[edo][stepspan] - MICROLINN_SCALEROWS[edo][stepspan - 1];
       }
       if (currScale == 7 || Device.microLinnScales[edo][edostep] & (1 << currScale)) {
-        setLed(col, 7 - (stepspan % 7), Device.microLinnRainbows[edo][edostep], cellOn);
+        if (Global.microLinn.useRainbow) {
+          color = Device.microLinnRainbows[edo][edostep];
+        } else {
+          color = (edostep == 0 ? Split[Global.currentPerSplit].colorAccent : Split[Global.currentPerSplit].colorMain);
+        }
+        setLed(col, 7 - (stepspan % 7), color, cellOn);
       }
       col += 1; 
     }
@@ -1037,18 +1023,35 @@ void PaintMicroLinnNoteLights() {
   }
   setLed(3, 7, currScale == 7 ? Split[LEFT].colorAccent : Split[LEFT].colorMain, cellOn);    // color editor
   setLed(3, 5, currScale == 8 ? Split[LEFT].colorAccent : Split[LEFT].colorMain, cellOn);    // dots selector
-  setLed(3, 3, Split[LEFT].colorMain, cellOn);                                               // mass selector/resetter
+  setLed(3, 3, Global.microLinn.useRainbow ? COLOR_LIME : Split[LEFT].colorMain, cellOn);  // rainbow enabler
 }
 
-void paintMicroLinnDotsEditor(boolean showAll) {
-  if (showAll) clearDisplay();
-  for (byte col = showAll ? 1 : 4; col < NUMCOLS; ++col) {
-    for (byte row = showAll ? 0 : 1; row < MAXROWS; ++row) {
-      if (Device.microLinnDots[Device.microLinn.EDO][col] & (1 << row)) {
+void paintMicroLinnDotsEditor(boolean fullScreen) {
+  if (fullScreen) clearDisplay();
+  for (byte col = fullScreen ? 1 : 4; col < NUMCOLS; ++col) {
+    for (byte row = fullScreen ? 0 : 1; row < MAXROWS; ++row) {
+      if (Device.microLinnDots[Global.microLinn.EDO][col] & (1 << row)) {
         setLed(col, row, globalColor, cellOn);
       }
     }
   }
+}
+
+void paintMicroLinnUninstall() {
+  clearDisplay();
+  setLed(4, 0, COLOR_GREEN, cellOn);
+  setLed(5, 0, microLinnUninstall == 1 ? COLOR_CYAN : COLOR_GREEN, cellOn);
+  setLed(6, 0, COLOR_GREEN, cellOn);
+  setLed(11, 0, COLOR_RED, cellOn);
+  setLed(12, 0, microLinnUninstall == 0 ? COLOR_ORANGE : COLOR_RED, cellOn);
+  setLed(13, 0, COLOR_RED, cellOn);
+  small_scroll_text_row1("      UNINSTALL MICROLINN? GREEN = YES, RED = NO", Split[LEFT].colorMain);
+  setLed(4, 0, COLOR_GREEN, cellOn);
+  setLed(5, 0, microLinnUninstall == 1 ? COLOR_CYAN : COLOR_GREEN, cellOn);
+  setLed(6, 0, COLOR_GREEN, cellOn);
+  setLed(11, 0, COLOR_RED, cellOn);
+  setLed(12, 0, microLinnUninstall == 0 ? COLOR_ORANGE : COLOR_RED, cellOn);
+  setLed(13, 0, COLOR_RED, cellOn);
 }
 
 void paintForkMenuButtons() {
@@ -1089,7 +1092,7 @@ void paintBrightnessScreen() {
 }
 
 
-/************** ls_settings.ino ************************/
+/************** functions called in ls_settings.ino ************************/
 
 void enterForkMenu () {
   forkMenuColNum = 0;
@@ -1149,8 +1152,7 @@ void microLinnSetGlobalView() {
 void microLinnHandleGlobalScaleHold() {                       // long-press one of the 9 scale buttons
   if (!isMicroLinnOn()) return;
   if (sensorRow <= 2) {
-    //cellTouched(ignoredCell);
-    Device.microLinnCurrScale[Device.microLinn.EDO] = Global.activeNotes;  
+    Global.microLinn.currScale = Global.activeNotes;  
     microLinnCalcTuning();
     setDisplayMode(displayMicroLinnConfig);
     updateDisplay();
@@ -1164,23 +1166,21 @@ void microLinnHandleGlobalScaleHold() {                       // long-press one 
 }
 
 void microLinnSetCurrScale() {
-  Device.microLinnCurrScale[Device.microLinn.EDO] = Global.activeNotes;
+  Global.microLinn.currScale = Global.activeNotes;
 }
 
 void microLinnHandleOctaveTransposeNewTouchSplit(byte side) {
   // handle touches to the 2 new rows on the transpose display
   if (!isMicroLinnOn()) return;
-  if (MICROLINN_MAJ2ND[Device.microLinn.EDO] == 1) return;
+  if (MICROLINN_MAJ2ND[Global.microLinn.EDO] == 1) return;
 
-  if (sensorRow == SPLIT_ROW) {
-    if (sensorCol > 0 && sensorCol < 16) {
-      Device.microLinn.transposeEDOsteps[side] = sensorCol - 8;
-    }
+  if (sensorRow == SPLIT_ROW &&
+      sensorCol > 0 && sensorCol < 16) {
+    Global.microLinn.transposeEDOsteps[side] = sensorCol - 8;
   }
-  else if (sensorRow == GLOBAL_SETTINGS_ROW) {
-    if (sensorCol > 0 && sensorCol < 16) {
-      Device.microLinn.transposeEDOsteps[side] = sensorCol - 8;
-    }
+  else if (sensorRow == GLOBAL_SETTINGS_ROW &&&
+           sensorCol > 0 && sensorCol < 16) {
+    Global.microLinn.transposeEDOlights[side] = sensorCol - 8;
   }
 }
 
@@ -1193,7 +1193,7 @@ void enterMicroLinnConfig () {
 
 boolean isMicroLinnConfigButton () {
   return sensorRow == 0 && sensorCol >= 2 && sensorCol <= 15 
-      && sensorCol != 4 && sensorCol != 8 && sensorCol != 11 && sensorCol != 13;
+      && sensorCol != 4 && sensorCol != 7 && sensorCol != 11 && sensorCol != 13;
 }
 
 void handleMicroLinnConfigNewTouch() {
@@ -1215,38 +1215,37 @@ void handleMicroLinnConfigNewTouch() {
   if (sensorRow > 0) {                                                   // rows 1-7 are handled right away
     switch (microLinnConfigColNum) {
       case 2: 
-        handleNumericDataNewTouchCol(Device.microLinn.EDO, 4, MICROLINN_MAX_EDO, true);
-        lightSettings = LIGHTS_ACTIVE;
-        Global.activeNotes = Device.microLinnCurrScale[Device.microLinn.EDO];
+        microLinnAdjustRowAndColOffsets();
+        handleNumericDataNewTouchCol(Global.microLinn.colOffset[LEFT], -MICROLINN_MAX_OFFSET, MICROLINN_MAX_OFFSET, true);
+        microLinnStoreColOffsetCents(LEFT);
         break;
       case 3: 
-        if (!isMicroLinnOn()) break;
-        handleNumericDataNewTouchCol(Device.microLinn.octaveStretch, -120, 120, true); 
+        microLinnAdjustRowAndColOffsets();
+        handleNumericDataNewTouchCol(Global.microLinn.colOffset[RIGHT], -MICROLINN_MAX_OFFSET, MICROLINN_MAX_OFFSET, true); 
+        microLinnStoreColOffsetCents(RIGHT);
         break;
       case 5: 
+        handleNumericDataNewTouchCol(Global.microLinn.EDO, 4, MICROLINN_MAX_EDO, true);
+        lightSettings = LIGHTS_ACTIVE;
+        break;
+      case 6: 
+        if (!isMicroLinnOn()) break;
+        handleNumericDataNewTouchCol(Global.microLinn.octaveStretch, -120, 120, true); 
+        break;
+      case 8: 
         if (!isMicroLinnOn()) break;
         resetNumericDataChange();
         microLinnCalcTuning();                              // anchor cell chooser needs to know the current tuning
         setDisplayMode(displayMicroLinnAnchorChooser);
         updateDisplay();
         break;
-      case 6: 
-        if (!isMicroLinnOn()) break;
-        handleNumericDataNewTouchCol(Device.microLinn.anchorNote, 0, 127, true); 
-        break;
-      case 7: 
-        if (!isMicroLinnOn()) break;
-        handleNumericDataNewTouchCol(Device.microLinn.anchorCents, -100, 100, true); 
-        break;
       case 9: 
-        microLinnAdjustRowAndColOffsets();
-        handleNumericDataNewTouchCol(Device.microLinn.colOffset[LEFT], -MICROLINN_MAX_OFFSET, MICROLINN_MAX_OFFSET, true);
-        microLinnStoreColOffsetCents(LEFT);
+        if (!isMicroLinnOn()) break;
+        handleNumericDataNewTouchCol(Global.microLinn.anchorNote, 0, 127, true); 
         break;
       case 10: 
-        microLinnAdjustRowAndColOffsets();
-        handleNumericDataNewTouchCol(Device.microLinn.colOffset[RIGHT], -MICROLINN_MAX_OFFSET, MICROLINN_MAX_OFFSET, true); 
-        microLinnStoreColOffsetCents(RIGHT);
+        if (!isMicroLinnOn()) break;
+        handleNumericDataNewTouchCol(Global.microLinn.anchorCents, -100, 100, true); 
         break;
       case 12: 
         if (!isMicroLinnOn()) break;
@@ -1257,8 +1256,8 @@ void handleMicroLinnConfigNewTouch() {
 }
 
 void handleMicroLinnConfigHold() {
-  if (isMicroLinnConfigButton() &&                                        // long-press bottom row
-      isCellPastSensorHoldWait() && !microLinnConfigNowScrolling) {     
+  if (isMicroLinnConfigButton() && !microLinnConfigNowScrolling &&        // long-press bottom row (or short-press when no edo is set)
+     (isCellPastSensorHoldWait() || (!isMicroLinnOn() && sensorCol >= 6 && sensorCol <= 12))) {     
     microLinnConfigNowScrolling = true;
     paintMicroLinnConfig();                                               // scroll the name of the button
   } else if (sensorRow > 0 && microLinnConfigColNum == 12) {
@@ -1269,22 +1268,24 @@ void handleMicroLinnConfigHold() {
 void handleMicroLinnConfigRelease() {
   if (isMicroLinnConfigButton() && !isCellPastSensorHoldWait()) {         // short-press bottom row
     switch (microLinnConfigColNum) {
-      case 2:
-        microLinnOldEDO = Device.microLinn.EDO;
+      case 5:
+        microLinnOldEDO = Global.microLinn.EDO;
         break;
       case 12:
-        microLinnCalcTuning();                                       // note lights display needs to know the current tuning
-        updateDisplay();
+        if (isMicroLinnOn()) {
+          microLinnCalcTuning();                                       // note lights display needs to know the current tuning
+          updateDisplay();
+        }
         break;
       case 14:
         resetNumericDataChange();
-        microLinnSetKiteGuitarDefaults();
+        microLinnSet31edoBosanquetDefaults();
         setDisplayMode(displayNormal); 
         updateDisplay();
         break;
       case 15:
         resetNumericDataChange();
-        microLinnResetTo12equal();
+        microLinnSetKiteGuitarDefaults();
         setDisplayMode(displayNormal); 
         updateDisplay();
         break;
@@ -1297,39 +1298,44 @@ void handleMicroLinnConfigRelease() {
 }
 
 void handleMicroLinnAnchorChooserNewTouch() {
-  Device.microLinn.anchorRow = sensorRow;
-  Device.microLinn.anchorCol = sensorCol;
-  cellTouched(ignoredCell);                      // so that choosing a row 0 note won't trigger a scrolling message
+  Global.microLinn.anchorRow = sensorRow;
+  Global.microLinn.anchorCol = sensorCol;
+  cellTouched(ignoredCell);                                // so that choosing a row 0 note won't trigger a scrolling message
   microLinnUpdateAnchorString ();
   setDisplayMode(displayMicroLinnConfig); 
   updateDisplay(); 
 }
 
 void handleMicroLinnNoteLightsNewTouch() {
-  byte edo = Device.microLinn.EDO;
+  byte edo = Global.microLinn.EDO;
 
   if (sensorCol == 1 && sensorRow > 0) {                              // scale selectors
-    Device.microLinnCurrScale[edo] = 7 - sensorRow;
-    Global.activeNotes = Device.microLinnCurrScale[edo];
+    Global.microLinn.currScale = 7 - sensorRow;
+    Global.activeNotes = Global.microLinn.currScale;
     updateDisplay(); 
     setLed(1, sensorRow, Split[LEFT].colorAccent, cellSlowPulse);
     return;
   }
   if (sensorCol == 3 && sensorRow == 7) {                             // rainbow editor
-    Device.microLinnCurrScale[edo] = 7;
+    Global.microLinn.currScale = 7;
     Global.activeNotes = 7;
     updateDisplay(); 
     setLed(3, 7, Split[LEFT].colorAccent, cellSlowPulse);
     return;
   }
   if (sensorCol == 3 && sensorRow == 5) {                             // dots selector
-    Device.microLinnCurrScale[edo] = 8;
+    Global.microLinn.currScale = 8;
     Global.activeNotes = 8;
     updateDisplay(); 
     setLed(3, 5, Split[LEFT].colorAccent, cellSlowPulse);
     return;
   }
-  if (sensorCol > 3 && sensorRow > 0 &&  Device.microLinnCurrScale[edo] == 8) {    // enter dots editor
+  if (sensorCol == 3 && sensorRow == 3) {                             // rainbow enabler
+    Global.microLinn.useRainbow = !Global.microLinn.useRainbow;
+    updateDisplay(); 
+    return;
+  }
+  if (sensorCol > 3 && sensorRow > 0 &&  Global.microLinn.currScale == 8) {    // enter dots editor
     setDisplayMode(displayMicroLinnDotsEditor);
     updateDisplay();
     return;
@@ -1341,7 +1347,7 @@ void handleMicroLinnNoteLightsNewTouch() {
      (edostep >  MICROLINN_SCALEROWS[edo][stepspan-1] ||
      (stepspan == 0 && edostep > MICROLINN_SCALEROWS[edo][6] - edo))) {
     edostep = microLinnMod (edostep, edo);
-    if (Device.microLinnCurrScale[edo] == 7) {                                // rainbow editor
+    if (Global.microLinn.currScale == 7) {                                    // rainbow editor
       switch (Device.microLinnRainbows[edo][edostep]) {                       // cycle through the colors
         case 8:  Device.microLinnRainbows[edo][edostep] = 1;  break;          // white to red
         case 1:  Device.microLinnRainbows[edo][edostep] = 9;  break;          // red to orange
@@ -1354,79 +1360,71 @@ void handleMicroLinnNoteLightsNewTouch() {
         case 6:  Device.microLinnRainbows[edo][edostep] = 11; break;          // magenta
         case 11: Device.microLinnRainbows[edo][edostep] = 8;  break;          // pink
       }
-    } else if (Device.microLinnCurrScale[edo] < 7) {
-      Device.microLinnScales[edo][edostep] ^= (1 << Device.microLinnCurrScale[edo]);     // xor to toggle the bit
+    } else if (Global.microLinn.currScale < 7) {
+      Device.microLinnScales[edo][edostep] ^= (1 << Global.microLinn.currScale);     // xor to toggle the bit
     }
     updateDisplay(); 
   }
 }
 
-void microLinnResetScaleNote (byte edo, byte edostep, byte currScale) {
-  bitWrite (Device.microLinnScales[edo][edostep], 
-            currScale, 
-            bitRead(MICROLINN_SCALES[edo][edostep],currScale));
-}
-
 void handleMicroLinnNoteLightsHold() {
 
   if (isCellPastConfirmHoldWait()) {                                           // long-press 800 ms
-    byte edo = Device.microLinn.EDO;
-    byte currScale = Device.microLinnCurrScale[edo];
+    byte edo = Global.microLinn.EDO;
+    byte currScale = Global.microLinn.currScale;
 
     if (currScale <= 6 && sensorCol == 1 && sensorRow > 0) {                   // scale selector button
-      if (cell(3, 3).touched == untouchedCell) {                               // mass-reset button
-        for (byte edostep = 0; edostep < edo; ++edostep) {                     // reset the scale
-          microLinnResetScaleNote(edo, edostep, currScale);
-        }
-      } else {
-        for (byte edo = 5; edo <= MICROLINN_MAX_EDO; ++edo) {                  // reset this scale in all the edos
-          for (byte edostep = 0; edostep < edo; ++edostep) { 
-            microLinnResetScaleNote(edo, edostep, currScale);
-          }
-        }
+      for (byte edostep = 0; edostep < edo; ++edostep) {                       // reset the scale
+        bitWrite (Device.microLinnScales[edo][edostep], 
+                  currScale, 
+                  bitRead(MICROLINN_SCALES[edo][edostep],currScale));
       }
       updateDisplay();
       return;
     }
 
-    if (currScale == 7 && sensorCol == 3 && sensorRow == 7) {                                      // color editor button
-      if (cell(3, 3).touched == untouchedCell) {                                                   // mass-reset button
-        memcpy (&Device.microLinnRainbows[edo][0], &MICROLINN_RAINBOWS[edo][0], edo);              // reset the rainbow
-      } else {
-        memcpy (Device.microLinnRainbows, MICROLINN_RAINBOWS, sizeof(Device.microLinnRainbows));   // reset all the rainbows
-      }
+    if (currScale == 7 && sensorCol == 3 && sensorRow == 7) {                            // color editor button
+      memcpy (&Device.microLinnRainbows[edo][0], &MICROLINN_RAINBOWS[edo][0], edo);      // reset the rainbow
       updateDisplay();
       return;
     }
 
     if (currScale == 8 && sensorCol == 3 && sensorRow == 5) {                        // dots selector button
-      if (cell(3, 3).touched == untouchedCell) {                                     //  mass-reset button
-        memcpy (&Device.microLinnDots[edo][0], &MICROLINN_DOTS[edo][0], MAXCOLS);    // reset the dots
-      } else {
-        memcpy (Device.microLinnDots, MICROLINN_DOTS, sizeof(Device.microLinnDots)); // reset all the dots
-      }
+      memcpy (&Device.microLinnDots[edo][0], &MICROLINN_DOTS[edo][0], MAXCOLS);      // reset the dots
       updateDisplay();
     }
   }
 }
 
 void handleMicroLinnNoteLightsRelease() {
-  byte currScale = Device.microLinnCurrScale[Device.microLinn.EDO];
+  byte currScale = Global.microLinn.currScale;
   if (!isCellPastConfirmHoldWait()) {
     if ((sensorCol == 1 && sensorRow > 0 && currScale <= 6) ||                  // short-press scale selector
         (sensorCol == 3 && sensorRow == 7 && currScale == 7) ||                 // short-press rainbow editor
         (sensorCol == 3 && sensorRow == 5 && currScale == 8)) {                 // short-press dots selector
       setLed(sensorCol, sensorRow, Split[LEFT].colorAccent, cellOn);            // stop pulsing
-      if (cell(3, 3).touched == touchedCell) {                                  // mass-select button
-        memset (Device.microLinnCurrScale, currScale, sizeof(Device.microLinnCurrScale));
-      }
     }
   }
 }
 
 void handleMicroLinnDotsEditorNewTouch() {
-  Device.microLinnDots[Device.microLinn.EDO][sensorCol] ^= (1 << sensorRow);    // xor to toggle the bit
+  Device.microLinnDots[Global.microLinn.EDO][sensorCol] ^= (1 << sensorRow);    // xor to toggle the bit
   updateDisplay();
+}
+
+void handleMicroLinnUninstallNewTouch() {
+  if (sensorRow == 0 && sensorCol >= 4 && sensorCol <= 6) {
+    microLinnUninstall = 1;
+    switchSerialMode(!Device.serialMode);
+    storeSettings();
+    updateDisplay(); 
+  }
+  else if (sensorRow == 0 && sensorCol >= 11 && sensorCol <= 13) {
+    microLinnUninstall = 0;
+    switchSerialMode(!Device.serialMode);
+    storeSettings();
+    updateDisplay(); 
+  }
 }
 
 void handleBrightnessNewTouch() {
@@ -1437,16 +1435,29 @@ void handleBrightnessNewTouch() {
 }
 
 
+/************** functions called in ls_midi.ino ************************/
 
-/************** ls_switches.ino ************************/
+byte microLinnGetCellColor(byte split, short col, byte row) {
+  if (Global.microLinn.currScale == 8) return Split[LEFT].colorMain;
+  byte edo = Global.microLinn.EDO;
+  byte edostep = microLinnMod(microLinnEdostep[split][col][row], edo);          // octave-reduced
+  if (Global.microLinn.useRainbow) {
+    return Device.microLinnRainbows[edo][edostep];
+  } else {
+    return (edostep == 0 ? Split[split].colorAccent : Split[split].colorMain);
+  }
+}
+
+
+/************** functions called in ls_switches.ino ************************/
 
 void microLinnChangeEDO(int delta) {                                   // called via switch1, switch2 or footswitch press
   if (!isMicroLinnOn()) return;
-  microLinnOldEDO = Device.microLinn.EDO;
-  Device.microLinn.EDO += delta;
-  if (Device.microLinn.EDO < 5) {Device.microLinn.EDO = MICROLINN_MAX_EDO;}        // wrap around
-  if (Device.microLinn.EDO > MICROLINN_MAX_EDO) {Device.microLinn.EDO = 5;}
-  Global.activeNotes = Device.microLinnCurrScale[Device.microLinn.EDO];
+  microLinnOldEDO = Global.microLinn.EDO;
+  Global.microLinn.EDO += delta;
+  if (Global.microLinn.EDO < 5) {Global.microLinn.EDO = MICROLINN_MAX_EDO;}        // wrap around
+  if (Global.microLinn.EDO > MICROLINN_MAX_EDO) {Global.microLinn.EDO = 5;}
+  Global.activeNotes = Global.microLinn.currScale;
   microLinnCalcTuning();
   updateDisplay();
 }
@@ -1455,7 +1466,7 @@ void microLinnChangeScale(int delta) {                                // called 
   signed char newScale = Global.activeNotes += delta;                 // use a signed char because we can't set a byte to -1
   if (newScale > 8) newScale = 0;                                     // wrap around
   if (newScale < 0) newScale = 8;
-  Device.microLinnCurrScale[Device.microLinn.EDO] = Global.activeNotes = newScale;
+  Global.microLinn.currScale = Global.activeNotes = newScale;
   updateDisplay();
 }
 
@@ -1885,6 +1896,28 @@ void initializeMicroLinn() {                  // called in setup(), runs every t
   updateDisplay();
   microLinnUpdateAnchorString ();
 }
+
+
+void microLinnResetTo12equal() {
+  Global.microLinn.EDO = 12;
+  Global.microLinn.octaveStretch = 0; 
+  //Global.microLinn.anchorRow = 4;                 // 4th row from top
+  //Global.microLinn.anchorCol = 11; 
+  //Global.microLinn.anchorNote = 60;               // middle-C
+  //microLinnUpdateAnchorString();
+  Global.microLinn.anchorCents = 0;
+  Global.microLinn.colOffset[LEFT] = 1;
+  Global.microLinn.colOffset[RIGHT] = 1;
+  Global.rowOffset = 5;
+  microLinnStoreRowOffsetCents();
+  microLinnStoreColOffsetCents(LEFT);
+  microLinnStoreColOffsetCents(RIGHT);
+  microLinnOldEDO = 12;                                 // to avoid microLinnAdjustRowAndColOffsets()
+  microLinnCalcTuning();
+  Global.activeNotes = 0;                              // set display to the major scale
+  loadCustomLedLayer(getActiveCustomLedPattern());
+}
+
 
 
 byte forkMenuProtectForkData(byte audienceMessageToEdit) {      // keep the user from editing fork data stored at the end of the message
