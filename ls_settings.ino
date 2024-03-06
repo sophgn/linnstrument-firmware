@@ -958,6 +958,11 @@ void handleControlButtonRelease() {
     // and save the global settings which may have been changed.
 
     case GLOBAL_SETTINGS_ROW:                                // global settings button released
+      if (displayMode == displayMicroLinnUninstall){
+        setDisplayMode(displayGlobal);
+        updateDisplay();
+        break;
+      }
       if (displayMode == displayReset) {
         // ensure that MPE is actively disabled before resetting
         disableMpe(LEFT);
@@ -2605,7 +2610,6 @@ void handleGlobalSettingNewTouch() {
             case LIGHTS_ACTIVE:
               Global.activeNotes = sensorCol-2 + (sensorRow*3);
               loadCustomLedLayer(getActiveCustomLedPattern());
-              microLinnSetCurrScale();
               break;
           }
         }
@@ -2859,16 +2863,10 @@ void handleGlobalSettingNewTouch() {
             break;
         }
         break;
-#ifndef DEBUG_ENABLED
-      case 17:                                // avoid conflict, column 17 also sets the debug level
-        if (sensorRow == 1) {
-          enterForkMenu();
-        }
-        break;
-        if (sensorRow == 2) {
-          setDisplayMode(displayMicroLinnUninstall);
-          updateDisplay();
-        }
+#ifndef DEBUG_ENABLED                                  // avoid conflict, column 17 also sets the debug level
+      case 17: 
+        if (sensorRow == 1) enterForkMenu();
+        if (sensorRow == 2) enterMicroLinnUninstallMenu();
         break;
 #endif
     }
@@ -2953,7 +2951,7 @@ void handleGlobalSettingNewTouch() {
 
     case 16:
       switch (sensorRow) {
-        case 1:                                                        // OS version is now handled here on release
+        case 1:                                                        // OS version is now handled on release
           setLed(sensorCol, sensorRow, globalColor, cellSlowPulse);    // to allow longpress to the fork menu
           break;
         case 2:

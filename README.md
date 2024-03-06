@@ -14,19 +14,22 @@ WARNING: installing this fork deletes your Linnstrument's settings and calibrati
 2) Download the latest version of linnstrument-firmware-microLinn.bin from this github.
 3) If on a mac, put both the updater and the .bin file on your **desktop**. If on a PC, _______________.
 4) Run the updater. Don't run anything else while it's running. If it asks for permission to read files from the desktop, say yes.
-5) Confirm the update by short-pressing the OS version (global settings, column 16). It should be 234.08A. If not, try using the 2.3.0 updater instead. 
+5) Confirm the update by short-pressing the OS version (Global Settings, column 16). It should be 234.08A. If not, try using the 2.3.0 updater instead. 
 
-IMPORTANT: Once microLinn is installed, before you can update the OS to a new version, microLinn asks if you want to uninstall microLinn.
-Say no if you're updating to a new version of microLinn. Say yes otherwise (e.g. if you're installing an official version of the firmware). 
-This avoids deleting your Linnstrument's user settings and calibration data.
+IMPORTANT: Once microLinn is installed, when you later update the OS to an even newer version, you'll be asked if you want to uninstall microLinn.
+Say no if you're updating to a new version of microLinn. This avoids deleting your microtonal data needlessly.
+Say yes otherwise (e.g. if you're installing an official version of the firmware, or someone else's OS version). 
+This does delete your microtonal data, necessary in order to avoid deleting all your user settings and calibration data.
 
 -------- NON-MICROTONAL FEATURES -------- 
 
-CHAINING SEQUENCES: hold down the pad for sequence #1 and tap the pad for sequence #2. Now the two sequences are chained into a single 
-sequence twice as long. You can chain #3 and #4 together as well. Or chain all 4 together. The PREV and NEXT footswitches work as expected.
+CHAINING SEQUENCES: hold the pad for sequence #2 and tap the pad for sequence #1. Now the two sequences are chained into a single 
+sequence twice as long. This is indicated by sequence #1 being accented and sequence #2 blinking.
+You can chain #3 and #4 together as well. Or chain all 4 together. The PREV and NEXT footswitches work as expected.
 To clear the chaining, tap the pad immediately to the left of the 4 selector pads. Or just disconnect the Linnstrument and reconnect it.
 You can select sequences on the fly as the sequencer is playing as usual. You can also chain and unchain on the fly. 
 When chaining on the fly, to start at the beginning of the chain not the end, hold the last sequence and tap the first one.
+But when chaining when the sequencer isn't running, hold the first sequence and tap the last one. Alas, such is life.
 
 BLINKING MODE: This is a variation of the SAME mode that shows you other occurences of the currently played note.
 
@@ -42,7 +45,7 @@ detuning to A-432 will heal your chakras lol.) Access it throught microLinn's an
 
 -------- MICROTONAL FEATURES -------- 
 
-On the global settings screen, long-press col 1 bottom row (VIEW MAIN) to go to the main microLinn menu.
+On the Global Settings screen, long-press col 1 bottom row (VIEW MAIN) to go to the main microLinn menu.
 Once the edo (notes per octave) is set to anything other than OFF, VIEW MAIN turns light blue and you can short-press it.
 The menu has 10 buttons. Long-press each one to see its function. Most don't work until you set the edo.
 
@@ -77,10 +80,12 @@ The 9 scales in Global Settings cols 2-4 are now microtonal and change for each 
 Shortcut: you can long-press the scale's pad in the Global Settings display to go directly to that scale.
 
 The note lights display has 7 scale buttons plus the color editor, the dots selector and the rainbow-enabler button.
-Tap a note in a scale to toggle it on or off. Tap a note in the color editor in column 3 row 1 to cycle it thru the rainbow. 
-Tapping the dots selector in column 3 row 3 makes the dots appear mid-screen. Tapping the dots lets you toggle them on or off. 
-Long-press the scale buttons or color editor button or the dots selector button to reset the note lights to the default. 
-Tap the orange rainbow enabler button in column 3 row 5 to turn off the rainbow and limit the note lights to the usual two colors.
+Tap a note in a scale to toggle it on or off. Like the guitar tuning screen, a midi note is sent when you tap. 
+The color editor is the 8th scale, in which all notes are always on. Tap a note to cycle it thru the rainbow. 
+The 9th scale (dots) isn't really a scale. It's a full-screen display like the custom light patterns.
+Tapping the dots selector makes the dots appear in blue mid-screen. Tapping the dots lets you toggle them on or off. 
+Long-press the scale buttons or the color editor button or the dots selector button to reset the note lights to the default. 
+Tap the yellow rainbow enabler button to turn off the rainbow and limit the note lights to the usual two colors.
 
 The 3 custom light patterns are totally separate from all this and are still available for use!
 This web browser lets you easily edit them: https://forrcaho.github.io/linnstrument_colorizer/

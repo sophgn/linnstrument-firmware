@@ -758,16 +758,15 @@ enum SustainBehavior {
 };
 
 struct MicroLinn {
+  signed char colOffset[NUMSPLITS];          // 2 column offsets, -33 to 32 (-33 = reversed guitar)
   byte EDO;                                  // limited to 5-55, plus 4 for OFF
   signed char octaveStretch;                 // limited to ± 120 cents, for non-octave tunings such as bohlen-pierce
   byte anchorCol;
   byte anchorRow;
   byte anchorNote;                           // any midi note 0-127
   signed char anchorCents;                   // limited to ± 100 cents
-  byte currScale;                            // scales are numbered 0-6, 7 = full rainbow, 8 = dots
-  signed char colOffset[NUMSPLITS];          // 2 column offsets, -34 to 33
-  byte transposeEDOsteps[NUMSPLITS];         // accessed not via displayMicroLinnConfig but via displayOctaveTranspose
-  byte transposeEDOlights[NUMSPLITS];
+  signed char transposeEDOsteps[NUMSPLITS];  // both accessed not via displayMicroLinnConfig but via displayOctaveTranspose
+  signed char transposeEDOlights[NUMSPLITS];
   boolean useRainbow;                        // if false, use colorAccent and colorMain instead
 };  
 
@@ -1165,7 +1164,7 @@ void reset() {
 
   initializeSwitches();
 
-  resetMicroLinn();
+  initializeMicroLinn();
 }
 
 boolean switchPressAtStartup(byte switchRow) {
@@ -1425,7 +1424,7 @@ void setup() {
   SWITCH_FREERAM = true;
 #endif
 
-  initializeMicroLinn ();  
+  setupMicroLinn ();  
 
   setupDone = true;
 

@@ -219,7 +219,7 @@ struct StepSequencerState {
 };
 StepSequencerState seqState[MAX_SEQUENCERS];
 
-short patternChain[NUMSPLITS][MAX_SEQUENCER_PATTERNS] = {-1, -1, -1, -1, -1, -1, -1, -1};      // which pattern comes next automatically
+signed char patternChain[NUMSPLITS][MAX_SEQUENCER_PATTERNS] = {-1};          // which pattern comes next automatically, -1 means nothing specified
 
 void initializeSequencer() {
   SEQ_MUTER_COLUMN = NUMCOLS - 1 - 1;  
@@ -2181,7 +2181,7 @@ void StepSequencerState::turnOff(boolean save) {
   nextPosition = -1;
   ticksUntilNextStep = 0;
   clock24PPQOffset = 0;
-  nextPattern = -1;
+  nextPattern = patternChain[split][currentPattern];
   switchPatternOnBeat = false;
 
   turnOffEvents();
@@ -3257,5 +3257,8 @@ boolean isWithinSequencerPatternChainClearArea() {           // hidden switches 
 }
 
 void handleSequencerPatternChainClearTouch() {
-  memset(&patternChain[SEQ_PATTERN_SELECTOR_TOP - sensorRow][0], -1, 4);
+  byte split = SEQ_PATTERN_SELECTOR_TOP - sensorRow;
+  memset(&patternChain[split][0], -1, 4);
+  seqState[split].nextPattern = -1;
+  seqState[split].paintPatternSelector();                    // so that the nextPattern pad isn't blinking
 }

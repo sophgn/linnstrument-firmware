@@ -1687,7 +1687,7 @@ void highlightPossibleNoteCells(byte split, byte notenum) {
       if (Split[sensorSplit].playedTouchMode == playedBlink) {
         byte color = getLedColor(col, row, LED_LAYER_MAIN);
         if (color == COLOR_OFF) color = Split[split].colorPlayed;
-        if (isMicroLinnOn) color = microLinnGetCellColor(split, col, row);
+        if (isMicroLinnOn()) color = microLinnGetCellColor(split, col, row);
         setLed(col, row, color, cellSlowPulse, LED_LAYER_PLAYED);
       } else {
         setLed(col, row, Split[split].colorPlayed, cellOn, LED_LAYER_PLAYED);
@@ -1738,7 +1738,7 @@ short getNoteNumColumn(byte split, byte notenum, byte row) {
   short col;
 
   if (Global.microLinn.colOffset[split] != 1) {
-    col = notenum - microLinnMidiNote[split][1][row];
+    col = notenum - microLinnEdostep[split][1][row];
     if (col % Global.microLinn.colOffset[split] != 0) return -1;         // if this row skips this note
     col = 1.0 * col / Global.microLinn.colOffset[split] + 1;
     /************************* OLD WAY
