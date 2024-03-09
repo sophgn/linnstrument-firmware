@@ -19,7 +19,6 @@ hammerons/pulloffs window of 1, 2 or 3 columns?
 
 
 TO DO
-fix blink mode when col offset > 1
 
 use virtual note numbers to get the midi to work
 
@@ -28,6 +27,9 @@ the uninstall code must adjust Split[side].playedTouchMode since no BLNK mode
 also adjust Global.customSwitchAssignment[switchSelect] since no EDO or SCALE up/down
 
 finish MICROLINN_RAINBOWS, test scales/rainbows, delete initializeScales function
+fix blink mode when col offset > 1
+expand the guitar tuning display to cover 225 edosteps (32 * 7 + 1)
+add a button for 12edo default
 
 get guitar dots to transpose
 make microLinnDots 55 columns wide, when loading from MICROLINN_DOTS complete the dots via symmetry
@@ -46,7 +48,7 @@ blink modes can blink a lit LED on/off, see getLedColor function
 
 
 
-
+// maybe not needed -- delete?
 const short MICROLINN_MAX_EDOSTEPS = MICROLINN_MAX_OFFSET * (MAXROWS - 1 + MAXCOLS - 1) + 1;     // 32 * 31 + 1 = 993
 
 const byte MICROLINN_MAJ2ND[MICROLINN_MAX_EDO+1] = {  // for edos 6, 8, 10 and 12, semitones actually
@@ -232,9 +234,9 @@ const byte MICROLINN_RAINBOWS[MICROLINN_MAX_EDO+1][MICROLINN_MAX_EDO] = {
   8, 4,10, 5, 6, 1, 8,11, 8, 5, 6, 1, 3, 9, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 14
   8, 3,10, 1, 3,10, 8, 6, 6, 8, 3,10, 5, 3,10, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 15
   8, 6, 3,10, 3,10, 6, 8,11, 8, 6, 3,10, 3,10, 6, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 16
-  8, 5, 6, 1, 5, 6, 1, 8, 4, 9, 8, 5, 6, 1, 5, 6, 1, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 17
+  8, 5, 6, 1, 5, 6, 1, 8, 6, 6, 8, 5, 6, 1, 5, 6, 1, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 17
   8, 5, 3,10, 5, 3,10, 5, 6,11, 6, 1, 3,10, 1, 3,10, 1, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 18
-  8, 6, 3,10, 6, 3,10, 6, 8, 4, 9, 8, 6, 3,10, 6, 3,10, 6, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 19
+  8, 6, 3,10, 6, 3,10, 6, 8, 6, 6, 8, 6, 3,10, 6, 3,10, 6, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 19
   8, 6, 3,10, 1, 3,10, 1, 8, 6,11, 6, 8, 5, 3,10, 5, 3,10, 6, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 20
   8, 4, 3,10, 1, 5, 6,10, 1, 8, 4, 9, 8, 5, 3, 6, 1, 5, 3,10, 9, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 21
   8, 5, 3,10, 1, 5, 3,10, 1, 8, 6,11, 6, 8, 5, 3,10, 1, 5, 3,10, 1, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 22
@@ -517,6 +519,28 @@ void microLinnSetKiteGuitarDefaults() {
   microLinnCalcTuning();
 }
 
+void microLinnSet12edoDefaults() {
+  Global.microLinn.EDO = 4;
+  Global.microLinn.octaveStretch = 0;
+  Global.microLinn.anchorRow = 4;                           // 4th row from the top
+  Global.microLinn.anchorCol = 11;
+  Global.microLinn.anchorNote = 60;                         // middle-C
+  Global.microLinn.anchorCents = 0;
+  Global.microLinn.colOffset[LEFT] = 1;
+  Global.microLinn.colOffset[RIGHT] = 1;
+  Global.rowOffset = 5;
+  Global.activeNotes = 1;
+  Split[LEFT].playedTouchMode = playedCell;
+  Split[RIGHT].playedTouchMode = playedCell;
+  microLinnSetGlobalView();
+  microLinnStoreRowOffsetCents();
+  microLinnStoreColOffsetCents(LEFT);
+  microLinnStoreColOffsetCents(RIGHT);
+  microLinnUpdateAnchorString();
+  microLinnOldEDO = 12;                                     // to avoid microLinnAdjustRowAndColOffsets()
+  microLinnCalcTuning();
+}
+
 int microLinnMod (int num, int base) {                       // -13 % 10 = -3, but microLinnMod (-13, 10) = 7
   num %= base;
   if (num < 0) num += base;
@@ -582,13 +606,17 @@ void microLinnStoreRowOffsetCents() {               // called from handleGlobalS
   byte edo = Global.microLinn.EDO;
   if (edo == 4) edo = 12;                           // because "OFF" is 4edo which is really 12edo
   microLinnRowOffsetCents = (Global.rowOffset == ROWOFFSET_OCTAVECUSTOM ? Global.customRowOffset : Global.rowOffset);
-  microLinnRowOffsetCents *= 1200.0 / edo;          // convert to cents
+  microLinnRowOffsetCents *= 1200.0 / edo;                               // convert to cents
+  if (microLinnRowOffsetCents = 500) microLinnRowOffsetCents = 498;      // so that 12edo -> 30edo makes 480c not 520c
+  if (microLinnRowOffsetCents = 700) microLinnRowOffsetCents = 702;
 }
 
 void microLinnStoreColOffsetCents(byte side) {
   byte edo = Global.microLinn.EDO;
   if (edo == 4) edo = 12;                           // because "OFF" is 4edo which is really 12edo
   microLinnColOffsetCents[side] = Global.microLinn.colOffset[side] * 1200.0 / edo;          // convert to cents
+  if (microLinnColOffsetCents[side] = 500) microLinnColOffsetCents[side] = 498;             // so that 12edo -> 30edo makes 480c not 520c
+  if (microLinnColOffsetCents[side] = 700) microLinnColOffsetCents[side] = 702;
 }
 
 void microLinnAdjustRowAndColOffsets () {         
@@ -2002,17 +2030,6 @@ byte forkMenuProtectForkData(byte audienceMessageToEdit) {      // keep the user
 
 sequencer code:
 
-// to make the entire chain another color, I didn't like it 
-void StepSequencerState::paintPatternSelector() {
-    if (isPatternChained(LEFT, pattern)) leftColor = Split[RIGHT].colorMain;
-
-boolean isPatternChained (byte side, byte pattern) {
-  return patternChain[side][pattern] != -1 &&                        // is this pattern chained?
-         pattern != seqState[side].currentPattern &&                 // is it not the current pattern?
-         patternChain[side][seqState[side].currentPattern] != -1;    // is the current pattern chained?
-}
-
-
 void paintPatternChainDebug() {
   for (byte side = 0; side < 2; ++side) {
     for (byte pattern = 0; pattern < 4; ++pattern) {
@@ -2029,6 +2046,5 @@ void paintPatternChainDebug() {
     }
   }
 }
-
 
 **********************************************************************************************/

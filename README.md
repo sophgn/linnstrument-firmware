@@ -25,23 +25,24 @@ This does delete your microtonal data, necessary in order to avoid deleting all 
 
 CHAINING SEQUENCES: hold the pad for sequence #2 and tap the pad for sequence #1. Now the two sequences are chained into a single 
 sequence twice as long. This is indicated by sequence #1 being accented and sequence #2 blinking.
-You can chain #3 and #4 together as well. Or chain all 4 together. The PREV and NEXT footswitches work as expected.
-To clear the chaining, tap the pad immediately to the left of the 4 selector pads. Or just disconnect the Linnstrument and reconnect it.
-You can select sequences on the fly as the sequencer is playing as usual. You can also chain and unchain on the fly. 
-When chaining on the fly, to start at the beginning of the chain not the end, hold the last sequence and tap the first one.
-But when chaining when the sequencer isn't running, hold the first sequence and tap the last one. Alas, such is life.
+You can chain #3 and #4 together as well. Or chain all 4 together. The lights for the entire chain will blink when it's playing. 
+When making a chain, to start at the beginning of the chain not the end, hold the last sequence and tap the first one.
+The NEXT and PREV footswitches take you to the next/previous chain as expected.
+You can still select sequences and chains on the fly as the sequencer is playing. You can also chain and unchain on the fly. 
+Straight/dotted/triplet/swing and quarter/eighth/sixteenth are still set individually for each sequence, so 1 chain can mix these together.
+To clear all chains in a split, tap the hidden switch immediately to the left of the 4 selector pads. Or just unplug the Linnstrument.
 
 BLINKING MODE: This is a variation of the SAME mode that shows you other occurences of the currently played note.
 
 NEW SWITCH/FOOTSWITCH FUNCTIONS: SCL+ and SCL- cycle you through the 9 scales in Global Settings columns 2-4 (only affects the note lights).
 
 COLUMN OFFSETS: The column offset can be set for each split independently. This allows Wicki-Hayden layout on the left for easy chord
-playing and normal layout on the right for easy melody playing. Access it throught the microLinn menu, see below.
+playing and normal layout on the right for easy melody playing. Access it through the microLinn menu, see below.
 
-MULTI-COLORED NOTE LIGHTS: Each of the 12 notes can be any color. Transposable. Access it throught the microLinn menu, see below.
+MULTI-COLORED NOTE LIGHTS: Each of the 12 notes can be any color. Transposable. Access it through the microLinn menu, see below.
 
 DETUNING: Detune the entire Linnstrument up or down from A-440 to match a similarly detuned recording or instrument. (No guarantee that 
-detuning to A-432 will heal your chakras lol.) Access it throught microLinn's anchor cents, see below.
+detuning to A-432 will heal your chakras lol.) Access it through microLinn's anchor cents, see below.
 
 -------- MICROTONAL FEATURES -------- 
 
@@ -62,12 +63,11 @@ The menu has 10 buttons. Long-press each one to see its function. Most don't wor
 8) set note lights
 
 9) set to 31edo Bosanquet
-10) set to Kite guitar
+10) set to 41edo Kite guitar
 
 The anchor pad is a specific pad or cell that doesn't change pitch when you change the notes per octave.
 The anchor pad chooser displays the row and column of the current anchor pad, e.g. R3C6 means row 3 (from the top) and column 6. 
-To choose a new anchor pad, tap the blue "R3C6" and then tap any pad.
-In 12edo, the anchor pad and note have no effect, but changing the anchor cents detunes the entire Linnstrument.
+To choose a new anchor pad, tap the blue "R3C6" and then tap any pad. Change the anchor cents to detune the entire Linnstrument.
 
 When the notes per octave is greater than 12, the OCTAVE/TRANSPOSE display shows 2 extra rows for transposing by edosteps.
 The 2nd and 3rd rows now transpose not by semitones but by major 2nds (since most edos have several different semitones).
@@ -126,7 +126,7 @@ Perhaps software on the PC could fix this problem by scaling the slides by adjus
 
 ============================= technical notes ==================================
 
-To find all changes to the code, search for "microlinn" or "brightness" or "playedBlink" or "patternChain"
+To find all changes to the code, search for "microlinn" or "patternChain" or "playedBlink" or "brightness"
 
 "Skip-fretting" is a column offset of 2 - each subsequent pad represents every other MIDI note, so note 0 2 4 6 8 ... instead of 0 1 2 3 4. 
 The name is in reference to the microtonal [kite guitar](https://kiteguitar.com/), which obviously uses frets and not keys, but the Linnstrument's 

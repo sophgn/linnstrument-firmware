@@ -220,6 +220,7 @@ struct StepSequencerState {
 StepSequencerState seqState[MAX_SEQUENCERS];
 
 signed char patternChain[NUMSPLITS][MAX_SEQUENCER_PATTERNS] = {-1};          // which pattern comes next automatically, -1 means nothing specified
+boolean firstSeqCycle[NUMSPLITS];                                            // firstSeqCycle is part of the patternChain fork
 
 void initializeSequencer() {
   SEQ_MUTER_COLUMN = NUMCOLS - 1 - 1;  
@@ -2159,6 +2160,7 @@ void StepSequencerState::turnOn() {
   }
 
   running = true;
+  firstSeqCycle[split] = true;                                   // firstSeqCycle is part of the patternChain fork
   switch2Waiting = false;
   if (!hasFocus() && !getCurrentPattern().loopScreen) {
     positionOffset = 0;
@@ -2345,7 +2347,8 @@ void StepSequencerState::advanceSequencer() {
       // check if the sequencer should switch to the next pattern
       if (nextPattern != -1 && (position == 0 || switchPatternOnBeat)) {
         position = 0;
-        currentPattern = nextPattern;
+        if (!firstSeqCycle[split]) currentPattern = nextPattern;      // avoid skipping the current pattern when first running, due to patternchaining
+        firstSeqCycle[split] = false;
         nextPattern = patternChain[split][currentPattern];
         switchPatternOnBeat = false;
         positionOffset = 0;
@@ -2721,6 +2724,7 @@ void StepSequencerState::paintPatternSelector() {
     int col = SEQ_PATTERN_SELECTOR_LEFT + pattern;
     byte leftColor = (pattern == seqState[LEFT].currentPattern ? Split[LEFT].colorAccent : Split[LEFT].colorMain);
     CellDisplay leftDisplay = (pattern == seqState[LEFT].nextPattern ? cellSlowPulse : cellOn);
+    if (isPatternChained(LEFT, pattern)) leftDisplay = cellSlowPulse;
     if (sequencerCopySplitSource == LEFT && sequencerCopyPatternSource == pattern) {
       leftDisplay = cellFastPulse;
     }
@@ -2729,6 +2733,7 @@ void StepSequencerState::paintPatternSelector() {
 
     byte rightColor = (pattern == seqState[RIGHT].currentPattern ? Split[RIGHT].colorAccent : Split[RIGHT].colorMain);
     CellDisplay rightDisplay = (pattern == seqState[RIGHT].nextPattern ? cellSlowPulse : cellOn);
+    if (isPatternChained(RIGHT, pattern)) rightDisplay = cellSlowPulse;
     if (sequencerCopySplitSource == RIGHT && sequencerCopyPatternSource == pattern) {
       rightDisplay = cellFastPulse;
     }
@@ -3189,7 +3194,7 @@ void StepSequencerState::selectPattern(byte pattern) {
   // clear the next pattern if the current pattern is selected again
   if (currentPattern == pattern) {
       if (nextPattern != -1) {
-        nextPattern = -1;
+        nextPattern = patternChain[split][currentPattern];
         switchPatternOnBeat = false;
       }
   }
@@ -3207,7 +3212,7 @@ void StepSequencerState::selectPattern(byte pattern) {
     else {
       // a double tap on an already scheduled next pattern, schedules it at the beginning of the next beat
       if (nextPattern == pattern) {
-        switchPatternOnBeat = true;
+        switchPatternOnBeat = patternChainTouches(split) < 2;      // don't schedule immediately if it's part of a chaining touch
       }
       // schedule the pattern as the next one
       else {
@@ -3240,19 +3245,18 @@ void setPatternChain(byte split) {
   }
   patternChain[split][lastPattern] = firstPattern;
 
-  // with only 4 patterns, the only way to have two chains is if 0 & 1 are chained, and 2 & 3 are also chained
-  if (patternChain[split][0] == 1 && patternChain[split][1] == 0 &&
-      patternChain[split][2] == 3 && patternChain[split][3] == 2) return;
+  // with only 4 patterns, the only way to have two chains is if 0 & 1 are chained, and 2 & 3 are also chained --> [1 0 3 2]
+  if (patternChain[split][1] == 0 && patternChain[split][3] == 2) return;
   // if that's not the case, unchain everything else in this split
   memset(&patternChain[split][0], -1, firstPattern);
   memset(&patternChain[split][lastPattern + 1], -1, 3 - lastPattern);
 }
 
 void resetPatternChain() {
-  memset (patternChain, -1, sizeof(patternChain));              // both splits
+  memset(patternChain, -1, sizeof(patternChain));            // both splits
 }
 
-boolean isWithinSequencerPatternChainClearArea() {           // hidden switches immediately to the left of the pattern selectors
+boolean isWithinSequencerPatternChainClearArea() {           // 2 hidden switches immediately to the left of the pattern selectors
   return sensorCol == SEQ_PATTERN_SELECTOR_LEFT - 1 && sensorRow >= SEQ_PATTERN_SELECTOR_BOTTOM && sensorRow <= SEQ_PATTERN_SELECTOR_TOP;
 }
 
@@ -3261,4 +3265,28 @@ void handleSequencerPatternChainClearTouch() {
   memset(&patternChain[split][0], -1, 4);
   seqState[split].nextPattern = -1;
   seqState[split].paintPatternSelector();                    // so that the nextPattern pad isn't blinking
+}
+
+boolean isPatternChained (byte split, byte pattern) {
+  if (patternChain[split][pattern] == -1) return false;                            // the entire pattern chain should blink,
+  if (pattern == seqState[split].currentPattern) return false;                     // ...except the current pattern shouldn't blink
+  if (patternChain[split][seqState[split].currentPattern] == -1) return false;     // only blink when this chain is playing,
+  if (patternChain[split][seqState[split].nextPattern] == -1) return false;        // ...and will continue to play
+  if (patternChain[split][1] == 0 && patternChain[split][3] == 2) {                // handle the double-chain situation [1 0 3 2]
+    if (pattern <= 1 && seqState[split].currentPattern >= 2) return false;
+    if (pattern >= 2 && seqState[split].currentPattern <= 1) return false;
+    if (pattern <= 1 && seqState[split].nextPattern >= 2) return false;
+    if (pattern >= 2 && seqState[split].nextPattern <= 1) return false;
+  }
+  return true;
+}
+
+byte patternChainTouches(byte split) {          // count the touches on the row of 4 pattern selectors
+  byte touches = 0;
+  for (byte p = 0; p < 4; ++p) {
+    if (cell(SEQ_PATTERN_SELECTOR_LEFT + p, SEQ_PATTERN_SELECTOR_TOP - split).touched == touchedCell) {
+      ++touches;
+    }
+  }
+  return touches;
 }
