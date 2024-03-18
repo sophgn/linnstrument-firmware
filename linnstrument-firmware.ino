@@ -682,8 +682,9 @@ enum SplitHandednessType {
   reversedRight
 };
 
-const byte MICROLINN_MAX_EDO = 55;
-const byte MICROLINN_MAX_OFFSET = 32;        // both row offset and column offset, increased from 16 to 32 (55edo's 5th)
+const byte MICROLINN_MAX_EDO = 55;                // minimum edo is 5
+const byte MICROLINN_MAX_OFFSET = 32;             // both row offset and column offset, increased from 16 to 32 (55edo's 5th)
+const short MICROLINN_ARRAY_SIZE = (MICROLINN_MAX_EDO * (MICROLINN_MAX_EDO + 1)) / 2 - 10;     // a triangular array missing rows 1-4 = 1530
 
 struct DeviceSettings {
   byte version;                                   // the version of the configuration format
@@ -711,9 +712,9 @@ struct DeviceSettings {
   short lastLoadedPreset;                         // the last settings preset that was loaded
   short lastLoadedProject;                        // the last sequencer project that was loaded
   byte customLeds[LED_PATTERNS][LED_LAYER_SIZE];  // the custom LEDs that persist across power cycle
-  byte microLinnDots[MICROLINN_MAX_EDO+1][MAXCOLS+3];                // one bit per row, ignores column offsets except for lefty/righty
-  byte microLinnRainbows[MICROLINN_MAX_EDO+1][MICROLINN_MAX_EDO];    // choose among the 10 colors
-  byte microLinnScales[MICROLINN_MAX_EDO+1][MICROLINN_MAX_EDO];      // each byte is a bitmask for the 8 scales, except bit 8 is unused
+  byte microLinnDots[MICROLINN_ARRAY_SIZE];       // one bit per row, ignores column offsets except for lefty/righty
+  byte microLinnRainbows[MICROLINN_ARRAY_SIZE];   // choose among the 10 colors
+  byte microLinnScales[MICROLINN_ARRAY_SIZE];     // each byte is a bitmask for the 8 scales, except bit 8 is unused
 };
 #define Device config.device
 
