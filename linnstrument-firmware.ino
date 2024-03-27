@@ -759,11 +759,11 @@ enum SustainBehavior {
 };
 
 struct MicroLinn {
-  signed char colOffset[NUMSPLITS];          // 2 column offsets, -33 to 32 (-33 = reversed guitar)
+  signed char colOffset[NUMSPLITS];          // 2 column offsets, -32 to 32
   byte EDO;                                  // limited to 5-55, plus 4 for OFF
   signed char octaveStretch;                 // limited to ± 120 cents, for non-octave tunings such as bohlen-pierce
   byte anchorCol;
-  byte anchorRow;
+  byte anchorRow;                            // top row is 7, bottom row is 0, but the user sees top row as 1, bottom row as 8
   byte anchorNote;                           // any midi note 0-127
   signed char anchorCents;                   // limited to ± 100 cents
   signed char transposeEDOsteps[NUMSPLITS];  // both accessed not via displayMicroLinnConfig but via displayOctaveTranspose

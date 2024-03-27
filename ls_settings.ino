@@ -2580,10 +2580,9 @@ void handleGlobalSettingNewTouch() {
             }
           case LIGHTS_ACCENT:
           case LIGHTS_ACTIVE:
-            if (!customLedPatternActive) {
+            if (!customLedPatternActive && !isMicroLinnOn()) {
               lightSettings = sensorRow;
             }
-            microLinnSetGlobalView();
             break;
           case 3:
             // handled at release

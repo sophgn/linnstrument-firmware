@@ -79,12 +79,13 @@ SCL+ and SCL- move up or down to the next scale, wraps around (only affects the 
 The 9 scales in Global Settings cols 2-4 are now microtonal and change for each edo. You can edit them and their colors in microLinn. 
 Shortcut: you can long-press the scale's pad in the Global Settings display to go directly to that scale.
 
-The note lights display has 7 scale buttons plus the color editor, the dots selector and the rainbow-enabler button.
+The note lights display has 7 scale buttons plus the rainbow editor, the dots selector and the yellow rainbow-enabler button.
+Tap any of these buttons except the rainbow-enabler to select it. Tap any selected button to backtrack to the previous button.
 Tap a note in a scale to toggle it on or off. Like the guitar tuning screen, a midi note is sent when you tap. 
-The color editor is the 8th scale, in which all notes are always on. Tap a note to cycle it thru the rainbow. 
+The rainbow editor is the 8th scale, in which all notes are always on. Tap a note to cycle it thru the rainbow. 
 The 9th scale (dots) isn't really a scale. It's a full-screen display like the custom light patterns.
 Tapping the dots selector makes the dots appear in blue mid-screen. Tapping the dots lets you toggle them on or off. 
-Long-press the scale buttons or the color editor button or the dots selector button to reset the note lights to the default. 
+Long-press the scale buttons or the rainbow editor button or the dots selector button to reset the note lights to the default. 
 Tap the yellow rainbow enabler button to turn off the rainbow and limit the note lights to the usual two colors.
 
 The 3 custom light patterns are totally separate from all this and are still available for use!
@@ -106,6 +107,7 @@ blue / red = downminor / upmajor = 7-over / 7-under
 purple = neutral = 11-over or 11-under or 13-over or 13-under
 pink is reserved for the exact half-octave of 600c, 12-edo-ish but not quite 3-limit, "off-white"
 cyan / orange = a catch-all pair, e.g. 41edo 7/5 and 10/7, cyan is also for "outside" notes aka interordinals e.g. 24edo
+orange is used in 55edo for upmid and downmid notes
 
 The dot patterns tend to follow the conventional m3 P4 P5 M6 P8 guitar fret markers. Some edos add M2 and m7.
 Edos above 31 approximate 12edo, in other words there are dots about every 100 cents.
