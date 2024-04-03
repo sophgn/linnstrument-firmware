@@ -1737,15 +1737,15 @@ short getNoteNumColumn(byte split, byte notenum, byte row) {
 
   short col;
 
-  if (Global.microLinn.colOffset[split] != 1) {
+  if (Split[split].microLinn.colOffset != 1) {
     col = notenum - microLinnEdostep[split][1][row];
-    if (col % Global.microLinn.colOffset[split] != 0) return -1;         // if this row skips this note
-    col = 1.0 * col / Global.microLinn.colOffset[split] + 1;
+    if (col % Split[split].microLinn.colOffset != 0) return -1;         // if this row skips this note
+    col = 1.0 * col / Split[split].microLinn.colOffset + 1;
     /************************* OLD WAY
     // we add 2 instead of 1 for skip fretting, since we add 1 everywhere for some reason
     // pitch transposition is only reflected on this side, not in getNoteNumber
-    col = notenum - (row_offset_note + Split[split].transposeOctave) + 1 + Global.microLinn.colOffset[split]
-            + Split[split].transposeLights * Global.microLinn.colOffset[split] - Split[split].transposePitch;;             
+    col = notenum - (row_offset_note + Split[split].transposeOctave) + 1 + Split[split].microLinn.colOffset
+            + Split[split].transposeLights * Split[split].microLinn.colOffset - Split[split].transposePitch;;             
     if (col % 2 == 0) { // even notenum in even row, or odd notenum in odd row
       col = col / 2;
     } else {

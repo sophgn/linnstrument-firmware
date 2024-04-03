@@ -614,6 +614,12 @@ enum SequencerDirection {
   sequencerPingPong
 };
 
+struct MicroLinnSplit {
+  signed char colOffset;                  // column offsets, -32 to 32
+  signed char transposeEDOsteps;          // accessed not via displayMicroLinnConfig but via displayOctaveTranspose
+  signed char transposeEDOlights;
+};
+
 // per-split settings
 struct SplitSettings {
   byte midiMode;                          // 0 = one channel, 1 = note per channel, 2 = row per channel
@@ -666,6 +672,7 @@ struct SplitSettings {
   boolean mpe;                            // true when MPE is active for this split
   boolean sequencer;                      // true when the sequencer of this split is displayed
   SequencerView sequencerView;            // see SequencerView
+  MicroLinnSplit microLinn;               // microtonal data
 };
 
 #define Split config.settings.split
@@ -758,16 +765,13 @@ enum SustainBehavior {
   sustainLatch
 };
 
-struct MicroLinn {
-  signed char colOffset[NUMSPLITS];          // 2 column offsets, -32 to 32
+struct MicroLinnGlobal {
   byte EDO;                                  // limited to 5-55, plus 4 for OFF
   signed char octaveStretch;                 // limited to ± 120 cents, for non-octave tunings such as bohlen-pierce
   byte anchorCol;
   byte anchorRow;                            // top row is 7, bottom row is 0, but the user sees top row as 1, bottom row as 8
   byte anchorNote;                           // any midi note 0-127
   signed char anchorCents;                   // limited to ± 100 cents
-  signed char transposeEDOsteps[NUMSPLITS];  // both accessed not via displayMicroLinnConfig but via displayOctaveTranspose
-  signed char transposeEDOlights[NUMSPLITS];
   boolean useRainbow;                        // if false, use colorAccent and colorMain instead
 };  
 
@@ -799,7 +803,7 @@ struct GlobalSettings {
   signed char arpOctave;                     // the number of octaves that the arpeggiator has to operate over: 0, +1, or +2
   SustainBehavior sustainBehavior;           // the way the sustain pedal influences the notes
   boolean splitActive;                       // false = split off, true = split on
-  MicroLinn microLinn;                       // microtonal data
+  MicroLinnGlobal microLinn;                 // microtonal data
 };
 #define Global config.settings.global
 

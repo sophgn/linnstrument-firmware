@@ -19,9 +19,10 @@ use virtual note numbers to get the midi to work
 
 fix the user data overwriting issue by modifying ls_extstorage.ino
 the uninstall code must adjust Split[side].playedTouchMode since no BLNK mode
+(possibly store playedBlink mode as the last option, but have it appear to the user as the 3rd option)
 also adjust Global.customSwitchAssignment[switchSelect] since no EDO or SCALE up/down
 
-finish MICROLINN_RAINBOWS, test scales/rainbows, delete initializeScales function
+test scales/rainbows, delete initializeScales function
 fix blink mode when col offset > 1
 expand the guitar tuning display to cover 225 edosteps (32 * 7 + 1), figure out how guitarTuning array works when microLinn is on
 change handleRowOffsetNewTouch()?
@@ -215,9 +216,16 @@ const byte MICROLINN_RAINBOWS[MICROLINN_ARRAY_SIZE] = {
 // 5/1   = blue/red      = subminor/supermajor  = 7-over/7-under
 // 6     = magenta       = neutral              = 11-over or 11-under or 13-over or 13-under
 // 11    = pink          = 600c, a half-8ve     = 12-edo-ish but not quite 3-limit, "off-white"
-// 4/9   = cyan/orange   = a catch-all pair, e.g. 41edo 7/5 and 10/7
-//         cyan is also for outside notes aka interordinals (see 19edo and 24edo)
-//         orange is also used in 55edo for superneutral and subneutral
+// 4     = cyan          = outside notes aka interordinals (see 19edo and 24edo)
+// 9     = orange        = used in 55edo for superneutral and subneutral, to avoid 3 magentas in a row
+//         cyan/orange   = used in 41edo for 7/5 and 10/7
+
+// white  8               bluish  4  
+// blue   5               orange  9
+// green  3               purple  6
+// yellow 10 (lime)       pink   11
+// red    1
+
   8, 1, 8, 8, 5, // 5edo
   8,10,10,11, 3, 3, // 6edo
   8,10, 6, 8, 8, 6, 3, // 7edo
@@ -236,37 +244,29 @@ const byte MICROLINN_RAINBOWS[MICROLINN_ARRAY_SIZE] = {
   8, 6, 3,10, 1, 3,10, 1, 8, 6,11, 6, 8, 5, 3,10, 5, 3,10, 6, // 20
   8, 6, 3,10, 1, 5, 6,10, 5, 8, 6, 6, 8, 1, 3, 6, 1, 5, 3,10, 6, // 21
   8, 5, 3,10, 1, 5, 3,10, 1, 8, 6,11, 6, 8, 5, 3,10, 1, 5, 3,10, 1, // 22
-  8, 4, 3, 6, 1, 5, 3, 6, 1, 5, 8, 4, 9, 8, 1, 5, 6,10, 1, 5, 6,10, 9, // 23 -- fewer colors? make bluish/orange be purple? 
+  8, 4, 3, 6, 1, 5, 3, 6, 1, 5, 8, 6, 6, 8, 1, 5, 6,10, 1, 5, 6,10, 4, // 23
   8, 4, 3, 6,10, 4, 3, 6,10, 4, 8, 6,11, 6, 8, 4, 3, 6,10, 4, 3, 6,10, 4, // 24
-  8, 5, 3, 6,10, 1, 5, 3,10, 1, 8, 6, 4, 9, 6, 8, 5, 3,10, 1, 5, 3, 6,10, 1, // 25
+  8, 5, 3, 6,10, 1, 5, 3,10, 1, 8, 6,10, 3, 6, 8, 5, 3,10, 1, 5, 3, 6,10, 1, // 25
   8, 1, 5, 3,10, 1, 5, 3,10, 1, 5, 8, 6,11, 6, 8, 1, 5, 3,10, 1, 5, 3,10, 1, 5, // 26
-  8, 5, 3, 6,10, 1, 5, 3, 6,10, 1, 8, 3, 4, 9,10, 8, 5, 3, 6,10, 1, 5, 3, 6,10, 1, // 27
+  8, 5, 3, 6,10, 1, 5, 3, 6,10, 1, 8, 6, 3,10, 6, 8, 5, 3, 6,10, 1, 5, 3, 6,10, 1, // 27 -- swap the 2 tritones?
   8, 5, 3, 6,10, 1, 5, 3, 6,10, 1, 5, 8, 6,11, 6, 8, 1, 5, 3, 6,10, 1, 5, 3, 6,10, 1, // 28
   8, 4, 8, 3,10, 8, 4, 8, 3,10, 8, 4, 8, 6,10, 3, 6, 8, 4, 8, 3,10, 8, 4, 8, 3,10, 8, 4, // 29
-  8, 6, 5, 3, 6,10, 1, 5, 3, 6,10, 1, 8, 3, 6,11, 6,10, 8, 5, 3, 6,10, 1, 5, 3, 6,10, 1, 6, // 30
+  8, 1, 5, 3, 6,10, 1, 5, 3, 6,10, 1, 8, 3, 6,11, 6,10, 8, 5, 3, 6,10, 1, 5, 3, 6,10, 1, 5, // 30
   8, 1, 5, 3, 6,10, 1, 5, 3, 6,10, 1, 5, 8, 6,10, 3, 6, 8, 1, 5, 3, 6,10, 1, 5, 3, 6,10, 1, 5, // 31
   8, 4, 5, 3, 6,10, 1, 5, 3, 6,10, 1, 4, 8, 3, 6,11, 6,10, 8, 4, 5, 3, 6,10, 1, 5, 3, 6,10, 1, 4, // 32
   8, 4, 5, 3, 6,10, 1, 4, 5, 3, 6,10, 1, 5, 8, 6,10, 3, 6, 8, 1, 5, 3, 6,10, 1, 4, 5, 3, 6,10, 1, 4, // 33
-  8, 4, 8, 3, 6,10, 8, 4, 8, 3, 6,10, 8, 4, 8, 3, 6,11, 6,10, 8, 4, 8, 3, 6,10, 8, 4, 8, 3, 6,10, 8, 4, // 34
-  // check 34 and 35... too many whites?
+  8, 4, 5, 3, 6,10, 8, 4, 5, 3, 6,10, 1, 4, 8, 3, 6,11, 6,10, 8, 4, 5, 3, 6,10, 1, 4, 8, 3, 6,10, 1, 4, // 34
   8, 1, 5, 3, 6,10, 8, 1, 5, 3, 6,10, 8, 1, 5, 8, 6,10, 3, 6, 8, 1, 5, 8, 3, 6,10, 1, 5, 8, 3, 6,10, 1, 5, // 35
   8, 1, 5, 3, 6, 6,10, 1, 5, 3, 6, 6,10, 1, 5, 8, 6, 6,11, 6, 6, 8, 1, 5, 3, 6, 6,10, 1, 5, 3, 6, 6,10, 1, 5, // 36
   8, 1, 4, 5, 3, 6,10, 1, 4, 5, 3, 6,10, 1, 4, 8, 3, 6,10, 3, 6,10, 8, 4, 5, 3, 6,10, 1, 4, 5, 3, 6,10, 1, 4, 5, // 37
   8, 1, 4, 5, 3, 6,10, 1, 4, 5, 3, 6,10, 1, 4, 5, 8, 6,10,11, 3, 6, 8, 1, 4, 5, 3, 6,10, 1, 4, 5, 3, 6,10, 1, 4, 5, // 38
-  8, 4, 5, 3, 6, 6,10, 1, 4, 5, 3, 6, 6,10, 1, 4, 8, 3, 6, 3,10, 6,10, 8, 4, 5, 3, 6, 6,10, 1, 4, 5, 3, 6, 6,10, 1, 4, // 39
+  8, 4, 5, 3, 6, 6,10, 1, 4, 5, 3, 6, 6,10, 1, 4, 8, 3, 6, 3,10, 6,10, 8, 4, 5, 3, 6, 6,10, 1, 4, 5, 3, 6, 6,10, 1, 4, // 39 -- swap the 2 tritones?
   8, 1, 5, 8, 3, 6,10, 8, 1, 5, 8, 3, 6,10, 8, 1, 5, 8, 6,10,11, 3, 6, 8, 1, 5, 8, 3, 6,10, 8, 1, 5, 8, 3, 6,10, 8, 1, 5, // 40
   8, 1, 5, 8, 3, 6,10, 8, 1, 5, 8, 3, 6,10, 8, 1, 5, 8, 3, 6, 4, 9, 6,10, 8, 1, 5, 8, 3, 6,10, 8, 1, 5, 8, 3, 6,10, 8, 1, 5, // 41
-
-// white  8               bluish  4  
-// blue   5               orange  9
-// green  3               purple  6
-// yellow 10 (lime)       pink   11
-// red    1
-
-  8, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, // 42
-  8, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, // 43
-  8, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, // 44
-  8, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, // 45
+  8, 1, 5, 8, 3, 6,10, 8, 1, 5, 8, 3, 6,10, 8, 1, 5, 8, 3, 6,10,11, 3, 6,10, 8, 1, 5, 8, 3, 6,10, 8, 1, 5, 8, 3, 6,10, 8, 1, 5, // 42
+  8, 1, 4, 5, 3, 6, 6,10, 1, 4, 5, 3, 6, 6,10, 1, 4, 5, 8, 6, 6,10, 3, 6, 6, 8, 1, 4, 5, 3, 6, 6,10, 1, 4, 5, 3, 6, 6,10, 1, 4, 5, // 43
+  8, 3, 5, 8, 3, 6,10, 8, 1, 4, 5, 8, 3, 6,10, 8, 1, 4, 8, 3, 6,10,11, 3, 6,10, 8, 4, 5, 8, 3, 6,10, 8, 1, 4, 5, 8, 3, 6,10, 8, 1,10, // 44
+  8, 1, 4, 5, 8, 3, 6,10, 8, 1, 5, 8, 3, 6,10, 8, 1, 4, 5, 8, 3, 6,10, 3, 6,10, 8, 1, 4, 5, 8, 3, 6,10, 8, 1, 5, 8, 3, 6,10, 8, 1, 4, 5, // 45
   8, 1, 5, 8, 3, 6, 6,10, 8, 1, 5, 8, 3, 6, 6,10, 8, 1, 5, 8, 3, 6, 6,11, 6, 6,10, 8, 1, 5, 8, 3, 6, 6,10, 8, 1, 5, 8, 3, 6, 6,10, 8, 1, 5, // 46
   8, 1, 4, 5, 8, 3, 6,10, 8, 1, 4, 5, 8, 3, 6,10, 8, 1, 4, 5, 8, 3, 6,10, 3, 6,10, 8, 1, 4, 5, 8, 3, 6,10, 8, 1, 4, 5, 8, 3, 6,10, 8, 1, 4, 5, // 47
   8, 1, 4, 5, 8, 3, 6,10, 8, 1, 4, 5, 8, 3, 6,10, 8, 1, 4, 5, 8, 3, 6,10,11, 3, 6,10, 8, 1, 4, 5, 8, 3, 6,10, 8, 1, 4, 5, 8, 3, 6,10, 8, 1, 4, 5, // 48
@@ -345,7 +345,7 @@ byte microLinnPrevScale;                                     // for backtracking
 boolean microLinnCanBacktrack;                               // true if newly touching an already selected scale button
 short microLinnRowOffsetCents;                               // set only when user sets row/col offset directly,
 short microLinnColOffsetCents[NUMSPLITS];                    // avoids offset drift when switching edos
-short microLinnGuitarTuningCents[NUMROWS - 1];               // cents between open strings, can be negative
+short microLinnGuitarTuningCents[MAXROWS - 1];               // cents between open strings, can be negative
 char microLinnAnchorString[6] = "R C  ";                     // row and column of the anchor cell, e.g. "R3C12", top row is row #1
 byte microLinnConfigColNum = 0;                              // active col number in microLinnConfig display, 0 means nothing active
 boolean microLinnConfigNowScrolling = false;
@@ -399,8 +399,8 @@ void microLinnResetDots (byte edo) {
 byte micoLinnGetFret (byte split, byte col) {
 // returns the distance from the "nut" of the dot pattern to the column, octave-reduced
   byte edo = microLinnGetEDO();
-  short fret = (Global.microLinn.colOffset[LEFT] < 0 && Global.microLinn.colOffset[RIGHT] < 0) ? NUMCOLS - col : col;
-  fret -= MICROLINN_MAJ2ND[edo] * Split[split].transposeLights + Global.microLinn.transposeEDOlights[split];
+  short fret = (Split[LEFT].microLinn.colOffset < 0 && Split[RIGHT].microLinn.colOffset < 0) ? NUMCOLS - col : col;
+  fret -= MICROLINN_MAJ2ND[edo] * Split[split].transposeLights + Split[split].microLinn.transposeEDOlights;
   if (edo == 41) edo = 12;                              // because 41edo kites repeat every 12 frets
   return microLinnMod (fret - 1, edo);
 }  
@@ -476,18 +476,18 @@ void microLinnInitializeScales() {
 /************** called from linnstrument_firmware.ino ************************/
 
 void initializeMicroLinn() {                      // called in reset(), runs when microLinn firmware is first installed
-  Global.microLinn.colOffset[LEFT] = 1;           // or when the user does a global reset 
-  Global.microLinn.colOffset[RIGHT] = 1;
+  Split[LEFT].microLinn.colOffset = 1;            // or when the user does a global reset 
+  Split[RIGHT].microLinn.colOffset = 1;
   Global.microLinn.EDO = 4;
   Global.microLinn.octaveStretch = 0;
   Global.microLinn.anchorRow = 4;                 // 4th row from the top
   Global.microLinn.anchorCol = 11;
   Global.microLinn.anchorNote = 60;               // middle-C
   Global.microLinn.anchorCents = 0;  
-  Global.microLinn.transposeEDOsteps[LEFT] = 0;
-  Global.microLinn.transposeEDOsteps[RIGHT] = 0;
-  Global.microLinn.transposeEDOlights[LEFT] = 0;
-  Global.microLinn.transposeEDOlights[RIGHT] = 0;
+  Split[LEFT].microLinn.transposeEDOsteps = 0;
+  Split[RIGHT].microLinn.transposeEDOsteps = 0;
+  Split[LEFT].microLinn.transposeEDOlights = 0;
+  Split[RIGHT].microLinn.transposeEDOlights = 0;
   Global.microLinn.useRainbow = true;
   for (byte edo = 5; edo <= MICROLINN_MAX_EDO; ++edo) microLinnResetDots(edo);
   memcpy (Device.microLinnRainbows, MICROLINN_RAINBOWS, MICROLINN_ARRAY_SIZE);
@@ -519,12 +519,12 @@ void microLinnSet31edoBosanquetDefaults() {
   Global.microLinn.anchorCol = 11;
   Global.microLinn.anchorNote = 60;                         // middle-C
   Global.microLinn.anchorCents = 0;
-  Global.microLinn.colOffset[LEFT] = 5;                     // 31-equal major 2nd
-  Global.microLinn.colOffset[RIGHT] = 5;
+  Split[LEFT].microLinn.colOffset = 5;                      // 31-equal major 2nd
+  Split[RIGHT].microLinn.colOffset = 5;
   Global.rowOffset = 3;                                     // 31-equal minor 2nd
   Global.activeNotes = 6;
   lightSettings = LIGHTS_ACTIVE;
-  //Split[LEFT].playedTouchMode = playedBlink;
+  //Split[LEFT].playedTouchMode = playedBlink;      // uncomment once playedBlink works right
   //Split[RIGHT].playedTouchMode = playedBlink;
   microLinnStoreRowOffsetCents();
   microLinnStoreColOffsetCents(LEFT);
@@ -541,13 +541,13 @@ void microLinnSetKiteGuitarDefaults() {
   Global.microLinn.anchorCol = 6;
   Global.microLinn.anchorNote = 54;                         // ^F#2, Kite guitar standard tuning with D = 0 cents
   Global.microLinn.anchorCents = 39;                        // ^M3 = 439c
-  Global.microLinn.colOffset[LEFT] = 2;
-  Global.microLinn.colOffset[RIGHT] = 2;
+  Split[LEFT].microLinn.colOffset = 2;
+  Split[RIGHT].microLinn.colOffset = 2;
   Global.rowOffset = ROWOFFSET_OCTAVECUSTOM;
   Global.customRowOffset = 13;                              // 41-equal downmajor 3rds
   Global.activeNotes = 6;
   lightSettings = LIGHTS_ACTIVE;
-  //Split[LEFT].playedTouchMode = playedBlink;
+  //Split[LEFT].playedTouchMode = playedBlink;      // uncomment once playedBlink works right
   //Split[RIGHT].playedTouchMode = playedBlink;
   microLinnStoreRowOffsetCents();
   microLinnStoreColOffsetCents(LEFT);
@@ -565,8 +565,8 @@ void microLinnResetTo12equal() {
   microLinnUpdateAnchorString();
   Global.microLinn.anchorNote = 60;               // middle-C
   Global.microLinn.anchorCents = 0;
-  Global.microLinn.colOffset[LEFT] = 1;
-  Global.microLinn.colOffset[RIGHT] = 1;
+  Split[LEFT].microLinn.colOffset = 1;
+  Split[RIGHT].microLinn.colOffset = 1;
   Global.rowOffset = 5;
   microLinnStoreRowOffsetCents();
   microLinnStoreColOffsetCents(LEFT);
@@ -655,11 +655,11 @@ void microLinnStoreRowOffsetCents() {               // called from handleGlobalS
   if (microLinnRowOffsetCents == 700) microLinnRowOffsetCents = 702;
 }
 
-void microLinnStoreColOffsetCents(byte side) {
+void microLinnStoreColOffsetCents(byte split) {
   byte edo = microLinnGetEDO();
-  microLinnColOffsetCents[side] = Global.microLinn.colOffset[side] * 1200.0 / edo;           // convert to cents
-  if (microLinnColOffsetCents[side] == 500) microLinnColOffsetCents[side] = 498;             // so that 12edo -> 30edo makes 480c not 520c
-  if (microLinnColOffsetCents[side] == 700) microLinnColOffsetCents[side] = 702;
+  microLinnColOffsetCents[split] = Split[split].microLinn.colOffset * 1200.0 / edo;            // convert to cents
+  if (microLinnColOffsetCents[split] == 500) microLinnColOffsetCents[split] = 498;             // so that 12edo -> 30edo makes 480c not 520c
+  if (microLinnColOffsetCents[split] == 700) microLinnColOffsetCents[split] = 702;
 }
 
 void microLinnAdjustRowAndColOffsets() {
@@ -677,15 +677,15 @@ void microLinnAdjustRowAndColOffsets() {
     rowOffset = microLinnSign(Global.rowOffset == ROWOFFSET_OCTAVECUSTOM ? Global.customRowOffset : Global.rowOffset);
   }
 
-  short leftOffset = Global.microLinn.colOffset[LEFT];
+  short leftOffset = Split[LEFT].microLinn.colOffset;
   if (leftOffset > 1 || leftOffset < -1) {                              // don't adjust offsets of 1, -1 or 0
     leftOffset = round (edo * microLinnColOffsetCents[LEFT] / 1200.0);
-    if (leftOffset == 0) leftOffset = microLinnSign(Global.microLinn.colOffset[LEFT]);   // don't adjust all the way to zero
+    if (leftOffset == 0) leftOffset = microLinnSign(Split[LEFT].microLinn.colOffset);   // don't adjust all the way to zero
   }
-  short rightOffset = Global.microLinn.colOffset[RIGHT];
+  short rightOffset = Split[RIGHT].microLinn.colOffset;
   if (rightOffset > 1 || rightOffset < -1) { 
     rightOffset = round (edo * microLinnColOffsetCents[RIGHT] / 1200.0);
-    if (rightOffset == 0) rightOffset = microLinnSign(Global.microLinn.colOffset[RIGHT]);
+    if (rightOffset == 0) rightOffset = microLinnSign(Split[RIGHT].microLinn.colOffset);
   }
 
   // ensure coprime row/col offsets so that all notes of the edo are present
@@ -707,8 +707,8 @@ void microLinnAdjustRowAndColOffsets() {
   } else {
     Global.rowOffset = rowOffset;
   }
-  Global.microLinn.colOffset[LEFT] = leftOffset;
-  Global.microLinn.colOffset[RIGHT] = rightOffset;
+  Split[LEFT].microLinn.colOffset = leftOffset;
+  Split[RIGHT].microLinn.colOffset = rightOffset;
   microLinnPrevEDO = Global.microLinn.EDO;
 }
 
@@ -718,8 +718,8 @@ short microLinnTransposition(byte side) {                                  // # 
   return octaves * edo
        + Split[side].transposePitch  * MICROLINN_MAJ2ND[edo]               // semitones are interpreted as whole tones
        - Split[side].transposeLights * MICROLINN_MAJ2ND[edo]
-       + Global.microLinn.transposeEDOsteps[side]
-       - Global.microLinn.transposeEDOlights[side];
+       + Split[side].microLinn.transposeEDOsteps
+       - Split[side].microLinn.transposeEDOlights;
 }
 
 short microLinnSumOfRowOffsets (byte row1, byte row2) {      // edosteps from row1 to row2
@@ -753,7 +753,7 @@ void microLinnCalcTuning() {
   float edostepSize = (1200 + Global.microLinn.octaveStretch) / (100.0 * edo);
 
   for (short side = 0; side < NUMSPLITS; ++side) {
-    short colOffset = Global.microLinn.colOffset[side];
+    short colOffset = Split[side].microLinn.colOffset;
     short transpose = microLinnTransposition(side);
     for (byte row = 0; row < NUMROWS; ++row) {
       short rowDistance = microLinnSumOfRowOffsets (anchorRow, row) + transpose;
@@ -798,8 +798,8 @@ FocusCell microLinnFIndEdostep(byte split, short edostep) {
   boolean success = false;
   while (!success && row < NUMROWS) {
     short col = edostep - microLinnEdostep[split][1][row];
-    if (col % Global.microLinn.colOffset[split] == 0) {                              // if this row doesn't skip this note
-      col = 1.0 * col / Global.microLinn.colOffset[split] + 1;
+    if (col % Split[split].microLinn.colOffset == 0) {                              // if this row doesn't skip this note
+      col = 1.0 * col / Split[split].microLinn.colOffset + 1;
       success = (col > 0 && col < NUMCOLS);
     }
     if (!success) ++row;
@@ -907,32 +907,32 @@ void  microLinnPaintEdostepTranspose(bool doublePerSplit, byte side) {
   if (MICROLINN_MAJ2ND[Global.microLinn.EDO] == 1) return;
 
   // Paint the edostep transpose values
-  if (!doublePerSplit || Global.microLinn.transposeEDOsteps[LEFT] == Global.microLinn.transposeEDOsteps[RIGHT]) {
-    paintTranspose(Split[Global.currentPerSplit].colorMain, SPLIT_ROW, Global.microLinn.transposeEDOsteps[side]);
+  if (!doublePerSplit || Split[LEFT].microLinn.transposeEDOsteps == Split[RIGHT].microLinn.transposeEDOsteps) {
+    paintTranspose(Split[Global.currentPerSplit].colorMain, SPLIT_ROW, Split[side].microLinn.transposeEDOsteps);
   }
   else if (doublePerSplit) {
-    if (abs(Global.microLinn.transposeEDOsteps[LEFT]) > abs(Global.microLinn.transposeEDOsteps[RIGHT])) {
-      paintTranspose(Split[LEFT].colorMain, SPLIT_ROW, Global.microLinn.transposeEDOsteps[LEFT]);
-      paintTranspose(Split[RIGHT].colorMain, SPLIT_ROW, Global.microLinn.transposeEDOsteps[RIGHT]);
+    if (abs(Split[LEFT].microLinn.transposeEDOsteps) > abs(Split[RIGHT].microLinn.transposeEDOsteps)) {
+      paintTranspose(Split[LEFT].colorMain, SPLIT_ROW, Split[LEFT].microLinn.transposeEDOsteps);
+      paintTranspose(Split[RIGHT].colorMain, SPLIT_ROW, Split[RIGHT].microLinn.transposeEDOsteps);
     }
     else {
-      paintTranspose(Split[RIGHT].colorMain, SPLIT_ROW, Global.microLinn.transposeEDOsteps[RIGHT]);
-      paintTranspose(Split[LEFT].colorMain, SPLIT_ROW, Global.microLinn.transposeEDOsteps[LEFT]);
+      paintTranspose(Split[RIGHT].colorMain, SPLIT_ROW, Split[RIGHT].microLinn.transposeEDOsteps);
+      paintTranspose(Split[LEFT].colorMain, SPLIT_ROW, Split[LEFT].microLinn.transposeEDOsteps);
     }
   }
 
   // Paint the edostep-light transpose values
-  if (!doublePerSplit || Global.microLinn.transposeEDOlights[LEFT] == Global.microLinn.transposeEDOlights[RIGHT]) {
-    paintTranspose(Split[Global.currentPerSplit].colorMain, GLOBAL_SETTINGS_ROW, Global.microLinn.transposeEDOlights[side]);
+  if (!doublePerSplit || Split[LEFT].microLinn.transposeEDOlights == Split[RIGHT].microLinn.transposeEDOlights) {
+    paintTranspose(Split[Global.currentPerSplit].colorMain, GLOBAL_SETTINGS_ROW, Split[side].microLinn.transposeEDOlights);
   }
   else if (doublePerSplit) {
-    if (abs(Global.microLinn.transposeEDOlights[LEFT]) > abs(Global.microLinn.transposeEDOlights[RIGHT])) {
-      paintTranspose(Split[LEFT].colorMain, GLOBAL_SETTINGS_ROW, Global.microLinn.transposeEDOlights[LEFT]);
-      paintTranspose(Split[RIGHT].colorMain, GLOBAL_SETTINGS_ROW, Global.microLinn.transposeEDOlights[RIGHT]);
+    if (abs(Split[LEFT].microLinn.transposeEDOlights) > abs(Split[RIGHT].microLinn.transposeEDOlights)) {
+      paintTranspose(Split[LEFT].colorMain, GLOBAL_SETTINGS_ROW, Split[LEFT].microLinn.transposeEDOlights);
+      paintTranspose(Split[RIGHT].colorMain, GLOBAL_SETTINGS_ROW, Split[RIGHT].microLinn.transposeEDOlights);
     }
     else {
-      paintTranspose(Split[RIGHT].colorMain, GLOBAL_SETTINGS_ROW, Global.microLinn.transposeEDOlights[RIGHT]);
-      paintTranspose(Split[LEFT].colorMain, GLOBAL_SETTINGS_ROW, Global.microLinn.transposeEDOlights[LEFT]);
+      paintTranspose(Split[RIGHT].colorMain, GLOBAL_SETTINGS_ROW, Split[RIGHT].microLinn.transposeEDOlights);
+      paintTranspose(Split[LEFT].colorMain, GLOBAL_SETTINGS_ROW, Split[LEFT].microLinn.transposeEDOlights);
     }
   }
 }
@@ -940,17 +940,17 @@ void  microLinnPaintEdostepTranspose(bool doublePerSplit, byte side) {
 void microLinnLightOctaveSwitch() {
   if (!isMicroLinnOn()) return;
   // light the octave/transpose switch if the pitch is transposed by edosteps
-  if ((Global.microLinn.transposeEDOsteps[LEFT] < 0 && Global.microLinn.transposeEDOsteps[RIGHT] < 0) ||
-      (Global.microLinn.transposeEDOsteps[LEFT] < 0 && Global.microLinn.transposeEDOsteps[RIGHT] == 0) ||
-      (Global.microLinn.transposeEDOsteps[LEFT] == 0 && Global.microLinn.transposeEDOsteps[RIGHT] < 0)) {
+  if ((Split[LEFT].microLinn.transposeEDOsteps < 0 && Split[RIGHT].microLinn.transposeEDOsteps < 0) ||
+      (Split[LEFT].microLinn.transposeEDOsteps < 0 && Split[RIGHT].microLinn.transposeEDOsteps == 0) ||
+      (Split[LEFT].microLinn.transposeEDOsteps == 0 && Split[RIGHT].microLinn.transposeEDOsteps < 0)) {
     setLed(0, OCTAVE_ROW, COLOR_RED, cellOn);
   }
-  else if ((Global.microLinn.transposeEDOsteps[LEFT] > 0 && Global.microLinn.transposeEDOsteps[RIGHT] > 0) ||
-           (Global.microLinn.transposeEDOsteps[LEFT] > 0 && Global.microLinn.transposeEDOsteps[RIGHT] == 0) ||
-           (Global.microLinn.transposeEDOsteps[LEFT] == 0 && Global.microLinn.transposeEDOsteps[RIGHT] > 0)) {
+  else if ((Split[LEFT].microLinn.transposeEDOsteps > 0 && Split[RIGHT].microLinn.transposeEDOsteps > 0) ||
+           (Split[LEFT].microLinn.transposeEDOsteps > 0 && Split[RIGHT].microLinn.transposeEDOsteps == 0) ||
+           (Split[LEFT].microLinn.transposeEDOsteps == 0 && Split[RIGHT].microLinn.transposeEDOsteps > 0)) {
     setLed(0, OCTAVE_ROW, COLOR_GREEN, cellOn);
   }
-  else if (Global.microLinn.transposeEDOsteps[LEFT] != 0 && Global.microLinn.transposeEDOsteps[RIGHT] != 0) {
+  else if (Split[LEFT].microLinn.transposeEDOsteps != 0 && Split[RIGHT].microLinn.transposeEDOsteps != 0) {
     setLed(0, OCTAVE_ROW, COLOR_YELLOW, cellOn);
   }
   else {
@@ -1034,10 +1034,10 @@ void paintMicroLinnConfig() {
   signed char offset = 0;
   switch (microLinnConfigColNum) {
     case 2:
-      paintNumericDataDisplayRow(Split[LEFT].colorMain, Global.microLinn.colOffset[LEFT], 0, 1, false);
+      paintNumericDataDisplayRow(Split[LEFT].colorMain, Split[LEFT].microLinn.colOffset, 0, 1, false);
       break;
     case 3: 
-      paintNumericDataDisplayRow(Split[RIGHT].colorMain, Global.microLinn.colOffset[RIGHT], 0, 1, false);
+      paintNumericDataDisplayRow(Split[RIGHT].colorMain, Split[RIGHT].microLinn.colOffset, 0, 1, false);
       break;
     case 5: 
       if (Global.microLinn.EDO < 5) {
@@ -1230,11 +1230,11 @@ void microLinnHandleOctaveTransposeNewTouchSplit(byte side) {
   if (MICROLINN_MAJ2ND[Global.microLinn.EDO] == 1) return;
   if (sensorRow == SPLIT_ROW &&
       sensorCol > 0 && sensorCol < 16) {
-    Global.microLinn.transposeEDOsteps[side] = sensorCol - 8;
+    Split[side].microLinn.transposeEDOsteps = sensorCol - 8;
   }
   else if (sensorRow == GLOBAL_SETTINGS_ROW &&
            sensorCol > 0 && sensorCol < 16) {
-    Global.microLinn.transposeEDOlights[side] = sensorCol - 8;
+    Split[side].microLinn.transposeEDOlights = sensorCol - 8;
   }
 }
 
@@ -1321,12 +1321,12 @@ void handleMicroLinnConfigNewTouch() {
     switch (microLinnConfigColNum) {
       case 2: 
         microLinnAdjustRowAndColOffsets();
-        handleNumericDataNewTouchCol(Global.microLinn.colOffset[LEFT], -MICROLINN_MAX_OFFSET, MICROLINN_MAX_OFFSET, true);
+        handleNumericDataNewTouchCol(Split[LEFT].microLinn.colOffset, -MICROLINN_MAX_OFFSET, MICROLINN_MAX_OFFSET, true);
         microLinnStoreColOffsetCents(LEFT);
         break;
       case 3: 
         microLinnAdjustRowAndColOffsets();
-        handleNumericDataNewTouchCol(Global.microLinn.colOffset[RIGHT], -MICROLINN_MAX_OFFSET, MICROLINN_MAX_OFFSET, true); 
+        handleNumericDataNewTouchCol(Split[RIGHT].microLinn.colOffset, -MICROLINN_MAX_OFFSET, MICROLINN_MAX_OFFSET, true); 
         microLinnStoreColOffsetCents(RIGHT);
         break;
       case 5: 
