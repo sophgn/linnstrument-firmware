@@ -92,6 +92,7 @@ The 3 custom light patterns are totally separate from all this and are still ava
 This web browser lets you easily edit them: https://forrcaho.github.io/linnstrument_colorizer/
 
 When microLinn is on, the global setting of lefthandedness is ignored. Set the column offsets to -1 to get lefthandedness.
+In general, turning off microLinn disables microLinn settings.
 
 The 8 scales are somewhat similar from edo to edo (except the smaller, weirder edos of course).
 The 1st and 2nd scales are major/downmajor (5-over) and minor/upminor (5-under).

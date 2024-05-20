@@ -12,6 +12,11 @@ short microLinnLandingBend[NUMSPLITS][16][10];               // 16 midi channels
 const short MICROLINN_MAX_EDOSTEPS = MICROLINN_MAX_OFFSET * (MAXROWS - 1 + MAXCOLS - 1) + 1;     // 32 * 31 + 1 = 993
 
 
+a function that starts with "microLinn" can replace or augment a previously existing function
+e.g. microLinnPaintNormalDisplayCell() replaces PaintNormalDisplayCell() when microLinn is on
+as opposed to a function that contains "microLinn" but starts with e.g. "paint" or "handle"
+e.g. PaintMicroLinnNoteLights() is something brand new
+
 
 TO DO
 
@@ -24,7 +29,10 @@ also adjust Global.customSwitchAssignment[switchSelect] since no EDO or SCALE up
 
 test scales/rainbows, delete initializeScales function
 fix blink mode when col offset > 1
-expand the guitar tuning display to cover 225 edosteps (32 * 7 + 1), figure out how guitarTuning array works when microLinn is on
+make microLinnGuitarTuning array list 7 column offsets, display has 2 strings light up not 1 (touched one and the one below it)
+finish microLinnHandleGuitarTuningNewTouch(), display sends 2 midi notes not 1
+initialize both microLinnGuitarTuning and microLinnGuitarTuningCents arrays, update as needed
+make microLinnAdjustRowAndColOffsets() adjust the microLinnGuitarTuning array using the microLinnGuitarTuningCents array
 change handleRowOffsetNewTouch()?
 test the 6 memories
 test octave up/down footswitches while playing, does the calcTuning call make it glitchy?
@@ -45,12 +53,27 @@ TO DECIDE
 Should resetTo12equal() send out pitchbends of 0 on each channel, to avoid lingering pitchbends?
 Should this also happen whenever the edo changes?
 Should I bother with ROWOFFSET_NOOVERLAP?
-2nd shortcut on global, col 1 row 1 for 2nd config display for brightness etc.?
-delete code for col 16 and/or 17 shortcut (ifndef)?
+add a 2nd shortcut on global, col 1 row 1 for 2nd config display for brightness etc.?
+delete code for col 16 and/or 17 shortcut? (search for ifndef)
+increase the number of memories/presets from 6 to 8?
+
+
+POSSIBILTIES
 accept sysex82 messages for non-edo tunings? when quantize is on, the pitch starts at and/or drifts to the JI note
 run the arpeggiator and the sequencer both at once, so that the arpeggiator uses the sequencer's rhythm & velocity?
-increase the number of memories/presets from 6 to 8?
 hammerons/pulloffs window of 1, 2 or 3 columns for each split?
+sweeten 41edo? widen 5/4 by shifting the top note up 2¢ and the bottom note down 2¢
+ratios to widen: 5/4 5/3 5/2 10/3 5/1 20/3 10/1     (maybe 15/8 15/4 15/2?)  (maybe 10/7?)
+ratios to narrow: 6/5 8/5 12/5 16/5 24/5 32/5 48/5  (maybe 9/5 18/5 36/5?)   (maybe 7/5?)
+pitch shifts of 2¢ are unnoticeable, worst case is Cv followed by C^m making C and G shift by 4¢, which is OK
+v(vv#5) chord's 3rd is pulled both ways, so no change, even in an add8 voicing that pulls up harder than down
+  Struct Pull {boolean sharp, flat;};
+  Pull pull[MAXCOLS*MAXROWS];
+  if (pull[cell].sharp && !pull[cell].flat) sharpen(cell);
+  if (pull[cell].flat && !pull[cell].sharp) flatten(cell);
+issues: in dim2 chord or v(b5) chord, 7/5 gets worse (add 7/5 to the narrowing list?)
+in a v9 chord, 9th is sharp, and in an ^9 chord, root is flat (add 9/5 to the narrowing list?)
+in a vM7no3 or vM7(4) chord, the root-5th interval is 2¢ flat (widen 15/8?)
 
 *********************************************************/
 
@@ -84,13 +107,13 @@ const byte MICROLINN_MAJ2ND[MICROLINN_MAX_EDO+1] = {      // actually just a sin
     MICROLINN_SCALEROWS[edo][6] = half2nd + 5*M2 + m2;    // 7ths
     MICROLINN_SCALEROWS[edo][7] = half2nd + edo;          // octaves
 
-    if (m2 == 0) {                                        // ** edos 5, 10, 15, 20, 25 and 30
+    if (m2 == 0) {                                        // ** the pentatonic edos 5, 10, 15, 20, 25 and 30
       MICROLINN_SCALEROWS[edo][2] -= 1;                   // one less 3rd, makes that last 3rd a 4th, since it's 480¢
       MICROLINN_SCALEROWS[edo][5] -= 1;                   // one less 6th, makes that last 6th a 7th, since it's 960¢
       MICROLINN_SCALEROWS[edo][6] -= 1;                   // one less 7th, makes that last 7th an 8ve, since it's 1200¢
     }
   }
-  // *** supersharp and superflat edos 8, 9, 11, 13, 18 and 23 must be manually adjusted
+  // *** supersharp edos 8, 13, and 18 and superflat edos 9, 11 and 23 must be manually adjusted
   ***************************/
 
 const byte MICROLINN_SCALEROWS[MICROLINN_MAX_EDO+1][8] = { 
@@ -162,7 +185,7 @@ const byte MICROLINN_DOTS [6 * MICROLINN_MAX_EDO - 24] = {
   3,  0,  0,  0,  0,  0,  //  7edo
   3,  0,  0,  0,  0,  0,  //  8edo
   3,  0,  0,  0,  0,  0,  //  9edo (9b)
-  2,  4,  0,  0,  0,  0,  // 10edo --- edos 10-31 mark (M2) m3 P4 P5 M6 (m7)
+  2,  4,  0,  0,  0,  0,  // 10edo --- edos 10-24 mark (M2) m3 P4 P5 M6 (m7)
   2,  4,  0,  0,  0,  0,  // 11edo (11b)
   3,  5,  0,  0,  0,  0,  // 12edo
   2,  5,  0,  0,  0,  0,  // 13edo
@@ -174,7 +197,7 @@ const byte MICROLINN_DOTS [6 * MICROLINN_MAX_EDO - 24] = {
   3,  5,  0,  0,  8,  0,  // 19edo
   4,  8,  0,  0,  0,  0,  // 20edo
   3,  6,  0,  0,  9,  0,  // 21edo
-  4,  5,  0,  0,  9,  0,  // 22edo
+  5,  9,  0,  0,  0,  0,  // 22edo
   3,  7,  0,  0, 10,  0,  // 23edo
   4,  6,  0,  0, 10,  0,  // 24edo
   2,  4,  6,  8, 10, 12,  // 25edo --- edos 25-55 approximate 12edo
@@ -216,7 +239,7 @@ const byte MICROLINN_RAINBOWS[MICROLINN_ARRAY_SIZE] = {
 // 5/1   = blue/red      = subminor/supermajor  = 7-over/7-under
 // 6     = magenta       = neutral              = 11-over or 11-under or 13-over or 13-under
 // 11    = pink          = 600c, a half-8ve     = 12-edo-ish but not quite 3-limit, "off-white"
-// 4     = cyan          = outside notes aka interordinals (see 19edo and 24edo)
+// 4     = cyan          = outside notes aka interordinals (e.g. 19edo and 24edo)
 // 9     = orange        = used in 55edo for superneutral and subneutral, to avoid 3 magentas in a row
 //         cyan/orange   = used in 41edo for 7/5 and 10/7
 
@@ -282,23 +305,23 @@ const byte MICROLINN_RAINBOWS[MICROLINN_ARRAY_SIZE] = {
 const byte MICROLINN_SCALES[MICROLINN_ARRAY_SIZE] = {
   // scale 0 = yo, 1 is gu, 2 = zo, 3 = ru, 4 = ila/tha, 5 = blank but for the tonic, 6 = yaza rainbow, 7 = full rainbow, bit 7 is unused
   //  1 y   2 g   4 z   8 r   16 l   32   64 ygzr
-  127,76,76,76,76, // 5edo
+  127,12,76,76,12, // 5edo
   127,64,64, 0,64,64, // 6edo
   127,67, 3,67,67, 3,67, // 7edo
   127,64,64,64, 0,64,64,64, // 8edo
-  127,64,64,64, 0, 0,64,64,64, // 9edo
-  127, 0,64, 0,64, 0,64, 0,64, 0, // 10
-  127, 0,64,64,64, 0, 0,64,64,64, 0, // 11
+  127,64, 0,64,64,64,64, 0,64, // 9edo
+  127, 0,64,64,64, 0,64,64,64, 0, // 10
+  127,64,64,64,64, 0, 0,64,64,64,64, // 11
   127,64,67,66,65,67, 0,67,66,65,66,65, // 12
-  127, 0,64,64,64,64, 0, 0,64,64,64,64, 0, // 13
-  127, 0,64,64,64,64,64, 0,64,64,64,64,64, 0, // 14
+  127,64,64,64,64,64, 0, 0,64,64,64,64,64, // 13
+  127,64,64,64, 0,64,64, 0,64,64, 0,64,64,64, // 14
   127,64,64, 3,66,65,67, 0, 0,67,66,65, 0,66,65, // 15
   127, 0,64,67,66,65, 0,67, 0,67, 0,66,65,66,65, 0, // 16
-  127,64, 0,76,68, 0,72,76, 0, 0,76,68, 0,72,68, 0,72, // 17
+  127,64, 0,92,68,16,72,92, 0, 0,92,68,16,72,68,16,72, // 17
   127, 0,64,64,64,64,64,64,64, 0,64,64,64,64,64,64,64, 0, // 18
   127, 0,64,67, 0,66,65, 0,67, 0, 0,67, 0,66,65, 0,66,65, 0, // 19
   127, 0,64,67, 0,66,65, 0,67, 0,64, 0,67, 0,66,65, 0,66,65, 0, // 20
-  127, 0,64,67, 0,66, 0,65, 0,67, 0, 0,67, 0,66, 0,65, 0,66,65, 0, // 21
+  127, 0,64,64,64,66,64,64, 0,64, 0, 0,64, 0,64,64,64,64,64,64, 0, // 21
   127,64,64,64,79,68,66,65,72,79, 0,64, 0,79,68,66,65,72,68,66,65,72, // 22
   127, 0,64, 0,67, 0,66, 0,65, 0,67, 0, 0,67, 0,66, 0,65, 0,66, 0,65, 0, // 23
   127, 0,64, 0,67, 0,66, 0,65, 0,67, 0,64, 0,67, 0,66, 0,65, 0,66, 0,65, 0, // 24
@@ -376,12 +399,12 @@ void microLinnResetDots (byte edo) {
   short start2 = 6 * (edo - 5);                        // index into MICROLINN_DOTS
   memset (&Device.microLinnDots[start1], 0, edo);
 
-  if (edo == 41) {
+  if (edo == 41) {                                     // kite guitar dots
     for (byte i = 0; i < 41; i += 12) {
-      Device.microLinnDots [start1 + i] = 16;
-      Device.microLinnDots [start1 + i + 4] = 40;
+      Device.microLinnDots [start1 + i] = 16;          // single dot
+      Device.microLinnDots [start1 + i + 4] = 40;      // double dot
       if (i == 36) break;
-      Device.microLinnDots [start1 + i + 8] = 84;
+      Device.microLinnDots [start1 + i + 8] = 84;      // triple dot
     }
     return;
   }
@@ -489,16 +512,16 @@ void initializeMicroLinn() {                      // called in reset(), runs whe
   Split[LEFT].microLinn.transposeEDOlights = 0;
   Split[RIGHT].microLinn.transposeEDOlights = 0;
   Global.microLinn.useRainbow = true;
-  for (byte edo = 5; edo <= MICROLINN_MAX_EDO; ++edo) microLinnResetDots(edo);
   memcpy (Device.microLinnRainbows, MICROLINN_RAINBOWS, MICROLINN_ARRAY_SIZE);
   memcpy (Device.microLinnScales, MICROLINN_SCALES, MICROLINN_ARRAY_SIZE);
+  for (byte edo = 5; edo <= MICROLINN_MAX_EDO; ++edo) microLinnResetDots(edo);
   Global.activeNotes = 0;
 }
 
 void setupMicroLinn() {                          // called in setup(), runs every time the Linnstrument powers up
     Global.setSwitchAssignment(3, ASSIGNED_MICROLINN_EDO_UP,   false);  // for debugging, delete later
     Global.setSwitchAssignment(2, ASSIGNED_MICROLINN_EDO_DOWN, false);  // for debugging
-    microLinnInitializeScales();                    // delete this line after testing is done
+    //microLinnInitializeScales();                    // delete this line after testing is done
   if (isMicroLinnOn()) lightSettings = LIGHTS_ACTIVE;
   microLinnStoreRowOffsetCents();
   microLinnStoreColOffsetCents(LEFT);
@@ -524,7 +547,7 @@ void microLinnSet31edoBosanquetDefaults() {
   Global.rowOffset = 3;                                     // 31-equal minor 2nd
   Global.activeNotes = 6;
   lightSettings = LIGHTS_ACTIVE;
-  //Split[LEFT].playedTouchMode = playedBlink;      // uncomment once playedBlink works right
+  //Split[LEFT].playedTouchMode = playedBlink;          // uncomment once playedBlink works right
   //Split[RIGHT].playedTouchMode = playedBlink;
   microLinnStoreRowOffsetCents();
   microLinnStoreColOffsetCents(LEFT);
@@ -547,7 +570,7 @@ void microLinnSetKiteGuitarDefaults() {
   Global.customRowOffset = 13;                              // 41-equal downmajor 3rds
   Global.activeNotes = 6;
   lightSettings = LIGHTS_ACTIVE;
-  //Split[LEFT].playedTouchMode = playedBlink;      // uncomment once playedBlink works right
+  //Split[LEFT].playedTouchMode = playedBlink;             // uncomment once playedBlink works right
   //Split[RIGHT].playedTouchMode = playedBlink;
   microLinnStoreRowOffsetCents();
   microLinnStoreColOffsetCents(LEFT);
@@ -567,7 +590,7 @@ void microLinnResetTo12equal() {
   Global.microLinn.anchorCents = 0;
   Split[LEFT].microLinn.colOffset = 1;
   Split[RIGHT].microLinn.colOffset = 1;
-  Global.rowOffset = 5;
+  Global.rowOffset = 4;                                 // delete 4 and make it 5 once testing is done
   microLinnStoreRowOffsetCents();
   microLinnStoreColOffsetCents(LEFT);
   microLinnStoreColOffsetCents(RIGHT);
@@ -580,7 +603,7 @@ void microLinnResetTo12equal() {
   Split[RIGHT].playedTouchMode = playedCell;
 }
 
-int microLinnMod (int num, int base) {                       // -13 % 10 = -3, but microLinnMod (-13, 10) = 7
+int microLinnMod (int num, int base) {                  // -13 % 10 = -3, but microLinnMod (-13, 10) = 7
   num %= base;
   if (num < 0) num += base;
   return num;
@@ -1238,6 +1261,22 @@ void microLinnHandleOctaveTransposeNewTouchSplit(byte side) {
   }
 }
 
+void microLinnHandleGuitarTuningNewTouch() {   // bug - NEEDS WORK
+  if (sensorCol == 1) {
+    guitarTuningRowNum = max (sensorRow, 6);     
+    updateDisplay();
+  }
+  else {
+    handleNumericDataNewTouchCol(Global.microLinn.guitarTuning[guitarTuningRowNum], -MICROLINN_MAX_OFFSET, MICROLINN_MAX_OFFSET, true);
+  }
+
+  ensureGuitarTuningPreviewNoteRelease();
+  guitarTuningPreviewNote = Global.microLinn.guitarTuning[guitarTuningRowNum];
+  guitarTuningPreviewChannel = takeChannel(Global.currentPerSplit, sensorRow);
+  //guitarTuningPreviewChannel2 = takeChannel(Global.currentPerSplit, sensorRow+1);
+  midiSendNoteOn(Global.currentPerSplit, guitarTuningPreviewNote, 96, guitarTuningPreviewChannel);
+}
+
 void enterForkMenu () {
   forkMenuColNum = 0;
   numTimesForkMenu += 1;
@@ -1318,15 +1357,17 @@ void handleMicroLinnConfigNewTouch() {
   }
   
   if (sensorRow > 0) {                                                   // rows 1-7 are handled right away
+    byte maxOffset = (isMicroLinnOn() ? min (MICROLINN_MAX_OFFSET, Global.microLinn.EDO) : 12);
     switch (microLinnConfigColNum) {
       case 2: 
         microLinnAdjustRowAndColOffsets();
-        handleNumericDataNewTouchCol(Split[LEFT].microLinn.colOffset, -MICROLINN_MAX_OFFSET, MICROLINN_MAX_OFFSET, true);
+        handleNumericDataNewTouchCol(Split[LEFT].microLinn.colOffset, -maxOffset, maxOffset, true);
+        //handleNumericDataNewTouchCol(Split[LEFT].microLinn.colOffset, -MICROLINN_MAX_OFFSET, MICROLINN_MAX_OFFSET, true);   // delete later
         microLinnStoreColOffsetCents(LEFT);
         break;
       case 3: 
         microLinnAdjustRowAndColOffsets();
-        handleNumericDataNewTouchCol(Split[RIGHT].microLinn.colOffset, -MICROLINN_MAX_OFFSET, MICROLINN_MAX_OFFSET, true); 
+        handleNumericDataNewTouchCol(Split[RIGHT].microLinn.colOffset, -maxOffset, maxOffset, true); 
         microLinnStoreColOffsetCents(RIGHT);
         break;
       case 5: 
@@ -2220,5 +2261,10 @@ const byte MICROLINN_DOTS[MICROLINN_MAX_EDO+1][MAXCOLS+3] = {
   0,84, 0, 0, 0, 0,16, 0, 0, 0,16, 0, 0, 0, 0,16, 0, 0, 0,16, 0, 0, 0, 0,40, 0, 0, 0,16,  // 54edo (...0, 0, 0,40)
   0,84, 0, 0, 0, 0,16, 0, 0, 0,16, 0, 0, 0, 0,16, 0, 0, 0,16, 0, 0, 0, 0,40, 0, 0, 0,16   // 55edo (...16,0, 0, 0,40)
 };
+
+// 2 lines that could replace line 1242 in ls_handleTouches.ino
+// see https://www.kvraudio.com/forum/viewtopic.php?p=8885419#p8885419
+      int microLinnTuningBend = (isMicroLinnOn() ? microLinnFineTuning[sensorSplit][sensorCol][sensorRow] : 0);
+      preSendPitchBend(sensorSplit, microLinnTuningBend, sensorCell->channel);
 
 **********************************************************************************************/

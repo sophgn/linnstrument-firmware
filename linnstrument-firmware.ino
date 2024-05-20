@@ -766,14 +766,15 @@ enum SustainBehavior {
 };
 
 struct MicroLinnGlobal {
-  byte EDO;                                  // limited to 5-55, plus 4 for OFF
-  signed char octaveStretch;                 // limited to ± 120 cents, for non-octave tunings such as bohlen-pierce
-  byte anchorCol;
+  byte EDO;                                  // ranges 5-55, plus 4 for OFF
+  signed char octaveStretch;                 // ranges -120 to 120 cents, for non-octave tunings such as bohlen-pierce
+  byte anchorCol;                            // ranges 1-25, setting to a number > 16 on a Linnstrument 128 is allowed
   byte anchorRow;                            // top row is 7, bottom row is 0, but the user sees top row as 1, bottom row as 8
-  byte anchorNote;                           // any midi note 0-127
-  signed char anchorCents;                   // limited to ± 100 cents
-  boolean useRainbow;                        // if false, use colorAccent and colorMain instead
-};  
+  byte anchorNote;                           // any midi note 0-127, refers to a standard pitch of 12edo calibrated to A-440
+  signed char anchorCents;                   // ranges -100 to +100 cents, even though 50 would do, for convenience
+  boolean useRainbow;                        // if false, instead of the 9 colors, use only colorMain, and colorAccent for the tonic
+  signed char guitarTuning[MAXROWS - 1];     // ranges -32 to 32, the edosteps between adjacent open strings, totally independent...
+};                                           // ...from Global.guitarTuning, intervals not notes because there is now an anchor string
 
 struct GlobalSettings {
   void setSwitchAssignment(byte, byte, boolean);
