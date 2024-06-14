@@ -62,14 +62,15 @@ The menu has 10 buttons. Long-press each one to see its function. Most don't wor
 
 8) set note lights
 
-9) set to 31edo Bosanquet
-10) set to 41edo Kite guitar
+9) set to 31edo Bosanquet (row offset 3, column offset 5)
+10) set to 41edo Kite guitar (row offset 13, column offset 2)
+11) reset to 12edo
 
 The anchor pad is a specific pad or cell that doesn't change pitch when you change the notes per octave.
 The anchor pad chooser displays the row and column of the current anchor pad, e.g. R3C6 means row 3 (from the top) and column 6. 
 To choose a new anchor pad, tap the blue "R3C6" and then tap any pad. Change the anchor cents to detune the entire Linnstrument.
 
-When the notes per octave is greater than 12, the OCTAVE/TRANSPOSE display shows 2 extra rows for transposing by edosteps.
+When the notes per octave is greater than 12, the OCTAVE/TRANSPOSE display shows two extra rows for transposing by edosteps.
 The 2nd and 3rd rows now transpose not by semitones but by major 2nds (since most edos have several different semitones).
 
 There are 4 new functions for switches 1 & 2 and footswitches 1 & 2: 
@@ -81,9 +82,10 @@ Shortcut: you can long-press the scale's pad in the Global Settings display to g
 
 The note lights display has 7 scale buttons plus the rainbow editor, the dots selector and the yellow rainbow-enabler button.
 Tap any of these buttons except the rainbow-enabler to select it. Tap any selected button to backtrack to the previous button.
+There are 7 rows of colored lights on the screen, which top to bottom are for unisons, 2nds, 3rds, 4ths, 5ths, 6ths and 7ths.
 Tap a note in a scale to toggle it on or off. Like the guitar tuning screen, a midi note is sent when you tap. 
 The rainbow editor is the 8th scale, in which all notes are always on. Tap a note to cycle it thru the rainbow. 
-The 9th scale (dots) isn't really a scale. It's a full-screen display like the custom light patterns.
+The 9th scale (guitar-like fretboard dots) isn't really a scale. It's a full-screen display like the custom light patterns.
 Tapping the dots selector makes the dots appear in blue mid-screen. Tapping the dots lets you toggle them on or off. 
 Long-press the scale buttons or the rainbow editor button or the dots selector button to reset the note lights to the default. 
 Tap the yellow rainbow enabler button to turn off the rainbow and limit the note lights to the usual two colors.
@@ -103,7 +105,7 @@ Many of the choices for scales and colors are somewhat arbitrary. Feel free to r
 
 The colors use the rainbow metaphor, red-yellow-green-blue = sharp to flat = supermajor to subminor
 white = 12-edo-ish = 3-limit
-yellow / green = downmajor / upminor =  5-over / 5-under
+yellow / green = downmajor / upminor =  5-over / 5-under (examples: 5/4 and 5/3 are 5-over, 6/5 and 16/15 are 5-under)
 blue / red = downminor / upmajor = 7-over / 7-under
 purple = neutral = 11-over or 11-under or 13-over or 13-under
 pink is reserved for the exact half-octave of 600c, 12-edo-ish but not quite 3-limit, "off-white"
@@ -132,14 +134,14 @@ Perhaps software on the PC could fix this problem by scaling the slides by adjus
 To find all changes to the code, search for "microlinn" or "patternChain" or "playedBlink" or "brightness"
 
 "Skip-fretting" is a column offset of 2 - each subsequent pad represents every other MIDI note, so note 0 2 4 6 8 ... instead of 0 1 2 3 4. 
-The name is in reference to the microtonal [kite guitar](https://kiteguitar.com/), which obviously uses frets and not keys, but the Linnstrument's 
-rows and columns work just like strings and frets.
+The name is in reference to the microtonal [kite guitar](https://kiteguitar.com/), which obviously uses frets and not keys, but the
+Linnstrument's rows and columns work just like strings and frets.
 
 Why would you want to skip half the notes? On the kite guitar, strings are 13 steps apart, which you can achieve on the Linnstrument by setting 
-the Row Offset to a custom value of 13 (Global Settings -> Row Offset -> hold down "Octave" to get the secret menu -> swipe right). 
+the Row Offset to a custom value of 13 (Global Settings -> Row Offset -> hold down "Octave" to get the hidden menu -> swipe right). 
 Thirteen is an odd number, so that means that if the first row represented the _even_ scale degrees (0 2 4 6 8...), the next row will represent 
-the _odd_ scale degrees (..13 15 17 19 21..)! Thus you actually have access to **all** the midi notes after all, with two neighboring rows filling 
-each other's gaps. 
+the _odd_ scale degrees (..13 15 17 19 21..)! Thus you actually have access to **all** the midi notes after all, with two neighboring rows
+filling each other's gaps. 
 
 This is handy, as 41 notes per octave would not otherwise fit on a single row. But with half that, you get at least an octave per row on a 200-pad 
 instrument. Luckily, you typically only want the odds or evens at the same time on the same string/row anyway, as explained on the kite guitar website.
