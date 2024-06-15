@@ -96,12 +96,10 @@ This web browser lets you easily edit them: https://forrcaho.github.io/linnstrum
 When microLinn is on, the global setting of lefthandedness is ignored. Set the column offsets to -1 to get lefthandedness.
 In general, turning off microLinn disables microLinn settings.
 
-The 8 scales are somewhat similar from edo to edo (except the smaller, weirder edos of course).
-The 1st and 2nd scales are major/downmajor (5-over) and minor/upminor (5-under).
-The 3rd and 4th scales are downminor (7-over) and upmajor (7-under).
-The 5th scale is mid or neutral (11-over or 11-under), and the 6th scale is blank but for the tonic.
+Of the 8 scales, the 1st and 2nd scales are major/downmajor (5-over) and minor/upminor (5-under).
+Scales 3-6 are blank but for the tonic, so that you can create your own scales in the lights display
+(For the smaller, weirder, edos, scales 1-2 are also blank.)
 The 7th scale is a partial rainbow, and the 8th scale is the full rainbow.
-Many of the choices for scales and colors are somewhat arbitrary. Feel free to replace them with your own choices!
 
 The colors use the rainbow metaphor, red-yellow-green-blue = sharp to flat = supermajor to subminor
 white = 12-edo-ish = 3-limit
@@ -120,6 +118,7 @@ Suggestions for exploring:
 The first few edos are pretty strange. Try starting with 15, 17, 19 or 22.
 Be sure to try the Bosanquet layout for 31edo and the Kite guitar layout for 41edo.
 The rainbow colors can be overwhelming. Try setting the played mode to BLNK or BLNK8.
+Once you know an edo well, you'll probably want to switch to the fretboard dots display.
 
 To create JI or rank-2 scales with N notes, set the edo to 12 but play as if in N-edo, think one midi note per edostep.
 Load a scala file into your synth or run alt-tuner to produce that N-note scale.

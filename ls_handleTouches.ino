@@ -1965,7 +1965,7 @@ inline void updateSensorCell() {
 // computes MIDI note number from current row, column, row offset, octave button and transposition amount
 byte getNoteNumber(byte split, byte col, byte row) {
   if (isMicroLinnOn()) {
-    //return microLinnGetNoteNumber(split, col, row);
+    //return microLinnGetNoteNumber(split, col, row);              // uncomment once midi code is done
   }
   byte notenum = 0;
 
@@ -1978,8 +1978,8 @@ byte getNoteNumber(byte split, byte col, byte row) {
   signed char transposeLights = Split[split].transposeLights;
 
   if (Split[split].microLinn.colOffset != 1) {
-    // subtract 1 needed everywhere, so do it again when doubling - this lets us start at note 0 instead of 1
-    noteCol = noteCol * Split[split].microLinn.colOffset - 1;
+    // subtract 1 to be zero-based, scale it up, then add 1 again - this lets us start at note 0 instead of 1
+    noteCol = (noteCol - 1) * Split[split].microLinn.colOffset + 1;
     transposeLights = transposeLights * Split[split].microLinn.colOffset;
   }
 
@@ -1991,6 +1991,7 @@ byte getNoteNumber(byte split, byte col, byte row) {
 // determine the start note of a given row.
 short determineRowOffsetNote(byte split, byte row) {
   short lowest = 30;                                  // 30 = F#2, which is 10 semitones below guitar low E (E3/52). High E = E5/76
+  if (isMicroLinnOn()) lowest = 0;                    // start at note 0 so that we show as many as possible and all disabled pads are in one place
 
   if (Global.rowOffset <= 12) {                       // if rowOffset is 12 or lower
     short offset = Global.rowOffset;
@@ -2001,6 +2002,7 @@ short determineRowOffsetNote(byte split, byte row) {
 
     if (offset < 0) {
       lowest = 65;
+      if (isMicroLinnOn()) lowest = 127;
     }
 
     if (Global.rowOffset == ROWOFFSET_NOOVERLAP) {    // no overlap mode
@@ -2021,14 +2023,10 @@ short determineRowOffsetNote(byte split, byte row) {
       }
     }
 
-    else if (offset >= 12) {
-      if (Split[split].microLinn.colOffset != 1) {    // handle skip fretting with high row offset (kite guitar is 13, only fills 194 cells)
-        lowest = 0;                                   // start at note 0 (why -1 gets us 0?) so that we show as many as possible and all disabled notes are in one place
-      } else {
-        lowest = 18;                                  // start the octave offset one octave lower to prevent having disabled notes at the top in the default configuration
-      }
+    else if (offset >= 12 && !isMicroLinnOn()) {
+      lowest = 18;                                  // start the octave offset one octave lower to prevent having disabled notes at the top in the default configuration
     }
-    else if (offset <= -12) {
+    else if (offset <= -12 && !isMicroLinnOn()) {
       lowest = 18 - 7 * offset;
     }
 

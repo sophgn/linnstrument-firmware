@@ -27,12 +27,17 @@ the uninstall code must adjust Split[side].playedTouchMode since no BLNK mode
 (possibly store playedBlink mode as the last option, but have it appear to the user as the 3rd option)
 also adjust Global.customSwitchAssignment[switchSelect] since no EDO or SCALE up/down
 
+go back to using the pre-existing lefty modes, and limit the col offsets to positive numbers
+
 test scales/rainbows, delete initializeScales function
 fix blink mode when col offset > 1
-make microLinnGuitarTuning array list 7 column offsets, display has 2 strings light up not 1 (touched one and the one below it)
-finish microLinnHandleGuitarTuningNewTouch(), display sends 2 midi notes not 1
+make microLinnGuitarTuning array display the edosteps from the anchor string as a number
+that number is positive for higher strings and negative for lower strings, range is 7 octaves total
+if anchor string is row N (0 is lowest row), range is -N * edo to (7-N) * edo
+finish microLinnHandleGuitarTuningNewTouch(), anchor string has tool-tip "anchor string" and data 0, can't be edited
 initialize both microLinnGuitarTuning and microLinnGuitarTuningCents arrays, update as needed
 make microLinnAdjustRowAndColOffsets() adjust the microLinnGuitarTuning array using the microLinnGuitarTuningCents array
+
 change handleRowOffsetNewTouch()?
 test the 6 memories
 test octave up/down footswitches while playing, does the calcTuning call make it glitchy?
@@ -48,6 +53,7 @@ BLN8 = same, blinks, octaves too
 all 3 plus SAME should include notes on the other split, but only if the other split also has SAME
 blink modes can blink a lit LED on/off, see getLedColor function
 
+cleanup: search for "delete", "uncomment" and "bug"
 
 TO DECIDE
 Should resetTo12equal() send out pitchbends of 0 on each channel, to avoid lingering pitchbends?
@@ -303,11 +309,11 @@ const byte MICROLINN_RAINBOWS[MICROLINN_ARRAY_SIZE] = {
 };
 
 const byte MICROLINN_SCALES[MICROLINN_ARRAY_SIZE] = {
-  // scale 0 = yo, 1 is gu, 2 = zo, 3 = ru, 4 = ila/tha, 5 = blank but for the tonic, 6 = yaza rainbow, 7 = full rainbow, bit 7 is unused
-  //  1 y   2 g   4 z   8 r   16 l   32   64 ygzr
-  127,12,76,76,12, // 5edo
+  // scale 0 = yo, 1 is gu, 2-5 = blank but for the tonic, 6 = yaza rainbow, 7 = full rainbow (but bit 7 is unused)
+  //  1 y   2 g   64 ygzr
+  127, 0,64,64, 0, // 5edo
   127,64,64, 0,64,64, // 6edo
-  127,67, 3,67,67, 3,67, // 7edo
+  127,64, 0,64,64, 0,64, // 7edo
   127,64,64,64, 0,64,64,64, // 8edo
   127,64, 0,64,64,64,64, 0,64, // 9edo
   127, 0,64,64,64, 0,64,64,64, 0, // 10
@@ -317,47 +323,46 @@ const byte MICROLINN_SCALES[MICROLINN_ARRAY_SIZE] = {
   127,64,64,64, 0,64,64, 0,64,64, 0,64,64,64, // 14
   127,64,64, 3,66,65,67, 0, 0,67,66,65, 0,66,65, // 15
   127, 0,64,67,66,65, 0,67, 0,67, 0,66,65,66,65, 0, // 16
-  127,64, 0,92,68,16,72,92, 0, 0,92,68,16,72,68,16,72, // 17
+  127,64, 0,67,66, 0,65,67, 0, 0,67,66, 0,65,66, 0,65, // 17
   127, 0,64,64,64,64,64,64,64, 0,64,64,64,64,64,64,64, 0, // 18
   127, 0,64,67, 0,66,65, 0,67, 0, 0,67, 0,66,65, 0,66,65, 0, // 19
   127, 0,64,67, 0,66,65, 0,67, 0,64, 0,67, 0,66,65, 0,66,65, 0, // 20
-  127, 0,64,64,64,66,64,64, 0,64, 0, 0,64, 0,64,64,64,64,64,64, 0, // 21
-  127,64,64,64,79,68,66,65,72,79, 0,64, 0,79,68,66,65,72,68,66,65,72, // 22
+  127, 0,64,64,64,64,64,64, 0,64, 0, 0,64, 0,64,64,64,64,64,64, 0, // 21
+  127,64,64,64,67,64,66,65,64,67, 0,64, 0,67,64,66,65,64,64,66,65,64, // 22
   127, 0,64, 0,67, 0,66, 0,65, 0,67, 0, 0,67, 0,66, 0,65, 0,66, 0,65, 0, // 23
   127, 0,64, 0,67, 0,66, 0,65, 0,67, 0,64, 0,67, 0,66, 0,65, 0,66, 0,65, 0, // 24
   127, 0,64, 0,67, 0,66, 0,65, 0,67, 0,64,64, 0,67, 0,66, 0,65, 0,66, 0,65, 0, // 25
-  127,64,64, 0,95,64,68,66,16,65,72,95, 0,64, 0,95,68,66,16,65,72,68,66,16,65,72, // 26
-  127,64,64, 0,95,64,68,66,16,65,72,95, 0,64,64, 0,95,68,66,16,65,72,68,66,16,65,72, // 27
-  127,64,64, 0,95,64,68,66,16,65,72, 0,95, 0,64, 0,95, 0,68,66,16,65,72,68,66,16,65,72, // 28
-  127,64,64, 0,64,95,68,66,16,65,72, 0,95, 0,64,64, 0,95, 0,68,66,16,65,72,68,66,16,65,72, // 29
-  127, 0,64,64, 0,95,64,68,66,16,65,72,95, 0, 0,64, 0, 0,95,68,66,16,65,72,68,66,16,65,72, 0, // 30
-  127, 0,64,64, 0,95,64,68,66,16,65,72, 0,95, 0,64,64, 0,95, 0,68,66,16,65,72,68,66,16,65,72, 0, // 31
-  127, 0,64,64, 0,95,64,68,66,16,65,72, 0,95, 0, 0,64, 0, 0,95, 0,68,66,16,65,72,68,66,16,65,72, 0, // 32
-  127, 0,64,64, 0,95,64, 0,68,66,16,65,72, 0,95, 0,64,64, 0,95, 0,68,66,16,65,72, 0,68,66,16,65,72, 0, // 33
-  127, 0,64,64, 0,95,64, 0,68,66,16,65,72, 0,95, 0, 0,64, 0, 0,95, 0,68,66,16,65,72, 0,68,66,16,65,72, 0, // 34
-  127, 0,64,64, 0,95,64, 0,68,66,16,65,72, 0, 0,95, 0,64,64, 0,95, 0, 0,68,66,16,65,72, 0,68,66,16,65,72, 0, // 35
-  127, 0,64,64, 0, 0,79,64,68,66, 0, 0,65,72, 0,79, 0, 0,64, 0, 0,79, 0,68,66, 0, 0,65,72,68,66, 0, 0,65,72, 0, // 36
-  127, 0, 0,64,64, 0,95,64, 0,68,66,16,65,72, 0,95, 0, 0,64,64, 0, 0,95, 0,68,66,16,65,72, 0,68,66,16,65,72, 0, 0, // 37
-  127, 0, 0,64,64, 0,95,64, 0,68,66,16,65,72, 0, 0,95, 0, 0,64, 0, 0,95, 0, 0,68,66,16,65,72, 0,68,66,16,65,72, 0, 0, // 38
-  127, 0,64,64, 0, 0,64,79, 0,68,66, 0, 0,65,72, 0,79, 0, 0,64,64, 0, 0,79, 0,68,66, 0, 0,65,72, 0,68,66, 0, 1,72,64, 0, // 39
-  127, 0, 0,64,64, 0, 0,79,64,68,66, 0, 0,65,72, 0, 0,79, 0, 0,64, 0, 0,79, 0, 0,68,66, 0, 0,65,72,68,66, 0, 0,65,72, 0, 0, // 40
-  127, 0,64, 0,64, 0,64,95,64,68, 0,66,16,65, 0,72, 0,95, 0,64,64,64,64, 0,95, 0,68, 0,66,16,65, 0,72,68,64,66,16,65, 0,72, 0, // 41
-  127, 0, 0,64,64, 0, 0,79,64, 0,68,66, 0, 0,65,72, 0,79, 0, 0, 0,64, 0, 0, 0,79, 0, 0,68,66, 0, 0,65,72,68,66, 0, 0,65,72, 0, 0, // 42
-  127, 0, 0,64,64, 0, 0,79, 0,68, 0,66, 0, 0,65, 0,72, 0,79, 0, 0,64,64, 0, 0,79, 0,68, 0,66, 0, 0,65, 0,76, 0,66, 0, 0,65, 0,72, 0, // 43
-  127, 0, 0,64, 0,64, 0, 0,95, 0,68, 0,66,16,65, 0,72, 0,95, 0, 0,64, 0,64, 0, 0,95, 0,68, 0,66,16,65, 0,72, 0,68, 0,66,16,65, 0,72, 0, // 44
-  127, 0, 0,64,64, 0, 0,95, 0, 0,68, 0,66,16,65, 0,72, 0, 0,95, 0, 0,64,64, 0, 0,95, 0, 0,68, 0,66,16,65, 0,72,68, 0,66,16,65, 0,72, 0, 0, // 45
-  127, 0, 0,64,64, 0, 0, 0,79, 0,68, 0,66, 0, 0,65, 0,72, 0,79, 0, 0, 0,64, 0, 0, 0,79, 0,68, 0,66, 0, 0,65, 0,72,68, 0,66, 0,65, 0,72, 0, 0, // 46
-  127, 0, 0,64,64, 0, 0,79, 0, 0,68, 0,66, 0, 0,65, 0,72, 0, 0,79, 0, 0,64,64, 0, 0,79, 0, 0,68, 0,66, 0, 0,65, 0,76, 0,66, 0, 0,65, 0,72, 0, 0, // 47
-  127, 0, 0, 0,64, 0, 0, 0,95, 0,68, 0,66, 0,16, 0,65, 0,72, 0,95, 0, 0, 0,64, 0, 0, 0,95, 0,68, 0,66, 0,16, 0,65, 0,76, 0,66, 0,16, 0,65, 0,72, 0, // 48
-  127, 0, 0, 0,64, 0, 0, 0,79, 0, 0,68, 0,66, 0, 0,65, 0,72, 0,79, 0, 0, 0,64,64, 0, 0, 0,79, 0,68, 0,66, 0, 0,65, 0,72, 0,68, 0,66, 0, 0,65, 0,72, 0, // 49
-  127, 0, 0,64, 0,64, 0, 0,95, 0,64,68, 0,66,16, 0,65, 0,72, 0, 0,95, 0, 0, 0,64, 0, 0, 0,95, 0, 0,68, 0,66,16, 0,65, 0,72,68, 0,66,16, 0,65, 0,72, 0, 0, // 50
-  127, 0, 0,64, 0,64, 0,64, 0,95, 0, 0,68, 0,66,16,65, 0,72, 0, 0,95, 0, 0, 0,64,64, 0, 0, 0,95, 0, 0,68, 0,66,16,65, 0,72, 0, 0,68, 0,66,16,65, 0,72, 0, 0, // 51
-  127, 0, 0, 0,64, 0, 0, 0,95, 0, 0,68, 0,66, 0,16, 0,65, 0,72, 0, 0,95, 0, 0, 0,64, 0, 0, 0,95, 0, 0,68, 0,66, 0,16, 0,65, 0,76, 0,66, 0,16, 0,65, 0,72, 0, 0, // 52
-  127, 0, 0,64, 0,64, 0, 0,64,95,64, 0,68, 0,66,16, 0,65, 0,72, 0, 0,95, 0, 0,64,64,64,64, 0, 0,95, 0, 0,68, 0,66,16, 0,65, 0,72, 0,68,64,66,16, 0,65, 0,72, 0, 0, // 53
-  127, 0, 0,64, 0,64, 0, 0,64,31,64, 0,64, 4,64, 2,16,65, 0,72, 0, 0,95, 0,64, 0,64, 0,64, 0,64, 0,95, 0, 0,68, 0,66,16, 1,64, 8,64, 0,64, 4,64, 2,16,65, 0,72, 0, 0, // 54
-  127, 0, 0,64, 0,64, 0,64, 0,95, 0,64,68, 0,66, 0,80, 0,65, 0,72, 0, 0,95, 0,64, 0,64,64, 0,64, 0,95, 0, 0,68, 0,66, 0,80, 0,65, 0,72,68, 0,66, 0,80, 0,65, 0,72, 0, 0  // 55
+  127, 0,64,64,67,64,64,66,64,65, 0,67, 0,64, 0,67, 0,66,64,65,64,64,66,64,65, 0, // 26
+  127,64,64, 0,67,64,64,66, 0,65,64,67, 0,64,64, 0,67,64,66, 0,65,64,64,66, 0,65,64, // 27
+  127,64,64, 0,67,64,64,66, 0,65,64, 0,67, 0,64, 0,67, 0,64,66, 0,65,64,64,66, 0,65,64, // 28
+  127, 0,64,64,64,67, 0,64,66,65,64, 0,67, 0,64,64, 0,67, 0,64,66,65,64, 0,64,66,65,64, 0, // 29
+  127, 0,64,64, 0,67,64,64,66, 0,65,64,67, 0, 0,64, 0, 0,67,64,66, 0,65,64,64,66, 0,65,64, 0, // 30
+  127, 0,64,64, 0,67,64,64,66, 0,65,64, 0,67, 0,64,64, 0,67, 0,64,66, 0,65,64,64,66, 0,65,64, 0, // 31
+  127, 0,64,64, 0,67,64,64,66, 0,65,64, 0,67, 0, 0,64, 0, 0,67, 0,64,66, 0,65,64,64,66, 0,65,64, 0, // 32
+  127, 0,64,64, 0,67,64, 0,64,66, 0,65,64, 0,67, 0,64,64, 0,67, 0,64,66, 0,65,64, 0,64,66, 0,65,64, 0, // 33
+  127, 0,64,64, 0,67,64, 0,64,66, 0,65,64, 0,67, 0, 0,64, 0, 0,67, 0,64,66, 0,65,64, 0,64,66, 0,65,64, 0, // 34
+  127, 0,64,64, 0,67,64, 0,64,66, 0,65,64, 0, 0,67, 0,64,64, 0,67, 0, 0,64,66, 0,65,64, 0,64,66, 0,65,64, 0, // 35
+  127, 0,64,64, 0, 0,67,64,64,66, 0, 0,65,64, 0,67, 0, 0,64, 0, 0,67, 0,64,66, 0, 0,65,64,64,66, 0, 0,65,64, 0, // 36
+  127, 0, 0,64,64, 0,67,64, 0,64,66, 0,65,64, 0,67, 0, 0,64,64, 0, 0,67, 0,64,66, 0,65,64, 0,64,66, 0,65,64, 0, 0, // 37
+  127, 0, 0,64,64, 0,67,64, 0,64,66, 0,65,64, 0, 0,67, 0, 0,64, 0, 0,67, 0, 0,64,66, 0,65,64, 0,64,66, 0,65,64, 0, 0, // 38
+  127, 0,64,64, 0, 0,64,67, 0,64,66, 0, 0,65,64, 0,67, 0, 0,64,64, 0, 0,67, 0,64,66, 0, 0,65,64, 0,64,66, 0, 0,65,64, 0, // 39
+  127, 0, 0,64,64,64,64,67, 0, 0,66,64,64,65,64, 0, 0,67, 0, 0,64, 0, 0,67, 0, 0,64,66,64,64,65, 0, 0,66,64,64,65,64, 0, 0, // 40
+  127, 0,64, 0,64, 0,64,67,64,64, 0,66, 0,65, 0,64, 0,67, 0,64,64,64,64, 0,67, 0,64, 0,66, 0,65, 0,64,64,64,66, 0,65, 0,64, 0, // 41
+  127, 0, 0,64,64,64,64,67, 0, 0,64,66,64,64,65, 0, 0,67, 0, 0,64,64,64, 0, 0,67, 0, 0,64,66,64,64,65, 0, 0,66,64,64,65,64, 0, 0, // 42
+  127, 0, 0,64,64, 0, 0,67,64, 0,64,66, 0, 0,65,64, 0, 0,67, 0, 0,64,64, 0, 0,67, 0, 0,64,66, 0, 0,65,64, 0,64,66, 0, 0,65,64, 0, 0, // 43
+  127, 0, 0,64, 0,64, 0, 0,67, 0,64, 0,66, 0,65, 0,64, 0,67, 0, 0,64, 0,64, 0, 0,67, 0,64, 0,66, 0,65, 0,64, 0,64, 0,66, 0,65, 0,64, 0, // 44
+  127, 0, 0,64,64, 0, 0,67, 0, 0,64, 0,66, 0,65, 0,64, 0, 0,67, 0, 0,64,64, 0, 0,67, 0, 0,64, 0,66, 0,65, 0,64,64, 0,66, 0,65, 0,64, 0, 0, // 45
+  127, 0,64, 0,64, 0, 0,64,67,64,64, 0,66, 0, 0,65, 0,64, 0,67, 0, 0,64,64,64, 0, 0,67, 0,64, 0,66, 0, 0,65, 0,64,64,64,66, 0, 0,65, 0,64, 0, // 46
+  127, 0, 0,64,64, 0, 0,67, 0, 0,64, 0,66, 0, 0,65, 0,64, 0, 0,67, 0, 0,64,64, 0, 0,67, 0, 0,64, 0,66, 0, 0,65, 0,64, 0,66, 0, 0,65, 0,64, 0, 0, // 47
+  127, 0, 0, 0,64, 0, 0, 0,67, 0,64, 0,66, 0, 0, 0,65, 0,64, 0,67, 0, 0, 0,64, 0, 0, 0,67, 0,64, 0,66, 0, 0, 0,65, 0,64, 0,66, 0, 0, 0,65, 0,64, 0, // 48
+  127, 0, 0, 0,64, 0, 0, 0,67, 0, 0,64, 0,66, 0, 0,65, 0,64, 0,67, 0, 0, 0,64,64, 0, 0, 0,67, 0,64, 0,66, 0, 0,65, 0,64, 0,64, 0,66, 0, 0,65, 0,64, 0, // 49
+  127, 0, 0,64, 0,64, 0, 0,67, 0,64,64, 0,66, 0, 0,65, 0,64, 0, 0,67, 0, 0, 0,64, 0, 0, 0,67, 0, 0,64, 0,66, 0, 0,65, 0,64,64, 0,66, 0, 0,65, 0,64, 0, 0, // 50
+  127, 0, 0,64, 0,64, 0,64, 0,67, 0, 0,64, 0,66, 0,65, 0,64, 0, 0,67, 0, 0, 0,64,64, 0, 0, 0,67, 0, 0,64, 0,66, 0,65, 0,64, 0, 0,64, 0,66, 0,65, 0,64, 0, 0, // 51
+  127, 0, 0, 0,64, 0, 0, 0,67, 0, 0,64, 0,66, 0, 0, 0,65, 0,64, 0, 0,67, 0, 0, 0,64, 0, 0, 0,67, 0, 0,64, 0,66, 0, 0, 0,65, 0,64, 0,66, 0, 0, 0,65, 0,64, 0, 0, // 52
+  127, 0, 0,64, 0,64, 0, 0,64,67,64, 0,64, 0,66, 0, 0,65, 0,64, 0, 0,67, 0, 0,64,64,64,64, 0, 0,67, 0, 0,64, 0,66, 0, 0,65, 0,64, 0,64,64,66, 0, 0,65, 0,64, 0, 0, // 53
+  127, 0, 0,64, 0,64, 0, 0,64, 3,64, 0,64, 0,64, 2, 0,65, 0,64, 0, 0,67, 0,64, 0,64, 0,64, 0,64, 0,67, 0, 0,64, 0,66, 0, 1,64, 0,64, 0,64, 0,64, 2, 0,65, 0,64, 0, 0, // 54
+  127, 0, 0,64, 0,64, 0,64, 0,67, 0,64,64, 0,66, 0, 0, 0,65, 0,64, 0, 0,67, 0,64, 0,64,64, 0,64, 0,67, 0, 0,64, 0,66, 0, 0, 0,65, 0,64,64, 0,66, 0, 0, 0,65, 0,64, 0, 0  // 55
 };
-
 
 // runtime vars
 byte microLinnMidiNote[NUMSPLITS][MAXCOLS][MAXROWS];         // the midi note that is output for each cell, col 0 is unused
@@ -427,74 +432,6 @@ byte micoLinnGetFret (byte split, byte col) {
   if (edo == 41) edo = 12;                              // because 41edo kites repeat every 12 frets
   return microLinnMod (fret - 1, edo);
 }  
-
-// delete these once MICROLINN_SCALES is tested
-const float wa2nd = log(9.0/8.0) / log(2.0);            // ratios as a fraction of an octave
-const float yo3rd = log(5.0/4.0) / log(2.0);
-const float gu3rd = log(6.0/5.0) / log(2.0);
-const float zo3rd = log(7.0/6.0) / log(2.0);
-const float ru3rd = log(9.0/7.0) / log(2.0);
-const float lo3rd = log(11.0/9.0) / log(2.0);
-const float wa4th = log(4.0/3.0) / log(2.0);
-const float wa5th = log(3.0/2.0) / log(2.0);
-const float yo6th = log(5.0/3.0) / log(2.0);
-const float gu6th = log(8.0/5.0) / log(2.0);
-const float zo6th = log(14.0/9.0) / log(2.0);
-const float ru6th = log(12.0/7.0) / log(2.0);
-const float lo6th = log(44.0/27.0) / log(2.0);
-const float yo7th = log(15.0/8.0)/ log(2.0);
-const float gu7th = log(9.0/5.0) / log(2.0);
-const float zo7th = log(7.0/4.0) / log(2.0);
-const float ru7th = log(27.0/14.0) / log(2.0);
-const float lo7th = log(11.0/6.0) / log(2.0);
-
-// delete this once MICROLINN_SCALES is tested
-void microLinnInitializeScales() {
-  memset (Device.microLinnScales, 0, sizeof(Device.microLinnScales));
-  for (byte edo = 5; edo <= MICROLINN_MAX_EDO; ++edo) {
-    Device.microLinnScales[triIndex(edo, 0)] = 127;                        // every scale has the tonic
-
-    Device.microLinnScales[triIndex(edo, round(edo * wa2nd))] |= 1;        // set scale 0 to yo scale
-    Device.microLinnScales[triIndex(edo, round(edo * yo3rd))] |= 1; 
-    Device.microLinnScales[triIndex(edo, round(edo * wa4th))] |= 1;
-    Device.microLinnScales[triIndex(edo, round(edo * wa5th))] |= 1;
-    Device.microLinnScales[triIndex(edo, round(edo * yo6th))] |= 1;
-    Device.microLinnScales[triIndex(edo, round(edo * yo7th))] |= 1;
-
-    Device.microLinnScales[triIndex(edo, round(edo * wa2nd))] |= 2;        // set scale 1 to gu scale
-    Device.microLinnScales[triIndex(edo, round(edo * gu3rd))] |= 2; 
-    Device.microLinnScales[triIndex(edo, round(edo * wa4th))] |= 2; 
-    Device.microLinnScales[triIndex(edo, round(edo * wa5th))] |= 2; 
-    Device.microLinnScales[triIndex(edo, round(edo * gu6th))] |= 2; 
-    Device.microLinnScales[triIndex(edo, round(edo * gu7th))] |= 2; 
-
-    Device.microLinnScales[triIndex(edo, round(edo * wa2nd))] |= 4;        // set scale 2 to zo scale
-    Device.microLinnScales[triIndex(edo, round(edo * zo3rd))] |= 4; 
-    Device.microLinnScales[triIndex(edo, round(edo * wa4th))] |= 4;
-    Device.microLinnScales[triIndex(edo, round(edo * wa5th))] |= 4;
-    Device.microLinnScales[triIndex(edo, round(edo * zo6th))] |= 4;
-    Device.microLinnScales[triIndex(edo, round(edo * zo7th))] |= 4;
-
-    Device.microLinnScales[triIndex(edo, round(edo * wa2nd))] |= 8;        // set scale 3 to ru scale
-    Device.microLinnScales[triIndex(edo, round(edo * ru3rd))] |= 8; 
-    Device.microLinnScales[triIndex(edo, round(edo * wa4th))] |= 8; 
-    Device.microLinnScales[triIndex(edo, round(edo * wa5th))] |= 8; 
-    Device.microLinnScales[triIndex(edo, round(edo * ru6th))] |= 8; 
-    Device.microLinnScales[triIndex(edo, round(edo * ru7th))] |= 8; 
-
-    Device.microLinnScales[triIndex(edo, round(edo * wa2nd))] |= 16;       // set scale 4 to ilo scale
-    Device.microLinnScales[triIndex(edo, round(edo * lo3rd))] |= 16; 
-    Device.microLinnScales[triIndex(edo, round(edo * wa4th))] |= 16; 
-    Device.microLinnScales[triIndex(edo, round(edo * wa5th))] |= 16; 
-    Device.microLinnScales[triIndex(edo, round(edo * lo6th))] |= 16; 
-    Device.microLinnScales[triIndex(edo, round(edo * lo7th))] |= 16; 
-
-    for (byte edostep = 0; edostep < edo; ++edostep) {                     // reset scale 6
-      bitWrite (Device.microLinnScales[triIndex(edo, edostep)], 6, 
-              bitRead(MICROLINN_SCALES[triIndex(edo, edostep)], 6));
-    }
-  }
-}
 
 /************** called from linnstrument_firmware.ino ************************/
 
@@ -2261,6 +2198,132 @@ const byte MICROLINN_DOTS[MICROLINN_MAX_EDO+1][MAXCOLS+3] = {
   0,84, 0, 0, 0, 0,16, 0, 0, 0,16, 0, 0, 0, 0,16, 0, 0, 0,16, 0, 0, 0, 0,40, 0, 0, 0,16,  // 54edo (...0, 0, 0,40)
   0,84, 0, 0, 0, 0,16, 0, 0, 0,16, 0, 0, 0, 0,16, 0, 0, 0,16, 0, 0, 0, 0,40, 0, 0, 0,16   // 55edo (...16,0, 0, 0,40)
 };
+
+// old way with scales #2 = zo, #3 = ru and #4 = ila/tha
+const byte MICROLINN_SCALES[MICROLINN_ARRAY_SIZE] = {
+  // scale 0 = yo, 1 is gu, 2 = zo, 3 = ru, 4 = ila/tha, 5 = blank but for the tonic, 6 = yaza rainbow, 7 = full rainbow, bit 7 is unused
+  //  1 y   2 g   4 z   8 r   16 l   32   64 ygzr
+  127,12,76,76,12, // 5edo
+  127,64,64, 0,64,64, // 6edo
+  127,67, 3,67,67, 3,67, // 7edo
+  127,64,64,64, 0,64,64,64, // 8edo
+  127,64, 0,64,64,64,64, 0,64, // 9edo
+  127, 0,64,64,64, 0,64,64,64, 0, // 10
+  127,64,64,64,64, 0, 0,64,64,64,64, // 11
+  127,64,67,66,65,67, 0,67,66,65,66,65, // 12
+  127,64,64,64,64,64, 0, 0,64,64,64,64,64, // 13
+  127,64,64,64, 0,64,64, 0,64,64, 0,64,64,64, // 14
+  127,64,64, 3,66,65,67, 0, 0,67,66,65, 0,66,65, // 15
+  127, 0,64,67,66,65, 0,67, 0,67, 0,66,65,66,65, 0, // 16
+  127,64, 0,92,68,16,72,92, 0, 0,92,68,16,72,68,16,72, // 17
+  127, 0,64,64,64,64,64,64,64, 0,64,64,64,64,64,64,64, 0, // 18
+  127, 0,64,67, 0,66,65, 0,67, 0, 0,67, 0,66,65, 0,66,65, 0, // 19
+  127, 0,64,67, 0,66,65, 0,67, 0,64, 0,67, 0,66,65, 0,66,65, 0, // 20
+  127, 0,64,64,64,66,64,64, 0,64, 0, 0,64, 0,64,64,64,64,64,64, 0, // 21
+  127,64,64,64,79,68,66,65,72,79, 0,64, 0,79,68,66,65,72,68,66,65,72, // 22
+  127, 0,64, 0,67, 0,66, 0,65, 0,67, 0, 0,67, 0,66, 0,65, 0,66, 0,65, 0, // 23
+  127, 0,64, 0,67, 0,66, 0,65, 0,67, 0,64, 0,67, 0,66, 0,65, 0,66, 0,65, 0, // 24
+  127, 0,64, 0,67, 0,66, 0,65, 0,67, 0,64,64, 0,67, 0,66, 0,65, 0,66, 0,65, 0, // 25
+  127,64,64, 0,95,64,68,66,16,65,72,95, 0,64, 0,95,68,66,16,65,72,68,66,16,65,72, // 26
+  127,64,64, 0,95,64,68,66,16,65,72,95, 0,64,64, 0,95,68,66,16,65,72,68,66,16,65,72, // 27
+  127,64,64, 0,95,64,68,66,16,65,72, 0,95, 0,64, 0,95, 0,68,66,16,65,72,68,66,16,65,72, // 28
+  127,64,64, 0,64,95,68,66,16,65,72, 0,95, 0,64,64, 0,95, 0,68,66,16,65,72,68,66,16,65,72, // 29
+  127, 0,64,64, 0,95,64,68,66,16,65,72,95, 0, 0,64, 0, 0,95,68,66,16,65,72,68,66,16,65,72, 0, // 30
+  127, 0,64,64, 0,95,64,68,66,16,65,72, 0,95, 0,64,64, 0,95, 0,68,66,16,65,72,68,66,16,65,72, 0, // 31
+  127, 0,64,64, 0,95,64,68,66,16,65,72, 0,95, 0, 0,64, 0, 0,95, 0,68,66,16,65,72,68,66,16,65,72, 0, // 32
+  127, 0,64,64, 0,95,64, 0,68,66,16,65,72, 0,95, 0,64,64, 0,95, 0,68,66,16,65,72, 0,68,66,16,65,72, 0, // 33
+  127, 0,64,64, 0,95,64, 0,68,66,16,65,72, 0,95, 0, 0,64, 0, 0,95, 0,68,66,16,65,72, 0,68,66,16,65,72, 0, // 34
+  127, 0,64,64, 0,95,64, 0,68,66,16,65,72, 0, 0,95, 0,64,64, 0,95, 0, 0,68,66,16,65,72, 0,68,66,16,65,72, 0, // 35
+  127, 0,64,64, 0, 0,79,64,68,66, 0, 0,65,72, 0,79, 0, 0,64, 0, 0,79, 0,68,66, 0, 0,65,72,68,66, 0, 0,65,72, 0, // 36
+  127, 0, 0,64,64, 0,95,64, 0,68,66,16,65,72, 0,95, 0, 0,64,64, 0, 0,95, 0,68,66,16,65,72, 0,68,66,16,65,72, 0, 0, // 37
+  127, 0, 0,64,64, 0,95,64, 0,68,66,16,65,72, 0, 0,95, 0, 0,64, 0, 0,95, 0, 0,68,66,16,65,72, 0,68,66,16,65,72, 0, 0, // 38
+  127, 0,64,64, 0, 0,64,79, 0,68,66, 0, 0,65,72, 0,79, 0, 0,64,64, 0, 0,79, 0,68,66, 0, 0,65,72, 0,68,66, 0, 1,72,64, 0, // 39
+  127, 0, 0,64,64, 0, 0,79,64,68,66, 0, 0,65,72, 0, 0,79, 0, 0,64, 0, 0,79, 0, 0,68,66, 0, 0,65,72,68,66, 0, 0,65,72, 0, 0, // 40
+  127, 0,64, 0,64, 0,64,95,64,68, 0,66,16,65, 0,72, 0,95, 0,64,64,64,64, 0,95, 0,68, 0,66,16,65, 0,72,68,64,66,16,65, 0,72, 0, // 41
+  127, 0, 0,64,64, 0, 0,79,64, 0,68,66, 0, 0,65,72, 0,79, 0, 0, 0,64, 0, 0, 0,79, 0, 0,68,66, 0, 0,65,72,68,66, 0, 0,65,72, 0, 0, // 42
+  127, 0, 0,64,64, 0, 0,79, 0,68, 0,66, 0, 0,65, 0,72, 0,79, 0, 0,64,64, 0, 0,79, 0,68, 0,66, 0, 0,65, 0,76, 0,66, 0, 0,65, 0,72, 0, // 43
+  127, 0, 0,64, 0,64, 0, 0,95, 0,68, 0,66,16,65, 0,72, 0,95, 0, 0,64, 0,64, 0, 0,95, 0,68, 0,66,16,65, 0,72, 0,68, 0,66,16,65, 0,72, 0, // 44
+  127, 0, 0,64,64, 0, 0,95, 0, 0,68, 0,66,16,65, 0,72, 0, 0,95, 0, 0,64,64, 0, 0,95, 0, 0,68, 0,66,16,65, 0,72,68, 0,66,16,65, 0,72, 0, 0, // 45
+  127, 0, 0,64,64, 0, 0, 0,79, 0,68, 0,66, 0, 0,65, 0,72, 0,79, 0, 0, 0,64, 0, 0, 0,79, 0,68, 0,66, 0, 0,65, 0,72,68, 0,66, 0,65, 0,72, 0, 0, // 46
+  127, 0, 0,64,64, 0, 0,79, 0, 0,68, 0,66, 0, 0,65, 0,72, 0, 0,79, 0, 0,64,64, 0, 0,79, 0, 0,68, 0,66, 0, 0,65, 0,76, 0,66, 0, 0,65, 0,72, 0, 0, // 47
+  127, 0, 0, 0,64, 0, 0, 0,95, 0,68, 0,66, 0,16, 0,65, 0,72, 0,95, 0, 0, 0,64, 0, 0, 0,95, 0,68, 0,66, 0,16, 0,65, 0,76, 0,66, 0,16, 0,65, 0,72, 0, // 48
+  127, 0, 0, 0,64, 0, 0, 0,79, 0, 0,68, 0,66, 0, 0,65, 0,72, 0,79, 0, 0, 0,64,64, 0, 0, 0,79, 0,68, 0,66, 0, 0,65, 0,72, 0,68, 0,66, 0, 0,65, 0,72, 0, // 49
+  127, 0, 0,64, 0,64, 0, 0,95, 0,64,68, 0,66,16, 0,65, 0,72, 0, 0,95, 0, 0, 0,64, 0, 0, 0,95, 0, 0,68, 0,66,16, 0,65, 0,72,68, 0,66,16, 0,65, 0,72, 0, 0, // 50
+  127, 0, 0,64, 0,64, 0,64, 0,95, 0, 0,68, 0,66,16,65, 0,72, 0, 0,95, 0, 0, 0,64,64, 0, 0, 0,95, 0, 0,68, 0,66,16,65, 0,72, 0, 0,68, 0,66,16,65, 0,72, 0, 0, // 51
+  127, 0, 0, 0,64, 0, 0, 0,95, 0, 0,68, 0,66, 0,16, 0,65, 0,72, 0, 0,95, 0, 0, 0,64, 0, 0, 0,95, 0, 0,68, 0,66, 0,16, 0,65, 0,76, 0,66, 0,16, 0,65, 0,72, 0, 0, // 52
+  127, 0, 0,64, 0,64, 0, 0,64,95,64, 0,68, 0,66,16, 0,65, 0,72, 0, 0,95, 0, 0,64,64,64,64, 0, 0,95, 0, 0,68, 0,66,16, 0,65, 0,72, 0,68,64,66,16, 0,65, 0,72, 0, 0, // 53
+  127, 0, 0,64, 0,64, 0, 0,64,31,64, 0,64, 4,64, 2,16,65, 0,72, 0, 0,95, 0,64, 0,64, 0,64, 0,64, 0,95, 0, 0,68, 0,66,16, 1,64, 8,64, 0,64, 4,64, 2,16,65, 0,72, 0, 0, // 54
+  127, 0, 0,64, 0,64, 0,64, 0,95, 0,64,68, 0,66, 0,80, 0,65, 0,72, 0, 0,95, 0,64, 0,64,64, 0,64, 0,95, 0, 0,68, 0,66, 0,80, 0,65, 0,72,68, 0,66, 0,80, 0,65, 0,72, 0, 0  // 55
+};
+
+// delete these once MICROLINN_SCALES is tested
+const float wa2nd = log(9.0/8.0) / log(2.0);            // ratios as a fraction of an octave
+const float yo3rd = log(5.0/4.0) / log(2.0);
+const float gu3rd = log(6.0/5.0) / log(2.0);
+const float zo3rd = log(7.0/6.0) / log(2.0);
+const float ru3rd = log(9.0/7.0) / log(2.0);
+const float lo3rd = log(11.0/9.0) / log(2.0);
+const float wa4th = log(4.0/3.0) / log(2.0);
+const float wa5th = log(3.0/2.0) / log(2.0);
+const float yo6th = log(5.0/3.0) / log(2.0);
+const float gu6th = log(8.0/5.0) / log(2.0);
+const float zo6th = log(14.0/9.0) / log(2.0);
+const float ru6th = log(12.0/7.0) / log(2.0);
+const float lo6th = log(44.0/27.0) / log(2.0);
+const float yo7th = log(15.0/8.0)/ log(2.0);
+const float gu7th = log(9.0/5.0) / log(2.0);
+const float zo7th = log(7.0/4.0) / log(2.0);
+const float ru7th = log(27.0/14.0) / log(2.0);
+const float lo7th = log(11.0/6.0) / log(2.0);
+
+// delete this once MICROLINN_SCALES is tested
+void microLinnInitializeScales() {
+  memset (Device.microLinnScales, 0, sizeof(Device.microLinnScales));
+  for (byte edo = 5; edo <= MICROLINN_MAX_EDO; ++edo) {
+    Device.microLinnScales[triIndex(edo, 0)] = 127;                        // every scale has the tonic
+
+    Device.microLinnScales[triIndex(edo, round(edo * wa2nd))] |= 1;        // set scale 0 to yo scale
+    Device.microLinnScales[triIndex(edo, round(edo * yo3rd))] |= 1; 
+    Device.microLinnScales[triIndex(edo, round(edo * wa4th))] |= 1;
+    Device.microLinnScales[triIndex(edo, round(edo * wa5th))] |= 1;
+    Device.microLinnScales[triIndex(edo, round(edo * yo6th))] |= 1;
+    Device.microLinnScales[triIndex(edo, round(edo * yo7th))] |= 1;
+
+    Device.microLinnScales[triIndex(edo, round(edo * wa2nd))] |= 2;        // set scale 1 to gu scale
+    Device.microLinnScales[triIndex(edo, round(edo * gu3rd))] |= 2; 
+    Device.microLinnScales[triIndex(edo, round(edo * wa4th))] |= 2; 
+    Device.microLinnScales[triIndex(edo, round(edo * wa5th))] |= 2; 
+    Device.microLinnScales[triIndex(edo, round(edo * gu6th))] |= 2; 
+    Device.microLinnScales[triIndex(edo, round(edo * gu7th))] |= 2; 
+
+    Device.microLinnScales[triIndex(edo, round(edo * wa2nd))] |= 4;        // set scale 2 to zo scale
+    Device.microLinnScales[triIndex(edo, round(edo * zo3rd))] |= 4; 
+    Device.microLinnScales[triIndex(edo, round(edo * wa4th))] |= 4;
+    Device.microLinnScales[triIndex(edo, round(edo * wa5th))] |= 4;
+    Device.microLinnScales[triIndex(edo, round(edo * zo6th))] |= 4;
+    Device.microLinnScales[triIndex(edo, round(edo * zo7th))] |= 4;
+
+    Device.microLinnScales[triIndex(edo, round(edo * wa2nd))] |= 8;        // set scale 3 to ru scale
+    Device.microLinnScales[triIndex(edo, round(edo * ru3rd))] |= 8; 
+    Device.microLinnScales[triIndex(edo, round(edo * wa4th))] |= 8; 
+    Device.microLinnScales[triIndex(edo, round(edo * wa5th))] |= 8; 
+    Device.microLinnScales[triIndex(edo, round(edo * ru6th))] |= 8; 
+    Device.microLinnScales[triIndex(edo, round(edo * ru7th))] |= 8; 
+
+    Device.microLinnScales[triIndex(edo, round(edo * wa2nd))] |= 16;       // set scale 4 to ilo scale
+    Device.microLinnScales[triIndex(edo, round(edo * lo3rd))] |= 16; 
+    Device.microLinnScales[triIndex(edo, round(edo * wa4th))] |= 16; 
+    Device.microLinnScales[triIndex(edo, round(edo * wa5th))] |= 16; 
+    Device.microLinnScales[triIndex(edo, round(edo * lo6th))] |= 16; 
+    Device.microLinnScales[triIndex(edo, round(edo * lo7th))] |= 16; 
+
+    for (byte edostep = 0; edostep < edo; ++edostep) {                     // reset scale 6
+      bitWrite (Device.microLinnScales[triIndex(edo, edostep)], 6, 
+              bitRead(MICROLINN_SCALES[triIndex(edo, edostep)], 6));
+    }
+  }
+}
+
 
 // 2 lines that could replace line 1242 in ls_handleTouches.ino
 // see https://www.kvraudio.com/forum/viewtopic.php?p=8885419#p8885419
