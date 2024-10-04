@@ -1738,8 +1738,8 @@ short getNoteNumColumn(byte split, byte notenum, byte row) {
   short col;
 
   if (Split[split].microLinn.colOffset != 1) {
-    col = notenum - microLinnEdostep[split][1][row];
     /* BUG WAY
+    col = notenum - microLinnEdostep[split][1][row];
     if (col % Split[split].microLinn.colOffset != 0) return -1;         // if this row skips this note
     col = 1.0 * col / Split[split].microLinn.colOffset + 1;
     */
